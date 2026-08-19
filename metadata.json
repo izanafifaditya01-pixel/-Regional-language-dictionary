@@ -1,0 +1,6 @@
+{
+  "name": "Kamus Bahasa Nusantara",
+  "description": "Aplikasi Kamus & Edukasi Bahasa Daerah Indonesia dengan Terjemahan, Audio Pelafalan, Kuis Interaktif, dan Asisten AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

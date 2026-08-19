@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  .pill-active {
+    background-color: #15803d;
+    color: #ffffff;
+  }
+
+  .pill-inactive {
+    background-color: #f1f5f9;
+    color: #64748b;
+  }
+
+  .stat-card {
+    transition: all 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  }
+}
