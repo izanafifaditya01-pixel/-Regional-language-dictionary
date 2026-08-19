@@ -531,11 +531,474 @@ export const DICTIONARY_DATABASE: WordEntry[] = [
     sourceLangId: 'ind',
     targetLangId: 'gor',
     word: 'Terima kasih',
-    translation: "Oluwo O'o / Tarima Kasi",
+    translation: "Oluwo O'o",
     phonetic: 'o-lu-wo o-o',
     category: 'Salam',
     exampleSentence: 'Oluwo o\'o uti woliya.',
     exampleTranslation: 'Terima kasih saudaraku.',
+    isPopular: true
+  },
+
+  // --- BETAWI (DKI JAKARTA) ---
+  {
+    id: 'btw-1',
+    sourceLangId: 'ind',
+    targetLangId: 'btw',
+    word: 'Makan',
+    translation: 'Makan / Ngotok',
+    phonetic: 'ma-kan',
+    category: 'Kata Kerja',
+    exampleSentence: 'Ayo pada makan kerak telor bareng-bareng.',
+    exampleTranslation: 'Ayo kita makan kerak telor bersama-sama.',
+    culturalContext: 'Masyarakat Betawi menjunjung tinggi kekeluargaan saat kumpul makan santai.',
+    isPopular: true
+  },
+  {
+    id: 'btw-2',
+    sourceLangId: 'ind',
+    targetLangId: 'btw',
+    word: 'Terima kasih',
+    translation: 'Makasih Banyak / Nuhun',
+    phonetic: 'ma-ka-sih ban-yak',
+    category: 'Salam',
+    exampleSentence: 'Makasih banyak ya bang udeh dibantuin.',
+    exampleTranslation: 'Terima kasih banyak ya bang sudah dibantu.',
+    isPopular: true
+  },
+  {
+    id: 'btw-3',
+    sourceLangId: 'ind',
+    targetLangId: 'btw',
+    word: 'Saya / Kamu',
+    translation: 'Gue / Lu',
+    phonetic: 'gue / lu',
+    category: 'Keluarga',
+    exampleSentence: 'Gue seneng banget bisa maen ke mari.',
+    exampleTranslation: 'Saya senang sekali bisa berkunjung ke sini.',
+    isPopular: true
+  },
+
+  // --- PALEMBANG (SUMATERA SELATAN) ---
+  {
+    id: 'plb-1',
+    sourceLangId: 'ind',
+    targetLangId: 'plb',
+    word: 'Makan',
+    translation: 'Makan / Ngirup',
+    phonetic: 'ma-kan / ngi-rup',
+    category: 'Kata Kerja',
+    exampleSentence: 'Pacak dak kito makan pempek iwak belido?',
+    exampleTranslation: 'Bisa tidak kita makan pempek ikan belida?',
+    culturalContext: 'Masyarakat Palembang punya tradisi ngirup cuko pempek yang khas.',
+    isPopular: true
+  },
+  {
+    id: 'plb-2',
+    sourceLangId: 'ind',
+    targetLangId: 'plb',
+    word: 'Terima kasih',
+    translation: 'Mokasih / Makasih Banyak',
+    phonetic: 'mo-ka-sih',
+    category: 'Salam',
+    exampleSentence: 'Mokasih banyak dolor lah bantu aku.',
+    exampleTranslation: 'Terima kasih banyak saudaraku sudah membantu saya.',
+    isPopular: true
+  },
+  {
+    id: 'plb-3',
+    sourceLangId: 'ind',
+    targetLangId: 'plb',
+    word: 'Bagus / Hebat',
+    translation: 'Elok / Rancak',
+    phonetic: 'e-lok',
+    category: 'Sifat',
+    exampleSentence: 'Elok nian jembatan Ampera di malam hari.',
+    exampleTranslation: 'Bagus sekali jembatan Ampera di malam hari.',
+    isPopular: true
+  },
+
+  // --- RIAU & KEPULAUAN RIAU ---
+  {
+    id: 'ria-1',
+    sourceLangId: 'ind',
+    targetLangId: 'ria',
+    word: 'Selamat Datang',
+    translation: 'Selamat Datang / Jemput Duduk',
+    phonetic: 'se-la-mat da-tang',
+    category: 'Salam',
+    exampleSentence: 'Sila jemput duduk di teratak kami.',
+    exampleTranslation: 'Silakan duduk di pondok kami.',
+    culturalContext: 'Bahasa Melayu Riau menjunjung tinggi pantun dan adab kesopanan tinggi.',
+    isPopular: true
+  },
+  {
+    id: 'ria-2',
+    sourceLangId: 'ind',
+    targetLangId: 'ria',
+    word: 'Terima kasih',
+    translation: 'Terima Kasih / Syukran',
+    phonetic: 'te-ri-ma ka-sih',
+    category: 'Salam',
+    exampleSentence: 'Terima kasih atas budi baik encik dan puan.',
+    exampleTranslation: 'Terima kasih atas kebaikan bapak dan ibu.',
+    isPopular: true
+  },
+
+  // --- LAMPUNG ---
+  {
+    id: 'lmp-1',
+    sourceLangId: 'ind',
+    targetLangId: 'lmp',
+    word: 'Selamat Datang',
+    translation: 'Tabik Pun',
+    phonetic: 'ta-bik pun',
+    category: 'Salam',
+    exampleSentence: 'Tabik pun, selamat ratong di Tanoh Lado.',
+    exampleTranslation: 'Salam hormat, selamat datang di Tanah Lada (Lampung).',
+    culturalContext: 'Tabik Pun adalah salam santun pembuka masyarakat adat Sai Batin dan Pepadun.',
+    isPopular: true
+  },
+  {
+    id: 'lmp-2',
+    sourceLangId: 'ind',
+    targetLangId: 'lmp',
+    word: 'Terima kasih',
+    translation: 'Nalom / Terima Kasih',
+    phonetic: 'na-lom',
+    category: 'Salam',
+    exampleSentence: 'Terima kasih bangek ya puari.',
+    exampleTranslation: 'Terima kasih banyak ya saudaraku.',
+    isPopular: true
+  },
+
+  // --- MANADO (SULAWESI UTARA) ---
+  {
+    id: 'mdo-1',
+    sourceLangId: 'ind',
+    targetLangId: 'mdo',
+    word: 'Makan',
+    translation: 'Makang',
+    phonetic: 'ma-kang',
+    category: 'Kata Kerja',
+    exampleSentence: 'Mari jo torang makang tinutuan sama-sama.',
+    exampleTranslation: 'Mari ayo kita makan bubur Manado tinutuan bersama-sama.',
+    culturalContext: 'Masyarakat Manado terkenal dengan kebersamaan "Torang Samua Basudara".',
+    isPopular: true
+  },
+  {
+    id: 'mdo-2',
+    sourceLangId: 'ind',
+    targetLangId: 'mdo',
+    word: 'Terima kasih',
+    translation: 'Makase / Makase Banyak',
+    phonetic: 'ma-ka-se ban-yak',
+    category: 'Salam',
+    exampleSentence: 'Makase banyak so bantu pa kita.',
+    exampleTranslation: 'Terima kasih banyak sudah membantu saya.',
+    isPopular: true
+  },
+
+  // --- KAILI (SULAWESI TENGAH) ---
+  {
+    id: 'kli-1',
+    sourceLangId: 'ind',
+    targetLangId: 'kli',
+    word: 'Makan',
+    translation: 'Mangkoni',
+    phonetic: 'mang-ko-ni',
+    category: 'Kata Kerja',
+    exampleSentence: 'Mai kita mangkoni kaledo.',
+    exampleTranslation: 'Mari kita makan sup kaki sapi kaledo.',
+    isPopular: true
+  },
+  {
+    id: 'kli-2',
+    sourceLangId: 'ind',
+    targetLangId: 'kli',
+    word: 'Terima kasih',
+    translation: 'Tarima Kasi / Nambae',
+    phonetic: 'ta-ri-ma ka-si',
+    category: 'Salam',
+    exampleSentence: 'Tarima kasi nambae sampesuwu.',
+    exampleTranslation: 'Terima kasih banyak saudaraku.',
+    isPopular: true
+  },
+
+  // --- MANDAR (SULAWESI BARAT) ---
+  {
+    id: 'mdr-1',
+    sourceLangId: 'ind',
+    targetLangId: 'mdr',
+    word: 'Makan',
+    translation: 'Mande',
+    phonetic: 'man-de',
+    category: 'Kata Kerja',
+    exampleSentence: 'Mandei jolo baru lai malao.',
+    exampleTranslation: 'Makanlah dulu sebelum kalian berangkat.',
+    isPopular: true
+  },
+  {
+    id: 'mdr-2',
+    sourceLangId: 'ind',
+    targetLangId: 'mdr',
+    word: 'Terima kasih',
+    translation: 'Tarima Kasi / Kurru Sumanga',
+    phonetic: 'kur-ru su-ma-nga',
+    category: 'Salam',
+    exampleSentence: 'Kurru sumanga di pappasanga.',
+    exampleTranslation: 'Terima kasih atas pesan dan nasihatnya.',
+    isPopular: true
+  },
+
+  // --- TOLAKI (SULAWESI TENGGARA) ---
+  {
+    id: 'tk-1',
+    sourceLangId: 'ind',
+    targetLangId: 'tk',
+    word: 'Makan',
+    translation: 'Mokaa',
+    phonetic: 'mo-kaa',
+    category: 'Kata Kerja',
+    exampleSentence: 'Mai to mokaa sinonggi.',
+    exampleTranslation: 'Mari kita makan sagu sinonggi.',
+    culturalContext: 'Sinonggi adalah makanan khas suku Tolaki berbahan sagu dengan kuah ikan.',
+    isPopular: true
+  },
+  {
+    id: 'tk-2',
+    sourceLangId: 'ind',
+    targetLangId: 'tk',
+    word: 'Terima kasih',
+    translation: 'Tarima Kasi / Medulu',
+    phonetic: 'ta-ri-ma ka-si',
+    category: 'Salam',
+    exampleSentence: 'Tarima kasi atas tulunganta.',
+    exampleTranslation: 'Terima kasih atas bantuan Anda.',
+    isPopular: true
+  },
+
+  // --- AMBON & MALUKU ---
+  {
+    id: 'amb-1',
+    sourceLangId: 'ind',
+    targetLangId: 'amb',
+    word: 'Makan',
+    translation: 'Makang',
+    phonetic: 'ma-kang',
+    category: 'Kata Kerja',
+    exampleSentence: 'Mari jua katong makang papeda deng ikan kuah kuning.',
+    exampleTranslation: 'Mari kita makan papeda dengan ikan kuah kuning.',
+    culturalContext: 'Tradisi makan bersama menggambarkan ikatan Pela Gandong yang kokoh di Maluku.',
+    isPopular: true
+  },
+  {
+    id: 'amb-2',
+    sourceLangId: 'ind',
+    targetLangId: 'amb',
+    word: 'Terima kasih',
+    translation: 'Dangkebanyak / Tarimakase',
+    phonetic: 'dang-ke ban-yak',
+    category: 'Salam',
+    exampleSentence: 'Dangke banyak lae su tolong beta.',
+    exampleTranslation: 'Terima kasih banyak saudaraku sudah menolong saya.',
+    isPopular: true
+  },
+  {
+    id: 'amb-3',
+    sourceLangId: 'ind',
+    targetLangId: 'amb',
+    word: 'Saya / Kita',
+    translation: 'Beta / Katong',
+    phonetic: 'be-ta / ka-tong',
+    category: 'Keluarga',
+    exampleSentence: 'Beta bangga jadi anak Nusantara.',
+    exampleTranslation: 'Saya bangga menjadi anak Nusantara.',
+    isPopular: true
+  },
+
+  // --- TERNATE & MALUKU UTARA ---
+  {
+    id: 'ter-1',
+    sourceLangId: 'ind',
+    targetLangId: 'ter',
+    word: 'Selamat Datang',
+    translation: 'Suba Jou',
+    phonetic: 'su-ba jou',
+    category: 'Salam',
+    exampleSentence: 'Suba jou, marimoi ngone futuru.',
+    exampleTranslation: 'Salam hormat yang mulia, bersatu kita teguh.',
+    culturalContext: 'Semboyan persatuan Kesultanan Ternate: "Marimoi Ngone Futuru".',
+    isPopular: true
+  },
+  {
+    id: 'ter-2',
+    sourceLangId: 'ind',
+    targetLangId: 'ter',
+    word: 'Terima kasih',
+    translation: 'Sukuru Jou / Syukur',
+    phonetic: 'su-ku-ru jou',
+    category: 'Salam',
+    exampleSentence: 'Sukuru jou atas berkat dan rezeki ini.',
+    exampleTranslation: 'Terima kasih penuh syukur atas rezeki ini.',
+    isPopular: true
+  },
+
+  // --- PAPUA (MELAYU PAPUA, BIAK, DANI, MARIND) ---
+  {
+    id: 'pap-1',
+    sourceLangId: 'ind',
+    targetLangId: 'pap',
+    word: 'Makan',
+    translation: 'Makan',
+    phonetic: 'ma-kan',
+    category: 'Kata Kerja',
+    exampleSentence: 'Kitorang makan papeda bungkus bakar.',
+    exampleTranslation: 'Kita semua makan papeda bungkus bakar.',
+    culturalContext: 'Kearifan lokal kuliner sagu yang menjadi makanan pokok masyarakat Papua.',
+    isPopular: true
+  },
+  {
+    id: 'pap-2',
+    sourceLangId: 'ind',
+    targetLangId: 'pap',
+    word: 'Terima kasih',
+    translation: 'Terima Kasih Banyak / Wa Wa Wa',
+    phonetic: 'wa wa wa',
+    category: 'Salam',
+    exampleSentence: 'Wa wa wa kitorang samua basaudara!',
+    exampleTranslation: 'Terima kasih banyak rasa syukur kita semua bersaudara!',
+    culturalContext: '"Wa Wa Wa" adalah seruan terima kasih, berkah, dan syukur masyarakat Papua Pegunungan.',
+    isPopular: true
+  },
+  {
+    id: 'pap-3',
+    sourceLangId: 'ind',
+    targetLangId: 'pap',
+    word: 'Saya / Kita',
+    translation: 'Sa / Kitorang (Kitong)',
+    phonetic: 'sa / ki-tong',
+    category: 'Keluarga',
+    exampleSentence: 'Sa tra kosong, kitong jalan sama-sama.',
+    exampleTranslation: 'Saya tidak sendiri, kita jalan bersama-sama.',
+    isPopular: true
+  },
+  {
+    id: 'dan-1',
+    sourceLangId: 'ind',
+    targetLangId: 'dan',
+    word: 'Salam & Terima Kasih',
+    translation: 'Wa Wa Wa',
+    phonetic: 'wa wa wa',
+    category: 'Salam',
+    exampleSentence: 'Wa wa wa ninom eromoko.',
+    exampleTranslation: 'Terima kasih banyak penuh rasa damai dan kehangatan.',
+    culturalContext: 'Ungkapan kerukunan tertinggi saat ritual bakar batu adat Wamena.',
+    isPopular: true
+  },
+  {
+    id: 'byk-1',
+    sourceLangId: 'ind',
+    targetLangId: 'byk',
+    word: 'Terima kasih',
+    translation: 'Amesaik (Kasumasa)',
+    phonetic: 'ka-su-ma-sa',
+    category: 'Salam',
+    exampleSentence: 'Kasumasa bekuri ba tolong ya.',
+    exampleTranslation: 'Terima kasih banyak sudah menolong.',
+    isPopular: true
+  },
+  {
+    id: 'mrd-1',
+    sourceLangId: 'ind',
+    targetLangId: 'mrd',
+    word: 'Salam Damai',
+    translation: 'Izakod Bekai Izakod Kai',
+    phonetic: 'i-za-kod be-kai',
+    category: 'Salam',
+    exampleSentence: 'Izakod bekai izakod kai di tanah Anim Ha.',
+    exampleTranslation: 'Satu hati satu tujuan di tanah manusia sejati Merauke.',
+    culturalContext: 'Motto persaudaraan suku Marind di Merauke, Papua Selatan.',
+    isPopular: true
+  },
+
+  // --- MANGGARAI & DAWAN (NTT) ---
+  {
+    id: 'mgr-1',
+    sourceLangId: 'ind',
+    targetLangId: 'mgr',
+    word: 'Terima kasih',
+    translation: 'Tiba Teing / Walas',
+    phonetic: 'ti-ba te-ing',
+    category: 'Salam',
+    exampleSentence: 'Tiba teing ata di’a one mai ite.',
+    exampleTranslation: 'Terima kasih atas kebaikan yang datang dari Anda.',
+    culturalContext: 'Ungkapan santun dalam adat Manggarai Flores Barat.',
+    isPopular: true
+  },
+  {
+    id: 'dwn-1',
+    sourceLangId: 'ind',
+    targetLangId: 'dwn',
+    word: 'Terima kasih',
+    translation: 'Ulas Tuan / Makasi',
+    phonetic: 'u-las tu-an',
+    category: 'Salam',
+    exampleSentence: 'Ulas tuan nane meto.',
+    exampleTranslation: 'Terima kasih banyak di tanah kering Timor.',
+    isPopular: true
+  },
+
+  // --- DAYAK KANAYATN (KALBAR) ---
+  {
+    id: 'kyn-1',
+    sourceLangId: 'ind',
+    targetLangId: 'kyn',
+    word: 'Salam Kebesaran Dayak',
+    translation: 'Adil Ka Talino, Bacuramin Ka Saruga, Basengat Ka Jubata',
+    phonetic: 'a-dil ka ta-li-no',
+    category: 'Salam',
+    exampleSentence: 'Adil Ka Talino, Bacuramin Ka Saruga, Basengat Ka Jubata! Arus!',
+    exampleTranslation: 'Adil kepada sesama, bercermin ke surga, bernapas kepada Tuhan! Amin!',
+    culturalContext: 'Falsafah hidup dan salam kebesaran masyarakat Dayak di seluruh Kalimantan.',
+    isPopular: true
+  },
+  {
+    id: 'kyn-2',
+    sourceLangId: 'ind',
+    targetLangId: 'kyn',
+    word: 'Makan',
+    translation: 'Makan / Nyangkuang',
+    phonetic: 'ma-kan',
+    category: 'Kata Kerja',
+    exampleSentence: 'Ayo diri makan sungkui.',
+    exampleTranslation: 'Ayo kita makan beras pulut sungkui.',
+    isPopular: true
+  },
+
+  // --- KUTAI (KALTIM / IKN) ---
+  {
+    id: 'kut-1',
+    sourceLangId: 'ind',
+    targetLangId: 'kut',
+    word: 'Makan',
+    translation: 'Makan / Begantar',
+    phonetic: 'ma-kan',
+    category: 'Kata Kerja',
+    exampleSentence: 'Yok keroan makan gence ruan di tepian Mahakam.',
+    exampleTranslation: 'Ayo kawan-kawan makan ikan haruan gence ruan di tepian Mahakam.',
+    culturalContext: 'Kuliner tradisional khas Kesultanan Kutai Kartanegara.',
+    isPopular: true
+  },
+  {
+    id: 'kut-2',
+    sourceLangId: 'ind',
+    targetLangId: 'kut',
+    word: 'Terima kasih',
+    translation: 'Terima Kasih / Makaseh',
+    phonetic: 'ma-ka-seh',
+    category: 'Salam',
+    exampleSentence: 'Makaseh banyak lah dengsanak.',
+    exampleTranslation: 'Terima kasih banyak ya saudaraku.',
     isPopular: true
   }
 ];

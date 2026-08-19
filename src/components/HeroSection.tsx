@@ -41,7 +41,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="lg:col-span-7 space-y-5 text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-800 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5 text-green-700" />
-              <span>Kamus & Edukasi Bahasa Daerah Indonesia</span>
+              <span>Kamus & Edukasi Bahasa Daerah 38 Provinsi Indonesia</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
@@ -52,7 +52,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base max-w-2xl leading-relaxed font-medium">
-              Kamus digital terjemahan Bahasa Indonesia ke Bugis, Jawa, Sunda, Bali, Makassar, Minang, Aceh, Batak, Banjar, dan puluhan bahasa daerah lainnya disertai audio pelafalan & tutor AI.
+              Kamus digital & penerjemah cerdas meliputi seluruh bahasa daerah dari 38 provinsi di Indonesia (Sumatera, Jawa, Bali, Nusa Tenggara, Kalimantan, Sulawesi, Maluku, hingga Papua) dilengkapi pelafalan suara dan tutor AI.
             </p>
 
             {/* Language Selector Bar Component */}

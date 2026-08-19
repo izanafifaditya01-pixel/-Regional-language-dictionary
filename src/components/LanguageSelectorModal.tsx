@@ -19,19 +19,32 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIsland, setSelectedIsland] = useState<string>('Semua');
 
-  const islands = ['Semua', 'Sulawesi', 'Jawa', 'Sumatera', 'Kalimantan', 'Bali', 'Nusa Tenggara'];
+  const islands = [
+    'Semua',
+    'Sumatera',
+    'Jawa',
+    'Bali & Nusa Tenggara',
+    'Kalimantan',
+    'Sulawesi',
+    'Maluku',
+    'Papua'
+  ];
 
   const filteredLanguages = LANGUAGES_DATA.filter(lang => {
     // Filter search query
+    const query = searchQuery.toLowerCase().trim();
     const matchQuery =
-      lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lang.province.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lang.island.toLowerCase().includes(searchQuery.toLowerCase());
+      !query ||
+      lang.name.toLowerCase().includes(query) ||
+      lang.nativeName.toLowerCase().includes(query) ||
+      lang.province.toLowerCase().includes(query) ||
+      lang.island.toLowerCase().includes(query);
 
     // Filter island
     const matchIsland =
       selectedIsland === 'Semua' ||
-      lang.island.toLowerCase().includes(selectedIsland.toLowerCase());
+      lang.island.toLowerCase().includes(selectedIsland.toLowerCase()) ||
+      (selectedIsland === 'Bali & Nusa Tenggara' && (lang.island.includes('Bali') || lang.island.includes('Nusa Tenggara')));
 
     return matchQuery && matchIsland;
   });
@@ -48,7 +61,13 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
             <span className="text-xs text-emerald-200 font-semibold uppercase tracking-wider block">
               Pilih {type === 'source' ? 'Bahasa Asal' : 'Bahasa Tujuan'}
             </span>
-            <h3 className="text-xl font-bold">Daftar Bahasa Daerah Indonesia</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold">Bahasa Daerah 38 Provinsi</h3>
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-white/20 rounded-full">
+                {filteredLanguages.length} Bahasa
+              </span>
+            </div>
+            <p className="text-xs text-emerald-100/80 mt-0.5">Lengkap dari Sabang sampai Merauke</p>
           </div>
 
           <button
