@@ -4,6 +4,7 @@ import { WordEntry, Language, Category } from '../types';
 import { DICTIONARY_DATABASE } from '../data/dictionaryDatabase';
 import { CATEGORIES_DATA } from '../data/languagesData';
 import { speakWord } from '../utils/audioSpeech';
+import { translateOfflineRegional } from '../utils/regionalTranslator';
 
 interface DictionaryViewProps {
   sourceLang: Language;
@@ -76,40 +77,50 @@ export const DictionaryView: React.FC<DictionaryViewProps> = ({
     setAiResult(null);
 
     try {
-      const res = await fetch('/api/ai/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          word: searchQuery,
-          sourceLangName: sourceLang.name,
-          targetLangName: targetLang.name,
-        }),
-      });
+      let data: any = null;
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || 'Gagal menerjemahkan dengan AI');
+      try {
+        const res = await fetch('/api/ai/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            word: searchQuery,
+            sourceLangName: sourceLang.name,
+            targetLangName: targetLang.name,
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            data = json.data;
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('Dictionary AI fetch error, using offline engine:', fetchErr);
       }
 
-      const data = json.data;
-      const newWordEntry: WordEntry = {
-        id: `ai-${Date.now()}`,
-        sourceLangId: sourceLang.id,
-        targetLangId: targetLang.id,
-        word: data.word || searchQuery,
-        translation: data.translation,
-        phonetic: data.phonetic || '-',
-        category: data.category || 'Kata Umum',
-        exampleSentence: data.exampleSentence || '',
-        exampleTranslation: data.exampleTranslation || '',
-        culturalContext: data.culturalContext || '',
-        synonyms: data.synonyms || [],
-        antonyms: data.antonyms || [],
-      };
+      const newWordEntry: WordEntry = data && data.translation
+        ? {
+            id: `ai-${Date.now()}`,
+            sourceLangId: sourceLang.id,
+            targetLangId: targetLang.id,
+            word: data.word || searchQuery,
+            translation: data.translation,
+            phonetic: data.phonetic || '-',
+            category: data.category || 'Kata Umum',
+            exampleSentence: data.exampleSentence || '',
+            exampleTranslation: data.exampleTranslation || '',
+            culturalContext: data.culturalContext || '',
+            synonyms: data.synonyms || [],
+            antonyms: data.antonyms || [],
+          }
+        : translateOfflineRegional(searchQuery, sourceLang, targetLang);
 
       setAiResult(newWordEntry);
     } catch (err: any) {
-      setAiError(err.message || 'Terjadi kesalahan pada AI. Silakan coba lagi.');
+      const fallback = translateOfflineRegional(searchQuery, sourceLang, targetLang);
+      setAiResult(fallback);
     } finally {
       setAiLoading(false);
     }

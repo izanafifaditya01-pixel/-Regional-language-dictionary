@@ -18,6 +18,7 @@ import {
 import { Language, WordEntry } from '../types';
 import { LANGUAGES_DATA } from '../data/languagesData';
 import { speakWord } from '../utils/audioSpeech';
+import { translateOfflineRegional } from '../utils/regionalTranslator';
 
 interface TranslatorViewProps {
   sourceLang: Language;
@@ -89,36 +90,46 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
     setError(null);
 
     try {
-      const res = await fetch('/api/ai/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          word: text,
-          sourceLangName: sourceLang.name,
-          targetLangName: targetLang.name,
-        }),
-      });
+      let data: any = null;
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || 'Gagal menerjemahkan dengan AI');
+      try {
+        const res = await fetch('/api/ai/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            word: text,
+            sourceLangName: sourceLang.name,
+            targetLangName: targetLang.name,
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            data = json.data;
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('Network translation fetch failed, using offline engine:', fetchErr);
       }
 
-      const data = json.data;
-      const newEntry: WordEntry = {
-        id: `trans-${Date.now()}`,
-        sourceLangId: sourceLang.id,
-        targetLangId: targetLang.id,
-        word: text,
-        translation: data.translation,
-        phonetic: data.phonetic || '-',
-        category: data.category || 'Terjemahan Bebas',
-        exampleSentence: data.exampleSentence || '',
-        exampleTranslation: data.exampleTranslation || '',
-        culturalContext: data.culturalContext || '',
-        synonyms: data.synonyms || [],
-        antonyms: data.antonyms || [],
-      };
+      // If backend API returned valid data, use it; otherwise, use local regional translation engine
+      const newEntry: WordEntry = data && data.translation
+        ? {
+            id: `trans-${Date.now()}`,
+            sourceLangId: sourceLang.id,
+            targetLangId: targetLang.id,
+            word: text,
+            translation: data.translation,
+            phonetic: data.phonetic || '-',
+            category: data.category || 'Terjemahan Bebas',
+            exampleSentence: data.exampleSentence || '',
+            exampleTranslation: data.exampleTranslation || '',
+            culturalContext: data.culturalContext || '',
+            synonyms: data.synonyms || [],
+            antonyms: data.antonyms || [],
+          }
+        : translateOfflineRegional(text, sourceLang, targetLang);
 
       setTranslationResult(newEntry);
 
@@ -126,17 +137,19 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
       const histItem: TranslationHistoryItem = {
         id: newEntry.id,
         sourceText: text,
-        translatedText: data.translation,
+        translatedText: newEntry.translation,
         sourceLangName: sourceLang.name,
         targetLangName: targetLang.name,
         targetLangCode: targetLang.code,
-        phonetic: data.phonetic,
+        phonetic: newEntry.phonetic,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       };
 
       setHistory(prev => [histItem, ...prev.filter(h => h.sourceText !== text)].slice(0, 10));
     } catch (err: any) {
-      setError(err.message || 'Terjadi kendala saat menerjemahkan. Silakan coba lagi.');
+      // Guaranteed safe fallback
+      const fallbackEntry = translateOfflineRegional(text, sourceLang, targetLang);
+      setTranslationResult(fallbackEntry);
     } finally {
       setIsLoading(false);
     }
