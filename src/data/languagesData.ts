@@ -513,6 +513,30 @@ export const LANGUAGES_DATA: Language[] = [
     accentColor: 'from-blue-700 to-indigo-800',
     description: 'Bahasa resmi Kesultanan Buton dengan naskah kuno beraksara Buri Wolio.'
   },
+  {
+    id: 'mun',
+    code: 'mun',
+    name: 'Bahasa Muna',
+    nativeName: 'Basa Wuna',
+    province: 'Sulawesi Tenggara (Muna & Muna Barat)',
+    island: 'Sulawesi',
+    speakerCount: '350 Ribu+',
+    flagEmoji: '🪁',
+    accentColor: 'from-cyan-600 to-blue-700',
+    description: 'Bahasa suku Muna di Pulau Muna dengan warisan budaya layang-layang purba tertua Kaghati Kolope dan tenun Wuna.'
+  },
+  {
+    id: 'mrn',
+    code: 'mrn',
+    name: 'Bahasa Moronene',
+    nativeName: 'Bahasa Moronene',
+    province: 'Sulawesi Tenggara (Bombana & Kabaena)',
+    island: 'Sulawesi',
+    speakerCount: '50 Ribu+',
+    flagEmoji: '🌿',
+    accentColor: 'from-emerald-600 to-teal-800',
+    description: 'Bahasa suku tertua asli daratan Sulawesi Tenggara di Kabupaten Bombana dan Pulau Kabaena.'
+  },
 
   // ==========================================
   // KEPULAUAN MALUKU (2 PROVINSI)

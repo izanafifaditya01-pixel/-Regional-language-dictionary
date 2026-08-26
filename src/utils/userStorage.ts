@@ -115,3 +115,49 @@ export function addHistoryToProfile(
   saveUserProfile(updated);
   return updated;
 }
+
+export function recordGameScoreInProfile(
+  profile: UserProfile,
+  gameId: string,
+  score: number
+): { updatedProfile: UserProfile; isNewHighScore: boolean } {
+  const currentScores = profile.gameHighScores || {};
+  const previousHigh = currentScores[gameId] || 0;
+  const isNewHighScore = score > previousHigh;
+
+  const newScores = {
+    ...currentScores,
+    [gameId]: Math.max(previousHigh, score)
+  };
+
+  const updatedProfile: UserProfile = {
+    ...profile,
+    gameHighScores: newScores
+  };
+
+  saveUserProfile(updatedProfile);
+  return { updatedProfile, isNewHighScore };
+}
+
+export function recordWheelSpinInProfile(profile: UserProfile): UserProfile {
+  const today = new Date().toISOString().split('T')[0];
+  const updatedProfile: UserProfile = {
+    ...profile,
+    lastWheelSpinDate: today
+  };
+  saveUserProfile(updatedProfile);
+  return updatedProfile;
+}
+
+export function claimDailyQuestInProfile(profile: UserProfile, questId: string): UserProfile {
+  const currentClaimed = profile.claimedDailyQuests || [];
+  if (currentClaimed.includes(questId)) return profile;
+
+  const updatedProfile: UserProfile = {
+    ...profile,
+    claimedDailyQuests: [...currentClaimed, questId]
+  };
+  saveUserProfile(updatedProfile);
+  return updatedProfile;
+}
+

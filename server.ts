@@ -108,6 +108,8 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
         "papua": "Wa Wa Wa",
         "toraja": "Kurre Sumanga'",
         "gorontalo": "Oluwo O'o",
+        "muna": "Tarima Kasi / Fodhahi Barakati",
+        "moronene": "Mpu’u Kosumanga / Tarima Kasi",
       },
       "makan": {
         "bugis": "Manre",
@@ -127,6 +129,8 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
         "papua": "Makan",
         "toraja": "Kuman",
         "gorontalo": "Monga",
+        "muna": "Kumaa",
+        "moronene": "Mongkoni / Manga",
       },
       "apa kabar": {
         "bugis": "Aga kareba?",
@@ -144,6 +148,8 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
         "ambon": "Bagaimana kabar?",
         "papua": "Bagaimana kabar?",
         "toraja": "Apara kareba?",
+        "muna": "Hae habari? / Ohae habari?",
+        "moronene": "Haba piapia? / Pandei habara?",
       },
       "selamat pagi": {
         "bugis": "Salama' Ele",
@@ -161,6 +167,8 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
         "ambon": "Slamat Pagi",
         "papua": "Selamat Pagi",
         "toraja": "Salama' Melambi'",
+        "muna": "Salama' Ele / Habari Keseno",
+        "moronene": "Salama Pagi / Haba Piapia",
       }
     };
 

@@ -29,6 +29,8 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       tor: { translation: 'Salama\' Melambi\'', phonetic: 'sa-la-ma me-lam-bi', context: 'Salam pagi sejuk pegunungan Tana Toraja.' },
       gor: { translation: 'Mopolohupa Dehu', phonetic: 'mo-po-lo-hu-pa', context: 'Salam pagi suku Gorontalo.' },
       kyn: { translation: 'Adil Ka Talino, Selamat Pagi', phonetic: 'a-dil ka ta-li-no', context: 'Salam persaudaraan Dayak.' },
+      mun: { translation: 'Salama\' Ele / Habari Keseno', phonetic: 'sa-la-ma e-le', context: 'Salam pagi penuh berkah di Pulau Muna.' },
+      mrn: { translation: 'Salama Pagi / Haba Piapia', phonetic: 'sa-la-ma pa-gi', context: 'Salam pagi hangat suku Moronene.' }
     }
   },
   {
@@ -53,7 +55,9 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       gor: { translation: 'Oluwo O\'o', phonetic: 'o-lu-wo o-o', context: 'Ungkapan terima kasih bahasa Gorontalo.' },
       kyn: { translation: 'Arus / Terima Kasih', phonetic: 'a-rus', context: 'Ungkapan syukur masyarakat Dayak Kanayatn.' },
       mgr: { translation: 'Tiba Teing', phonetic: 'ti-ba te-ing', context: 'Ungkapan terima kasih Manggarai Flores.' },
-      dwn: { translation: 'Ulas Tuan', phonetic: 'u-las tu-an', context: 'Ungkapan terima kasih Timor Dawan.' }
+      dwn: { translation: 'Ulas Tuan', phonetic: 'u-las tu-an', context: 'Ungkapan terima kasih Timor Dawan.' },
+      mun: { translation: 'Tarima Kasi / Fodhahi Barakati', phonetic: 'ta-ri-ma ka-si', context: 'Ungkapan terima kasih dan berkah khas Pulau Muna.' },
+      mrn: { translation: 'Mpu’u Kosumanga / Tarima Kasi', phonetic: 'mpu-u ko-su-ma-nga', context: 'Ungkapan terima kasih mendalam suku Moronene Bombana.' }
     }
   },
   {
@@ -77,7 +81,9 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       tor: { translation: 'Kuman / Mangkuman', phonetic: 'ku-man', example: 'Mai komi kuman pa’piong.', exampleTrans: 'Mari kemari makan pa\'piong.' },
       gor: { translation: 'Monga', phonetic: 'mo-nga', example: 'Watiya monga binthe biluhuta.', exampleTrans: 'Saya makan sup jagung binthe biluhuta.' },
       kyn: { translation: 'Makan / Nyangkuang', phonetic: 'ma-kan', example: 'Ayo diri makan sungkui.', exampleTrans: 'Ayo kita makan pulut sungkui.' },
-      kut: { translation: 'Makan / Begantar', phonetic: 'ma-kan', example: 'Yok keroan makan gence ruan.', exampleTrans: 'Ayo makan ikan gence ruan.' }
+      kut: { translation: 'Makan / Begantar', phonetic: 'ma-kan', example: 'Yok keroan makan gence ruan.', exampleTrans: 'Ayo makan ikan gence ruan.' },
+      mun: { translation: 'Kumaa', phonetic: 'ku-maa', example: 'Inodi akumaa kenta gholu.', exampleTrans: 'Saya makan ikan bakar.' },
+      mrn: { translation: 'Mongkoni / Manga', phonetic: 'mo-ngko-ni', example: 'Iyo manga tinutu pedadi.', exampleTrans: 'Dia sedang makan jagung rebus.' }
     }
   },
   {
@@ -99,6 +105,8 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       pap: { translation: 'Tidur', phonetic: 'ti-dur' },
       tor: { translation: 'Mamma\'', phonetic: 'mam-ma' },
       gor: { translation: 'Tuluhe', phonetic: 'tu-lu-he' },
+      mun: { translation: 'Tindo / Matindo', phonetic: 'tin-do' },
+      mrn: { translation: 'Montiro / Tindo', phonetic: 'mon-ti-ro' },
     }
   },
   {
@@ -116,7 +124,9 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       btw: { translation: 'Rumah Kebaya', phonetic: 'ru-mah ke-ba-ya', context: 'Rumah adat tradisional masyarakat Betawi.' },
       plb: { translation: 'Rumah Limas', phonetic: 'ru-mah li-mas', context: 'Rumah tradisional berjenjang khas Palembang.' },
       tor: { translation: 'Banua / Tongkonan', phonetic: 'tong-ko-nan', context: 'Rumah adat beratap perahu pusaka leluhur Toraja.' },
-      pap: { translation: 'Rumah Honai', phonetic: 'ho-nai', context: 'Rumah bulat tradisional beratap jerami di Lembah Baliem.' }
+      pap: { translation: 'Rumah Honai', phonetic: 'ho-nai', context: 'Rumah bulat tradisional beratap jerami di Lembah Baliem.' },
+      mun: { translation: 'Lambu', phonetic: 'lam-bu', context: 'Rumah panggung tradisional adat suku Muna.' },
+      mrn: { translation: 'Banua / Laika', phonetic: 'ba-nu-a', context: 'Rumah panggung adat suku Moronene Bombana.' }
     }
   },
   {
@@ -136,7 +146,9 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       mdo: { translation: 'Kyapa kabar?', phonetic: 'kya-pa ka-bar', context: 'Sapaan hangat Manado.' },
       amb: { translation: 'Bagaimana kabar katong?', phonetic: 'ba-gai-ma-na ka-bar', context: 'Sapaan persaudaraan Maluku.' },
       pap: { translation: 'Bagaimana kabar kamurang?', phonetic: 'ba-gai-ma-na ka-bar', context: 'Sapaan bersahabat di Papua.' },
-      tor: { translation: 'Apara kareba?', phonetic: 'a-pa-ra ka-re-ba', context: 'Sapaan kabar di Toraja.' }
+      tor: { translation: 'Apara kareba?', phonetic: 'a-pa-ra ka-re-ba', context: 'Sapaan kabar di Toraja.' },
+      mun: { translation: 'Hae habari? / Ohae habari?', phonetic: 'o-hae ha-ba-ri', context: 'Sapaan kabar suku Muna (dijawab: "Habari keseno").' },
+      mrn: { translation: 'Haba piapia? / Pandei habara?', phonetic: 'ha-ba pi-a-pi-a', context: 'Sapaan kabar suku Moronene (dijawab: "Piapia mpu\'u").' }
     }
   },
   {
@@ -157,6 +169,8 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       amb: { translation: 'Beta', phonetic: 'be-ta' },
       pap: { translation: 'Sa / Saya', phonetic: 'sa' },
       tor: { translation: 'Aku / Misa', phonetic: 'a-ku' },
+      mun: { translation: 'Inodi / Aedi', phonetic: 'i-no-di' },
+      mrn: { translation: 'Iaku', phonetic: 'i-a-ku' }
     }
   },
   {
@@ -176,7 +190,9 @@ export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
       mdo: { translation: 'Ngana', phonetic: 'nga-na' },
       amb: { translation: 'Ose / Ale', phonetic: 'o-se / a-le' },
       pap: { translation: 'Ko / Kamu', phonetic: 'ko' },
-      tor: { translation: 'Komi / Ikau', phonetic: 'ko-mi' }
+      tor: { translation: 'Komi / Ikau', phonetic: 'ko-mi' },
+      mun: { translation: 'Ihintu / Oitu', phonetic: 'i-hin-tu' },
+      mrn: { translation: 'Iiko', phonetic: 'i-i-ko' }
     }
   }
 ];

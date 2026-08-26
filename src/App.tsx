@@ -4,13 +4,14 @@ import { HeroSection } from './components/HeroSection';
 import { DictionaryView } from './components/DictionaryView';
 import { TranslatorView } from './components/TranslatorView';
 import { LearnHub } from './components/LearnHub';
+import { GamesHub } from './components/GamesHub';
 import { QuizView } from './components/QuizView';
 import { AITutorChat } from './components/AITutorChat';
 import { UserProfileView } from './components/UserProfileView';
 import { WordDetailModal } from './components/WordDetailModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 
-import { WordEntry, Language, UserProfile } from './types';
+import { WordEntry, Language, UserProfile, AppTab } from './types';
 import { LANGUAGES_DATA } from './data/languagesData';
 import { DICTIONARY_DATABASE } from './data/dictionaryDatabase';
 import {
@@ -18,12 +19,15 @@ import {
   saveUserProfile,
   addXpToProfile,
   toggleBookmarkInProfile,
-  addHistoryToProfile
+  addHistoryToProfile,
+  recordGameScoreInProfile,
+  recordWheelSpinInProfile,
+  claimDailyQuestInProfile
 } from './utils/userStorage';
 
 export default function App() {
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'dictionary' | 'translate' | 'learn' | 'quiz' | 'ai' | 'profile'>('dictionary');
+  const [activeTab, setActiveTab] = useState<AppTab>('dictionary');
 
   // Languages State (Default: Indonesia -> Bugis)
   const [sourceLang, setSourceLang] = useState<Language>(
@@ -114,6 +118,24 @@ export default function App() {
     setUserProfile(updated);
   };
 
+  // Game High Score Handler
+  const handleRecordGameScore = (gameId: string, score: number) => {
+    const { updatedProfile } = recordGameScoreInProfile(userProfile, gameId, score);
+    setUserProfile(updatedProfile);
+  };
+
+  // Daily Wheel Spin Handler
+  const handleRecordWheelSpin = () => {
+    const updated = recordWheelSpinInProfile(userProfile);
+    setUserProfile(updated);
+  };
+
+  // Claim Daily Quest Handler
+  const handleClaimQuest = (questId: string, xpReward: number) => {
+    const updated = claimDailyQuestInProfile(userProfile, questId);
+    setUserProfile(updated);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col antialiased selection:bg-green-100 selection:text-green-900">
       
@@ -170,6 +192,17 @@ export default function App() {
             targetLang={targetLang}
             onAddXp={handleAddXp}
             onSelectWordDetail={handleSelectWordDetail}
+          />
+        )}
+
+        {activeTab === 'games' && (
+          <GamesHub
+            targetLang={targetLang}
+            userProfile={userProfile}
+            onAddXp={handleAddXp}
+            onRecordGameScore={handleRecordGameScore}
+            onClaimQuest={handleClaimQuest}
+            onRecordWheelSpin={handleRecordWheelSpin}
           />
         )}
 

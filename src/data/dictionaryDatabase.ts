@@ -1,6 +1,7 @@
 import { WordEntry } from '../types';
+import { COMPREHENSIVE_VOCABULARY } from './comprehensiveVocabulary';
 
-export const DICTIONARY_DATABASE: WordEntry[] = [
+const BASE_DICTIONARY_DATABASE: WordEntry[] = [
   // --- BUGIS ---
   {
     id: 'bug-1',
@@ -1000,5 +1001,158 @@ export const DICTIONARY_DATABASE: WordEntry[] = [
     exampleSentence: 'Makaseh banyak lah dengsanak.',
     exampleTranslation: 'Terima kasih banyak ya saudaraku.',
     isPopular: true
+  },
+
+  // --- BAHASA MUNA (SULTRA - PULAU MUNA) ---
+  {
+    id: 'mun-1',
+    sourceLangId: 'ind',
+    targetLangId: 'mun',
+    word: 'Makan',
+    translation: 'Kumaa',
+    phonetic: 'ku-maa',
+    category: 'Kata Kerja',
+    exampleSentence: 'Inodi akumaa kenta gholu.',
+    exampleTranslation: 'Saya makan ikan bakar.',
+    culturalContext: 'Di Pulau Muna, tradisi makan bersama biasa menyajikan kenta gholu dan kasoami (olahan ubi kayu).',
+    synonyms: ['Kuma'],
+    isPopular: true
+  },
+  {
+    id: 'mun-2',
+    sourceLangId: 'ind',
+    targetLangId: 'mun',
+    word: 'Apa kabar',
+    translation: 'Hae habari? / Ohae habari?',
+    phonetic: 'o-hae ha-ba-ri',
+    category: 'Salam',
+    exampleSentence: 'Ohae habari aitu sabangka?',
+    exampleTranslation: 'Bagaimana kabarmu sekarang kawan?',
+    culturalContext: 'Sapaan hangat penuh persaudaraan di Pulau Muna (dijawab: "Kareba keseno" atau "Habari keseno" - kabar baik).',
+    synonyms: ['Kareba hae?'],
+    isPopular: true
+  },
+  {
+    id: 'mun-3',
+    sourceLangId: 'ind',
+    targetLangId: 'mun',
+    word: 'Terima kasih',
+    translation: 'Tarima Kasi / Fodhahi Barakati',
+    phonetic: 'ta-ri-ma ka-si',
+    category: 'Salam',
+    exampleSentence: 'Tarima kasi dadihinio bhantua.',
+    exampleTranslation: 'Terima kasih banyak atas bantuannya.',
+    culturalContext: 'Ungkapan rasa syukur dan doa limpahan berkah dalam adat masyarakat Wuna.',
+    isPopular: true
+  },
+  {
+    id: 'mun-4',
+    sourceLangId: 'ind',
+    targetLangId: 'mun',
+    word: 'Rumah',
+    translation: 'Lambu',
+    phonetic: 'lam-bu',
+    category: 'Tubuh & Bangunan',
+    exampleSentence: 'Lambu Wuna noando marobe mpu’u.',
+    exampleTranslation: 'Rumah adat suku Muna sangat asri dan kokoh.',
+    culturalContext: 'Lambu Wuna merupakan rumah panggung tradisional khas suku Muna.',
+    synonyms: ['Lambubu'],
+    isPopular: true
+  },
+  {
+    id: 'mun-5',
+    sourceLangId: 'ind',
+    targetLangId: 'mun',
+    word: 'Tidur',
+    translation: 'Tindo / Matindo',
+    phonetic: 'tin-do / ma-tin-do',
+    category: 'Kata Kerja',
+    exampleSentence: 'Aitu inodi atindo we lambu.',
+    exampleTranslation: 'Sekarang saya tidur di rumah.',
+    isPopular: true
+  },
+  {
+    id: 'mun-6',
+    sourceLangId: 'ind',
+    targetLangId: 'mun',
+    word: 'Layang-layang purba Muna',
+    translation: 'Kaghati Kolope',
+    phonetic: 'ka-gha-ti ko-lo-pe',
+    category: 'Budaya & Tradisi',
+    exampleSentence: 'Kaghati Kolope noando layang-layang tertua we dunia.',
+    exampleTranslation: 'Kaghati Kolope merupakan layang-layang tertua di dunia.',
+    culturalContext: 'Terbuat dari daun kolope (umbi hutan) dan serat nanas, dibuktikan lewat lukisan prasejarah di Gua Liang Kabori Muna.',
+    isPopular: true
+  },
+
+  // --- BAHASA MORONENE (SULTRA - BOMBANA & KABAENA) ---
+  {
+    id: 'mrn-1',
+    sourceLangId: 'ind',
+    targetLangId: 'mrn',
+    word: 'Makan',
+    translation: 'Mongkoni / Manga',
+    phonetic: 'mo-ngko-ni / ma-nga',
+    category: 'Kata Kerja',
+    exampleSentence: 'Iyo manga tinutu pedadi.',
+    exampleTranslation: 'Dia sedang makan jagung rebus bersama-sama.',
+    culturalContext: 'Masyarakat suku tertua Moronene memiliki tradisi kuliner berbahan dasar jagung dan sagu.',
+    isPopular: true
+  },
+  {
+    id: 'mrn-2',
+    sourceLangId: 'ind',
+    targetLangId: 'mrn',
+    word: 'Apa kabar',
+    translation: 'Haba piapia? / Pandei habara?',
+    phonetic: 'ha-ba pi-a-pi-a',
+    category: 'Salam',
+    exampleSentence: 'Pandei habara komiu mpenai aitu?',
+    exampleTranslation: 'Bagaimana kabar kalian semua saat ini?',
+    culturalContext: 'Sapaan keakraban suku Moronene di daratan Bombana dan Pulau Kabaena (dijawab: "Piapia mpu\'u" - sangat baik).',
+    isPopular: true
+  },
+  {
+    id: 'mrn-3',
+    sourceLangId: 'ind',
+    targetLangId: 'mrn',
+    word: 'Terima kasih',
+    translation: 'Mpu’u Kosumanga / Tarima Kasi',
+    phonetic: 'mpu-u ko-su-ma-nga',
+    category: 'Salam',
+    exampleSentence: 'Mpu’u kosumanga atas tulungamu.',
+    exampleTranslation: 'Terima kasih sebesar-besarnya atas pertolonganmu.',
+    culturalContext: 'Ungkapan terima kasih mendalam suku Moronene yang menghormati semangat jiwa sesama manusia.',
+    isPopular: true
+  },
+  {
+    id: 'mrn-4',
+    sourceLangId: 'ind',
+    targetLangId: 'mrn',
+    word: 'Rumah',
+    translation: 'Banua / Laika',
+    phonetic: 'ba-nu-a / lai-ka',
+    category: 'Tubuh & Bangunan',
+    exampleSentence: 'Banua adat Moronene moolo mpu’u.',
+    exampleTranslation: 'Rumah adat suku Moronene sangat kokoh dan megah.',
+    culturalContext: 'Rumah panggung adat suku Moronene dihiasi ukiran khas alam Bombana.',
+    isPopular: true
+  },
+  {
+    id: 'mrn-5',
+    sourceLangId: 'ind',
+    targetLangId: 'mrn',
+    word: 'Tidur',
+    translation: 'Montiro / Tindo',
+    phonetic: 'mon-ti-ro / tin-do',
+    category: 'Kata Kerja',
+    exampleSentence: 'Iaku montiro i bampa sawah.',
+    exampleTranslation: 'Saya beristirahat tidur di pondok sawah.',
+    isPopular: true
   }
+];
+
+export const DICTIONARY_DATABASE: WordEntry[] = [
+  ...BASE_DICTIONARY_DATABASE,
+  ...COMPREHENSIVE_VOCABULARY
 ];

@@ -88,6 +88,29 @@ export interface UserProfile {
   unlockedLanguages: string[];
   completedQuizzesCount: number;
   wordsMasteredCount: number;
+  gameHighScores?: Record<string, number>;
+  claimedDailyQuests?: string[];
+  lastWheelSpinDate?: string;
+}
+
+export type AppTab = 'dictionary' | 'translate' | 'learn' | 'games' | 'quiz' | 'ai' | 'profile';
+
+export interface DailyQuest {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+  progress: number;
+  target: number;
+  isClaimed: boolean;
+  iconName: string;
+}
+
+export interface GameHighScore {
+  gameId: string;
+  score: number;
+  date: string;
+  languageName: string;
 }
 
 export interface AIChatMessage {

@@ -4,6 +4,12 @@ import { QuizQuestion, Language } from '../types';
 import { generateRandomQuiz } from '../utils/quizGenerator';
 import { speakWord } from '../utils/audioSpeech';
 import { LANGUAGES_DATA } from '../data/languagesData';
+import { 
+  playSuccessSound, 
+  playErrorSound, 
+  playVictorySound, 
+  playTileClickSound 
+} from '../utils/soundEffects';
 
 interface QuizViewProps {
   targetLang: Language;
@@ -44,16 +50,19 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
 
   const handleSelectOption = (option: string) => {
     if (isSubmitted) return;
+    playTileClickSound();
     setSelectedOption(option);
   };
 
   const handleScrambleLetterClick = (letter: string, index: number) => {
     if (isSubmitted) return;
+    playTileClickSound();
     setScrambleLettersInput(prev => [...prev, letter]);
   };
 
   const handleScrambleRemoveLetter = (index: number) => {
     if (isSubmitted) return;
+    playTileClickSound();
     setScrambleLettersInput(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -74,7 +83,10 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
     setIsCorrect(correct);
 
     if (correct) {
+      playSuccessSound();
       setScore(prev => prev + 1);
+    } else {
+      playErrorSound();
     }
   };
 
@@ -88,6 +100,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
       setCurrentQuestionIdx(prev => prev + 1);
     } else {
       setQuizFinished(true);
+      playVictorySound();
       const earnedXp = Math.max(20, score * 25 + 20);
       onAddXp(earnedXp);
     }
