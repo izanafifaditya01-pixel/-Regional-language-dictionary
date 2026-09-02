@@ -39,20 +39,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           
           {/* Left Title & Mission */}
           <div className="lg:col-span-7 space-y-5 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-800 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5 text-green-700" />
-              <span>Kamus & Edukasi Bahasa Daerah 38 Provinsi Indonesia</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Kamus & Pelestarian Bahasa Daerah Sulawesi Tenggara</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Lestarikan & Pelajari <br className="hidden sm:inline" />
-              <span className="text-green-700">
-                Bahasa Nusantara
+              <span className="text-emerald-700">
+                Bahasa Daerah Sultra
               </span>
             </h1>
 
             <p className="text-slate-600 text-sm sm:text-base max-w-2xl leading-relaxed font-medium">
-              Kamus digital & penerjemah cerdas meliputi seluruh bahasa daerah dari 38 provinsi di Indonesia (Sumatera, Jawa, Bali, Nusa Tenggara, Kalimantan, Sulawesi, Maluku, hingga Papua) dilengkapi pelafalan suara dan tutor AI.
+              Kamus digital & pelestarian kosakata <strong>Bahasa Tolaki</strong>, <strong>Bahasa Moronene</strong>, <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Dilengkapi audio pelafalan asli, fitur penambahan kosakata komunitas, serta permainan kuis interaktif.
             </p>
 
             {/* Language Selector Bar Component */}
@@ -80,17 +80,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold border border-slate-200 hover:scale-105 transition-all flex items-center justify-center shrink-0 cursor-pointer"
                     title="Tukar Bahasa"
                   >
-                    <ArrowRightLeft className="w-4 h-4 text-green-700" />
+                    <ArrowRightLeft className="w-4 h-4 text-emerald-700" />
                   </button>
 
                   {/* Target Language Button */}
                   <button
                     onClick={() => onOpenLanguageModal('target')}
-                    className="flex-1 bg-green-50 hover:bg-green-100 p-2.5 sm:p-3 rounded-2xl border border-green-200 flex items-center justify-between text-left transition-all cursor-pointer"
+                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 p-2.5 sm:p-3 rounded-2xl border border-emerald-200 flex items-center justify-between text-left transition-all cursor-pointer"
                   >
                     <div>
-                      <span className="text-[10px] text-green-800 font-bold uppercase tracking-wider block">Bahasa Tujuan</span>
-                      <span className="text-sm font-extrabold text-green-900 flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">Bahasa Tujuan</span>
+                      <span className="text-sm font-extrabold text-emerald-900 flex items-center gap-1.5 mt-0.5">
                         <span>{targetLang.flagEmoji}</span>
                         <span className="truncate">{targetLang.name}</span>
                       </span>
@@ -101,17 +101,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
             </div>
 
-            {/* Quick Language Pills */}
+            {/* Quick Language Pills (Sultra Region) */}
             <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-600">
-              <span className="font-bold text-slate-700">Pilih Bahasa Populer:</span>
+              <span className="font-bold text-slate-700">Rumpun Bahasa Sultra:</span>
               {[
-                { id: 'bug', name: 'Bugis' },
-                { id: 'jav', name: 'Jawa' },
-                { id: 'sun', name: 'Sunda' },
-                { id: 'ban', name: 'Bali' },
-                { id: 'mak', name: 'Makassar' },
-                { id: 'min', name: 'Minang' },
-                { id: 'ace', name: 'Aceh' }
+                { id: 'tk', name: '🌾 Tolaki' },
+                { id: 'mor', name: '🌿 Moronene' },
+                { id: 'mun', name: '🪁 Muna' },
+                { id: 'btn', name: '🏰 Buton (Wolio)' }
               ].map(lang => {
                 const isActive = targetLang.id === lang.id;
                 return (
@@ -119,7 +116,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     key={lang.id}
                     onClick={() => onQuickSearchSelect(lang.id)}
                     className={`px-3.5 py-1.5 rounded-2xl font-bold text-xs transition-all cursor-pointer ${
-                      isActive ? 'pill-active shadow-xs' : 'pill-inactive border border-slate-200 hover:bg-slate-200/80'
+                      isActive ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                     }`}
                   >
                     {lang.name}

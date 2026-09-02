@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2 } from 'lucide-react';
+import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2, PlusCircle } from 'lucide-react';
 import { UserProfile, AppTab } from '../types';
 
 interface NavbarProps {
@@ -107,6 +107,22 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userPro
             </button>
 
             <button
+              id="nav-tab-contribute"
+              onClick={() => setActiveTab('contribute')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === 'contribute'
+                  ? 'bg-emerald-700 text-white shadow-xs font-black'
+                  : 'text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/70'
+              }`}
+            >
+              <PlusCircle className="w-4 h-4 text-emerald-600" />
+              <span className="flex items-center gap-1">
+                <span>Pengembangan</span>
+                <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1 rounded-sm font-bold">+Kata</span>
+              </span>
+            </button>
+
+            <button
               id="nav-tab-ai"
               onClick={() => setActiveTab('ai')}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
@@ -122,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userPro
 
           {/* Medium Screen (md to lg) Navigation */}
           <nav className="hidden md:flex lg:hidden items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-            {(['dictionary', 'translate', 'learn', 'games', 'quiz', 'ai'] as const).map(tab => (
+            {(['dictionary', 'translate', 'learn', 'games', 'quiz', 'contribute', 'ai'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -138,6 +154,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userPro
                 {tab === 'learn' && <BookOpen className="w-4 h-4" />}
                 {tab === 'games' && <Gamepad2 className="w-4 h-4 text-amber-600" />}
                 {tab === 'quiz' && <BrainCircuit className="w-4 h-4" />}
+                {tab === 'contribute' && <PlusCircle className="w-4 h-4 text-emerald-600" />}
                 {tab === 'ai' && <Sparkles className="w-4 h-4" />}
               </button>
             ))}
@@ -184,75 +201,85 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userPro
 
       {/* Mobile Bottom Navigation Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-50 px-1 py-1.5 shadow-lg">
-        <div className="grid grid-cols-7 gap-0.5">
+        <div className="grid grid-cols-8 gap-0.5 text-center">
           <button
             onClick={() => setActiveTab('dictionary')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
               activeTab === 'dictionary' ? 'text-green-700 font-black' : 'text-slate-500'
             }`}
           >
-            <Search className="w-4 h-4 mb-0.5" />
+            <Search className="w-3.5 h-3.5 mb-0.5" />
             <span>Kamus</span>
           </button>
 
           <button
             onClick={() => setActiveTab('translate')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
               activeTab === 'translate' ? 'text-green-700 font-black' : 'text-slate-500'
             }`}
           >
-            <Languages className="w-4 h-4 mb-0.5" />
+            <Languages className="w-3.5 h-3.5 mb-0.5" />
             <span>Terjemah</span>
           </button>
 
           <button
             onClick={() => setActiveTab('learn')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
               activeTab === 'learn' ? 'text-green-700 font-black' : 'text-slate-500'
             }`}
           >
-            <BookOpen className="w-4 h-4 mb-0.5" />
+            <BookOpen className="w-3.5 h-3.5 mb-0.5" />
             <span>Belajar</span>
           </button>
 
           <button
             onClick={() => setActiveTab('games')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium relative ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium relative ${
               activeTab === 'games' ? 'text-amber-600 font-black' : 'text-slate-700 font-bold'
             }`}
           >
-            <Gamepad2 className="w-4 h-4 mb-0.5 text-amber-500" />
+            <Gamepad2 className="w-3.5 h-3.5 mb-0.5 text-amber-500" />
             <span>Games</span>
-            <span className="absolute top-0.5 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full" />
+            <span className="absolute top-0.5 right-1 w-1.5 h-1.5 bg-rose-500 rounded-full" />
           </button>
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
               activeTab === 'quiz' ? 'text-green-700 font-black' : 'text-slate-500'
             }`}
           >
-            <BrainCircuit className="w-4 h-4 mb-0.5" />
+            <BrainCircuit className="w-3.5 h-3.5 mb-0.5" />
             <span>Kuis</span>
           </button>
 
           <button
+            onClick={() => setActiveTab('contribute')}
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
+              activeTab === 'contribute' ? 'text-emerald-700 font-black bg-emerald-50 rounded-lg' : 'text-emerald-700 font-bold'
+            }`}
+          >
+            <PlusCircle className="w-3.5 h-3.5 mb-0.5 text-emerald-600" />
+            <span>+Kata</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('ai')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
               activeTab === 'ai' ? 'text-green-700 font-black' : 'text-slate-500'
             }`}
           >
-            <Sparkles className="w-4 h-4 mb-0.5 text-amber-500" />
-            <span>AI Tutor</span>
+            <Sparkles className="w-3.5 h-3.5 mb-0.5 text-amber-500" />
+            <span>AI</span>
           </button>
 
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[9px] font-medium ${
+            className={`flex flex-col items-center justify-center py-1 rounded-lg text-[8.5px] font-medium ${
               activeTab === 'profile' ? 'text-green-700 font-black' : 'text-slate-500'
             }`}
           >
-            <User className="w-4 h-4 mb-0.5" />
+            <User className="w-3.5 h-3.5 mb-0.5" />
             <span>Profil</span>
           </button>
         </div>

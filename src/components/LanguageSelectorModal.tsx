@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Search, Check, MapPin, Globe } from 'lucide-react';
+import { X, Search, Check, MapPin, Sparkles } from 'lucide-react';
 import { Language } from '../types';
 import { LANGUAGES_DATA } from '../data/languagesData';
 
@@ -17,36 +17,16 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
   onClose
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIsland, setSelectedIsland] = useState<string>('Semua');
-
-  const islands = [
-    'Semua',
-    'Sumatera',
-    'Jawa',
-    'Bali & Nusa Tenggara',
-    'Kalimantan',
-    'Sulawesi',
-    'Maluku',
-    'Papua'
-  ];
 
   const filteredLanguages = LANGUAGES_DATA.filter(lang => {
-    // Filter search query
     const query = searchQuery.toLowerCase().trim();
-    const matchQuery =
+    return (
       !query ||
       lang.name.toLowerCase().includes(query) ||
       lang.nativeName.toLowerCase().includes(query) ||
       lang.province.toLowerCase().includes(query) ||
-      lang.island.toLowerCase().includes(query);
-
-    // Filter island
-    const matchIsland =
-      selectedIsland === 'Semua' ||
-      lang.island.toLowerCase().includes(selectedIsland.toLowerCase()) ||
-      (selectedIsland === 'Bali & Nusa Tenggara' && (lang.island.includes('Bali') || lang.island.includes('Nusa Tenggara')));
-
-    return matchQuery && matchIsland;
+      lang.island.toLowerCase().includes(query)
+    );
   });
 
   return (
@@ -56,18 +36,18 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
         id="language-selector-modal"
       >
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-emerald-800 to-teal-900 p-5 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 p-5 text-white flex items-center justify-between">
           <div>
             <span className="text-xs text-emerald-200 font-semibold uppercase tracking-wider block">
-              Pilih {type === 'source' ? 'Bahasa Asal' : 'Bahasa Tujuan'}
+              Pilih {type === 'source' ? 'Bahasa Asal' : 'Bahasa Sasaran'}
             </span>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold">Bahasa Daerah 38 Provinsi</h3>
+              <h3 className="text-xl font-black">Rumpun Bahasa Sulawesi Tenggara</h3>
               <span className="px-2 py-0.5 text-[10px] font-bold bg-white/20 rounded-full">
-                {filteredLanguages.length} Bahasa
+                {filteredLanguages.length} Pilihan
               </span>
             </div>
-            <p className="text-xs text-emerald-100/80 mt-0.5">Lengkap dari Sabang sampai Merauke</p>
+            <p className="text-xs text-emerald-100/80 mt-0.5">Bahasa Tolaki, Moronene, Muna, Buton, & Indonesia</p>
           </div>
 
           <button
@@ -78,39 +58,22 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
           </button>
         </div>
 
-        {/* Search & Island Filters */}
-        <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
+        {/* Search Bar */}
+        <div className="p-4 bg-slate-50 border-b border-slate-200">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Cari nama bahasa, provinsi, atau pulau..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+              placeholder="Cari bahasa Tolaki, Moronene, Muna, Buton..."
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500 font-medium"
             />
-          </div>
-
-          {/* Island Filter Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {islands.map(island => (
-              <button
-                key={island}
-                onClick={() => setSelectedIsland(island)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-                  selectedIsland === island
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {island}
-              </button>
-            ))}
           </div>
         </div>
 
         {/* Languages Grid / List */}
-        <div className="p-4 overflow-y-auto space-y-2 flex-1">
+        <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
           {filteredLanguages.map(lang => {
             const isSelected = lang.id === selectedLangId;
 
@@ -121,40 +84,52 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                   onSelectLanguage(lang);
                   onClose();
                 }}
-                className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                   isSelected
-                    ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500/50 shadow-xs'
-                    : 'bg-white border-slate-200/80 hover:border-emerald-300 hover:bg-slate-50'
+                    ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl p-2 bg-slate-100 rounded-xl shrink-0">{lang.flagEmoji}</div>
+                <div className="flex items-center gap-3.5">
+                  <div className="text-3xl p-2 bg-slate-100 rounded-2xl shrink-0 border border-slate-200">
+                    {lang.flagEmoji}
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-900 text-sm">{lang.name}</h4>
-                      <span className="text-xs text-slate-400 font-mono">({lang.nativeName})</span>
+                      <h4 className="font-extrabold text-slate-900 text-base">{lang.name}</h4>
+                      <span className="text-xs text-slate-500 font-mono">({lang.nativeName})</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-emerald-600" />
+                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                      <span className="flex items-center gap-1 font-medium text-emerald-700">
+                        <MapPin className="w-3.5 h-3.5" />
                         {lang.province}
                       </span>
-                      <span>•</span>
+                      <span className="text-slate-400">•</span>
                       <span>{lang.speakerCount} Penutur</span>
                     </div>
                   </div>
                 </div>
 
-                {isSelected && (
-                  <div className="p-1.5 bg-emerald-600 text-white rounded-full">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {isSelected ? (
+                    <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold">
+                      <Check className="w-5 h-5" />
+                    </div>
+                  ) : (
+                    <span className="text-xs font-bold text-slate-400 hover:text-emerald-700">
+                      Pilih
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
 
+        {/* Modal Footer */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-500">
+          Setiap bahasa daerah dilengkapi kosakata lengkap tubuh, alam, budaya, angka, dan audio pelafalan.
+        </div>
       </div>
     </div>
   );

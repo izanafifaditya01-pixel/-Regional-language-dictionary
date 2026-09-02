@@ -29,8 +29,8 @@ export interface WordEntry {
   targetLangId: string;
   word: string;
   translation: string;
-  phonetic: string; // Cara membaca, e.g. "man-reh"
-  category: string; // e.g. 'Kata Kerja', 'Keluarga', 'Makanan'
+  phonetic: string; // Cara membaca, e.g. "mo-nga'a", "ku-maa"
+  category: string; // e.g. 'Kata Kerja', 'Keluarga', 'Makanan', 'Budaya & Tradisi'
   exampleSentence: string;
   exampleTranslation: string;
   culturalContext?: string;
@@ -39,6 +39,10 @@ export interface WordEntry {
   audioUrl?: string;
   isPopular?: boolean;
   isWordOfTheDay?: boolean;
+  isUserContributed?: boolean;
+  contributorName?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface QuizQuestion {
@@ -93,7 +97,7 @@ export interface UserProfile {
   lastWheelSpinDate?: string;
 }
 
-export type AppTab = 'dictionary' | 'translate' | 'learn' | 'games' | 'quiz' | 'ai' | 'profile';
+export type AppTab = 'dictionary' | 'translate' | 'learn' | 'games' | 'quiz' | 'contribute' | 'ai' | 'profile';
 
 export interface DailyQuest {
   id: string;

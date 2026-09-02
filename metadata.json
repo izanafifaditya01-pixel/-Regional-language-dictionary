@@ -1,6 +1,6 @@
 {
   "name": "Kamus Bahasa Nusantara",
-  "description": "Aplikasi Kamus & Edukasi Bahasa Daerah Indonesia dengan Terjemahan, Audio Pelafalan, Kuis Interaktif, dan Asisten AI.",
+  "description": "Aplikasi Kamus & Pelestarian Bahasa Daerah Sulawesi Tenggara (Tolaki, Moronene, Muna, Buton) dengan Terjemahan, Audio Pelafalan, Fitur Tambah Kata Komunitas, Flashcard, dan Game Edukasi.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

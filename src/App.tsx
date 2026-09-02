@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { DictionaryView } from './components/DictionaryView';
@@ -8,12 +8,12 @@ import { GamesHub } from './components/GamesHub';
 import { QuizView } from './components/QuizView';
 import { AITutorChat } from './components/AITutorChat';
 import { UserProfileView } from './components/UserProfileView';
+import { WordContributionView } from './components/WordContributionView';
 import { WordDetailModal } from './components/WordDetailModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 
 import { WordEntry, Language, UserProfile, AppTab } from './types';
 import { LANGUAGES_DATA } from './data/languagesData';
-import { DICTIONARY_DATABASE } from './data/dictionaryDatabase';
 import {
   loadUserProfile,
   saveUserProfile,
@@ -24,29 +24,47 @@ import {
   recordWheelSpinInProfile,
   claimDailyQuestInProfile
 } from './utils/userStorage';
+import {
+  loadContributedWords,
+  addContributedWord,
+  updateContributedWord,
+  deleteContributedWord,
+  getMergedDictionary
+} from './utils/userContributedWords';
 
 export default function App() {
   // Navigation State
   const [activeTab, setActiveTab] = useState<AppTab>('dictionary');
 
-  // Languages State (Default: Indonesia -> Bugis)
+  // Languages State (Default: Indonesia -> Tolaki)
   const [sourceLang, setSourceLang] = useState<Language>(
     LANGUAGES_DATA.find(l => l.id === 'ind') || LANGUAGES_DATA[0]
   );
   const [targetLang, setTargetLang] = useState<Language>(
-    LANGUAGES_DATA.find(l => l.id === 'bug') || LANGUAGES_DATA[1]
+    LANGUAGES_DATA.find(l => l.id === 'tk') || LANGUAGES_DATA[1]
   );
 
   // User Profile State
   const [userProfile, setUserProfile] = useState<UserProfile>(loadUserProfile());
+
+  // User Contributed Words State
+  const [contributedWords, setContributedWords] = useState<WordEntry[]>(loadContributedWords());
+
+  // Merged Dictionary Database (Base Sultra words + Community contributed words)
+  const mergedDictionary = useMemo(() => {
+    return getMergedDictionary(contributedWords);
+  }, [contributedWords]);
 
   // Modals & Selections
   const [selectedWordForDetail, setSelectedWordForDetail] = useState<WordEntry | null>(null);
   const [languageModalType, setLanguageModalType] = useState<'source' | 'target' | null>(null);
   const [aiPromptWord, setAiPromptWord] = useState<WordEntry | null>(null);
 
-  // Word of the Day (Spotlight)
-  const wordOfTheDay = DICTIONARY_DATABASE.find(w => w.isWordOfTheDay) || DICTIONARY_DATABASE[0];
+  // Word of the Day (Spotlight for current target language)
+  const wordOfTheDay = useMemo(() => {
+    const langWords = mergedDictionary.filter(w => w.targetLangId === targetLang.id);
+    return langWords.find(w => w.isWordOfTheDay) || langWords[0] || mergedDictionary[0];
+  }, [mergedDictionary, targetLang]);
 
   // Save profile changes to localStorage
   useEffect(() => {
@@ -136,8 +154,31 @@ export default function App() {
     setUserProfile(updated);
   };
 
+  // ==========================================
+  // WORD CONTRIBUTION HANDLERS
+  // ==========================================
+  const handleAddContributedWord = (
+    wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>,
+    contributorName: string
+  ) => {
+    const { word, updatedList } = addContributedWord(wordData, contributorName);
+    setContributedWords(updatedList);
+    // Award +30 XP for contributing a word
+    handleAddXp(30);
+  };
+
+  const handleUpdateContributedWord = (wordId: string, updatedFields: Partial<WordEntry>) => {
+    const updatedList = updateContributedWord(wordId, updatedFields);
+    setContributedWords(updatedList);
+  };
+
+  const handleDeleteContributedWord = (wordId: string) => {
+    const updatedList = deleteContributedWord(wordId);
+    setContributedWords(updatedList);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col antialiased selection:bg-green-100 selection:text-green-900">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col antialiased selection:bg-emerald-100 selection:text-emerald-900">
       
       {/* Top Header Navbar */}
       <Navbar
@@ -166,9 +207,11 @@ export default function App() {
             sourceLang={sourceLang}
             targetLang={targetLang}
             bookmarks={userProfile.bookmarks}
+            allWords={mergedDictionary}
             onToggleBookmark={handleToggleBookmark}
             onSelectWordDetail={handleSelectWordDetail}
             onOpenLanguageModal={type => setLanguageModalType(type)}
+            onNavigateToContribute={() => setActiveTab('contribute')}
           />
         )}
 
@@ -210,6 +253,17 @@ export default function App() {
           <QuizView
             targetLang={targetLang}
             onAddXp={handleAddXp}
+          />
+        )}
+
+        {activeTab === 'contribute' && (
+          <WordContributionView
+            contributedWords={contributedWords}
+            onAddWord={handleAddContributedWord}
+            onUpdateWord={handleUpdateContributedWord}
+            onDeleteWord={handleDeleteContributedWord}
+            onSelectWordDetail={handleSelectWordDetail}
+            userProfile={userProfile}
           />
         )}
 
@@ -256,10 +310,10 @@ export default function App() {
       <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs text-center">
         <div className="max-w-7xl mx-auto px-4 space-y-2">
           <p className="font-semibold text-slate-300">
-            Kamus Bahasa Nusantara — Leksika AI
+            Kamus & Pelestarian Bahasa Daerah Sulawesi Tenggara (Tolaki • Moronene • Muna • Buton)
           </p>
           <p>
-            Platform Edukasi Digital & Misi Pelestarian Bahasa Daerah Republik Indonesia 🇮🇩
+            Platform Edukasi Digital, Kosakata Komunitas & Game Pembelajaran Bahasa Sultra 🌾🌿🪁🏰
           </p>
         </div>
       </footer>
