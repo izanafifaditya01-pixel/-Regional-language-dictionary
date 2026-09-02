@@ -46,17 +46,28 @@ app.post("/api/ai/translate", async (req, res) => {
 
     const ai = getGeminiClient();
     
-    // Tier 1: Gemini AI Translation
+    // Tier 1: Gemini AI Translation with strict regional prompting
     if (ai) {
       const modelsToTry = ["gemini-3.7-flash", "gemini-2.5-flash"];
       for (const modelName of modelsToTry) {
         try {
-          const prompt = `Anda adalah pakar bahasa daerah Indonesia dan linguis terkemuka. Terjemahkan kata atau kalimat "${word}" dari ${sourceLangName} ke ${targetLangName}.
-Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
+          const prompt = `Anda adalah pakar linguistik bahasa daerah Sulawesi Tenggara (Tolaki, Moronene, Muna, Buton/Wolio) serta rumpun bahasa Nusantara.
+TUGAS UTAMA: Terjemahkan kata/kalimat "${word}" dari ${sourceLangName} ke ${targetLangName}.
+
+PEDOMAN WAJIB DAN KETAT:
+1. NILAI PROPERTI "translation" HARUS BERUPA KATA/KALIMAT ASLI DALAM ${targetLangName}.
+2. JIKA ${targetLangName} BUKAN BAHASA INDONESIA, DILARANG KERAS MENGEMBALIKAN BAHASA INDONESIA!
+3. Contoh Bahasa Daerah Sulawesi Tenggara:
+   - Bahasa Tolaki (Konawe/Kendari): Terima kasih="Tarima kase", Makan="Monga'a / Monga", Minum="Monono", Tidur="Tindoi", Rumah="Laika", Air="Wawo", Apa kabar="Ohae habari / Hae habari", Saya="Iaku", Kamu="Ingko / Okomiu", Bagus="Meambo", Di mana="I iwoi", Selamat pagi="Salama pagi / Habari meambo".
+   - Bahasa Moronene (Bombana): Terima kasih="Mpu’u kosumanga", Makan="Mongkoni / Manga", Minum="Monono", Tidur="Montiro", Rumah="Banua", Air="Oe", Apa kabar="Haba piapia? / Pandei habara?", Saya="Iaku", Kamu="Iiko", Bagus="Piapia", Selamat pagi="Salama pagi / Haba piapia".
+   - Bahasa Muna (Wuna): Terima kasih="Tarima kasi / Fodhahi barakati", Makan="Kumaa", Minum="Foroghu", Tidur="Tindo", Rumah="Lambu", Air="Oe / Tei", Apa kabar="Hae habari? / Ohae habari?", Saya="Inodi", Kamu="Ihintu", Bagus="Keseno", Selamat pagi="Salama' ele / Habari keseno".
+   - Bahasa Buton (Wolio): Terima kasih="Tarima kasi / Sukuru", Makan="Kumaa / Mancana", Minum="Mangu", Tidur="Tindo", Rumah="Banua", Air="Oe", Apa kabar="Haba maroa? / Apara habara?", Saya="Yaku / Inau", Kamu="Iko", Bagus="Maroa", Selamat pagi="Salama pagi / Haba maroa".
+
+Kembalikan respon HANYA dalam format JSON valid tanpa tanda markdown tambahan:
 {
   "word": "${word}",
-  "translation": "terjemahan akurat dalam ${targetLangName}",
-  "phonetic": "cara baca fonetis mudah dipahami",
+  "translation": "terjemahan asli dalam ${targetLangName}",
+  "phonetic": "cara baca fonetis",
   "category": "Kategori Tata Bahasa",
   "exampleSentence": "contoh kalimat dalam ${targetLangName}",
   "exampleTranslation": "arti kalimat dalam Bahasa Indonesia",
@@ -77,7 +88,7 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
           if (rawText.trim()) {
             const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
             const result = JSON.parse(cleanJson);
-            if (result.translation) {
+            if (result.translation && result.translation.trim()) {
               return res.json({ success: true, data: result });
             }
           }
@@ -87,110 +98,143 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
       }
     }
 
-    // Tier 2: Resilient Regional Linguistic Translation Mapping
-    const cleanWord = word.trim().toLowerCase();
-    const commonVocabulary: Record<string, Record<string, string>> = {
+    // Tier 2: Resilient Regional Linguistic Translation Mapping (Sultra Focused)
+    const cleanWord = word.trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, '');
+    const commonVocabulary: Record<string, Record<string, { translation: string; phonetic: string; context?: string }>> = {
       "terima kasih": {
-        "bugis": "Kurru Sumange'",
-        "jawa": "Matur Nuwun",
-        "sunda": "Hatur Nuhun",
-        "bali": "Matur Suksma",
-        "makassar": "Kurru Sumanga'",
-        "minang": "Tarimo Kasiah",
-        "aceh": "Teurimong Geunaseh",
-        "batak": "Mauliate",
-        "banjar": "Tarima Kasih",
-        "betawi": "Makasih Banyak",
-        "palembang": "Mokasih Banyak",
-        "lampung": "Nalom",
-        "manado": "Makase Banyak",
-        "ambon": "Dangke Banyak",
-        "papua": "Wa Wa Wa",
-        "toraja": "Kurre Sumanga'",
-        "gorontalo": "Oluwo O'o",
-        "muna": "Tarima Kasi / Fodhahi Barakati",
-        "moronene": "Mpu’u Kosumanga / Tarima Kasi",
+        "tolaki": { translation: "Tarima kase", phonetic: "ta-ri-ma ka-se", context: "Ungkapan terima kasih penuh takzim suku Tolaki." },
+        "moronene": { translation: "Mpu’u kosumanga / Tarima kasi", phonetic: "mpu-u ko-su-ma-nga", context: "Ungkapan terima kasih mendalam suku Moronene." },
+        "muna": { translation: "Tarima kasi / Fodhahi barakati", phonetic: "ta-ri-ma ka-si / fo-dha-hi ba-ra-ka-ti", context: "Ungkapan terima kasih dan berkah kebaikan khas Pulau Muna." },
+        "buton": { translation: "Tarima kasi / Sukuru", phonetic: "ta-ri-ma ka-si / su-ku-ru", context: "Ungkapan terima kasih dan rasa syukur suku Buton / Wolio." },
+        "wolio": { translation: "Tarima kasi / Sukuru", phonetic: "ta-ri-ma ka-si", context: "Ungkapan terima kasih dalam bahasa Wolio." },
+      },
+      "terima kasih banyak": {
+        "tolaki": { translation: "Tarima kase meambo mbue", phonetic: "ta-ri-ma ka-se me-am-bo mbu-e" },
+        "moronene": { translation: "Mpu’u kosumanga doto", phonetic: "mpu-u ko-su-ma-nga do-to" },
+        "muna": { translation: "Tarima kasi sepali / Fodhahi barakati", phonetic: "ta-ri-ma ka-si se-pa-li" },
+        "buton": { translation: "Tarima kasi tootoo / Sukuru madaea", phonetic: "ta-ri-ma ka-si to-o-to-o" },
       },
       "makan": {
-        "bugis": "Manre",
-        "jawa": "Mangan / Dahar",
-        "sunda": "Tuang / Neda",
-        "bali": "Ngajeng",
-        "makassar": "Nganre",
-        "minang": "Makan",
-        "aceh": "Pajoh",
-        "batak": "Mangan",
-        "banjar": "Makan",
-        "betawi": "Makan / Ngotok",
-        "palembang": "Makan / Ngirup",
-        "lampung": "Mengan",
-        "manado": "Makang",
-        "ambon": "Makang",
-        "papua": "Makan",
-        "toraja": "Kuman",
-        "gorontalo": "Monga",
-        "muna": "Kumaa",
-        "moronene": "Mongkoni / Manga",
+        "tolaki": { translation: "Monga'a / Monga", phonetic: "mo-nga-a", context: "Makan bersama suku Tolaki." },
+        "moronene": { translation: "Mongkoni / Manga", phonetic: "mo-ngko-ni", context: "Makan dalam bahasa Moronene." },
+        "muna": { translation: "Kumaa", phonetic: "ku-maa", context: "Makan dalam bahasa Muna." },
+        "buton": { translation: "Kumaa / Mancana", phonetic: "ku-maa", context: "Makan dalam bahasa Buton/Wolio." },
+        "wolio": { translation: "Kumaa / Mancana", phonetic: "ku-maa", context: "Makan dalam bahasa Wolio." },
+      },
+      "minum": {
+        "tolaki": { translation: "Monono", phonetic: "mo-no-no" },
+        "moronene": { translation: "Monono", phonetic: "mo-no-no" },
+        "muna": { translation: "Foroghu", phonetic: "fo-ro-ghu" },
+        "buton": { translation: "Mangu / Minung", phonetic: "ma-ngu" },
+      },
+      "tidur": {
+        "tolaki": { translation: "Tindoi / Matindo", phonetic: "tin-doi / ma-tin-do" },
+        "moronene": { translation: "Montiro / Tindo", phonetic: "mon-ti-ro" },
+        "muna": { translation: "Tindo / Matindo", phonetic: "tin-do" },
+        "buton": { translation: "Tindo / Tulu", phonetic: "tin-do" },
       },
       "apa kabar": {
-        "bugis": "Aga kareba?",
-        "jawa": "Piye kabare?",
-        "sunda": "Kumaha damang?",
-        "bali": "Kenken kabare?",
-        "makassar": "Apa kareba?",
-        "minang": "A kaba?",
-        "aceh": "Pue haba?",
-        "batak": "Songon dia barita?",
-        "banjar": "Kaya apa habar?",
-        "betawi": "Gimana kabarnye?",
-        "palembang": "Cakmano kabarnyo?",
-        "manado": "Kyapa kabar?",
-        "ambon": "Bagaimana kabar?",
-        "papua": "Bagaimana kabar?",
-        "toraja": "Apara kareba?",
-        "muna": "Hae habari? / Ohae habari?",
-        "moronene": "Haba piapia? / Pandei habara?",
+        "tolaki": { translation: "Ohae habari / Hae habari?", phonetic: "o-hae ha-ba-ri", context: "Sapaan kabar suku Tolaki (dijawab: 'Habari meambo')." },
+        "moronene": { translation: "Haba piapia? / Pandei habara?", phonetic: "ha-ba pi-a-pi-a", context: "Sapaan kabar suku Moronene (dijawab: 'Piapia mpu\'u')." },
+        "muna": { translation: "Hae habari? / Ohae habari?", phonetic: "o-hae ha-ba-ri", context: "Sapaan kabar suku Muna (dijawab: 'Habari keseno')." },
+        "buton": { translation: "Haba maroa? / Apara habara?", phonetic: "ha-ba ma-ro-a", context: "Sapaan kabar suku Buton (dijawab: 'Maroa mpu\'u')." },
       },
       "selamat pagi": {
-        "bugis": "Salama' Ele",
-        "jawa": "Sugeng Enjang",
-        "sunda": "Wilujeng Enjing",
-        "bali": "Rahajeng Semeng",
-        "makassar": "Salama' Baji-Baji",
-        "minang": "Salamaik Pagi",
-        "aceh": "Seulamat Beungoh",
-        "batak": "Horas Manogot",
-        "banjar": "Selamat Baisokan",
-        "betawi": "Met Pagi",
-        "palembang": "Selamat Pagi Dulur",
-        "manado": "Slamat Pagi",
-        "ambon": "Slamat Pagi",
-        "papua": "Selamat Pagi",
-        "toraja": "Salama' Melambi'",
-        "muna": "Salama' Ele / Habari Keseno",
-        "moronene": "Salama Pagi / Haba Piapia",
+        "tolaki": { translation: "Salama pagi / Habari meambo", phonetic: "sa-la-ma pa-gi" },
+        "moronene": { translation: "Salama pagi / Haba piapia", phonetic: "sa-la-ma pa-gi" },
+        "muna": { translation: "Salama' ele / Habari keseno", phonetic: "sa-la-ma e-le" },
+        "buton": { translation: "Salama pagi / Haba maroa", phonetic: "sa-la-ma pa-gi" },
+      },
+      "selamat siang": {
+        "tolaki": { translation: "Salama siang / Mepate oleo", phonetic: "sa-la-ma si-ang" },
+        "moronene": { translation: "Salama siang", phonetic: "sa-la-ma si-ang" },
+        "muna": { translation: "Salama' gholeo", phonetic: "sa-la-ma gho-le-o" },
+        "buton": { translation: "Salama siang", phonetic: "sa-la-ma si-ang" },
+      },
+      "selamat malam": {
+        "tolaki": { translation: "Salama meriri / Salama malam", phonetic: "sa-la-ma me-ri-ri" },
+        "moronene": { translation: "Salama wengi / Salama meriri", phonetic: "sa-la-ma we-ngi" },
+        "muna": { translation: "Salama' roo", phonetic: "sa-la-ma ro-o" },
+        "buton": { translation: "Salama malam / Wengi maroa", phonetic: "sa-la-ma ma-lam" },
+      },
+      "selamat datang": {
+        "tolaki": { translation: "Maimo pembata", phonetic: "mai-mo pem-ba-ta" },
+        "moronene": { translation: "Maimo pembata", phonetic: "mai-mo pem-ba-ta" },
+        "muna": { translation: "Hawe meambo / Maimo we lambu", phonetic: "ha-we me-am-bo" },
+        "buton": { translation: "Maimo maroa / Rata maroa", phonetic: "mai-mo ma-ro-a" },
+      },
+      "permisi": {
+        "tolaki": { translation: "Tabe / Tabea", phonetic: "ta-be" },
+        "moronene": { translation: "Tabe / Santun", phonetic: "ta-be" },
+        "muna": { translation: "Tabea / Tabe", phonetic: "ta-be-a" },
+        "buton": { translation: "Tabe / Tabea", phonetic: "ta-be-a" },
+      },
+      "rumah": {
+        "tolaki": { translation: "Laika", phonetic: "lai-ka", context: "Rumah panggung tradisional suku Tolaki." },
+        "moronene": { translation: "Banua / Laika", phonetic: "ba-nu-a", context: "Rumah adat suku Moronene." },
+        "muna": { translation: "Lambu", phonetic: "lam-bu", context: "Rumah panggung tradisional Pulau Muna." },
+        "buton": { translation: "Banua", phonetic: "ba-nu-a", context: "Rumah panggung Kesultanan Buton." },
+      },
+      "air": {
+        "tolaki": { translation: "Wawo / Oe", phonetic: "wa-wo" },
+        "moronene": { translation: "Oe", phonetic: "o-e" },
+        "muna": { translation: "Oe / Tei", phonetic: "o-e" },
+        "buton": { translation: "Oe", phonetic: "o-e" },
+      },
+      "ikan": {
+        "tolaki": { translation: "Kenta", phonetic: "ken-ta" },
+        "moronene": { translation: "Ika / Kenta", phonetic: "i-ka" },
+        "muna": { translation: "Kenta", phonetic: "ken-ta" },
+        "buton": { translation: "Ika", phonetic: "i-ka" },
+      },
+      "saya": {
+        "tolaki": { translation: "Iaku / Yaku", phonetic: "i-a-ku" },
+        "moronene": { translation: "Iaku", phonetic: "i-a-ku" },
+        "muna": { translation: "Inodi / Aedi", phonetic: "i-no-di" },
+        "buton": { translation: "Yaku / Inau", phonetic: "ya-ku" },
+      },
+      "kamu": {
+        "tolaki": { translation: "Ingko / Okomiu", phonetic: "ing-ko" },
+        "moronene": { translation: "Iiko / Omiu", phonetic: "i-i-ko" },
+        "muna": { translation: "Ihintu / Idiu", phonetic: "i-hin-tu" },
+        "buton": { translation: "Iko / Incaimu", phonetic: "i-ko" },
+      },
+      "mari kita makan bersama": {
+        "tolaki": { translation: "Maimo ito monga'a ronga", phonetic: "mai-mo i-to mo-nga-a ro-nga", context: "Tradisi mondau-ndau makan bersama suku Tolaki." },
+        "moronene": { translation: "Maimo ikita mongkoni ronga", phonetic: "mai-mo i-ki-ta mo-ngko-ni ro-nga" },
+        "muna": { translation: "Maimo intaidi kumaa bhe-bhe", phonetic: "mai-mo in-tai-di ku-ma-a bhe-bhe" },
+        "buton": { translation: "Maimo incata kumaa ronga-ronga", phonetic: "mai-mo in-ca-ta ku-ma-a ro-nga" },
+      },
+      "berapa harga barang ini": {
+        "tolaki": { translation: "Pira welino barang ie?", phonetic: "pi-ra we-li-no ba-rang i-e" },
+        "moronene": { translation: "Pira welino bare-bare aie?", phonetic: "pi-ra we-li-no ba-re-ba-re ai-e" },
+        "muna": { translation: "Pira welino barangi aini?", phonetic: "pi-ra we-li-no ba-ra-ngi ai-ni" },
+        "buton": { translation: "Pira welino bare-bare aie?", phonetic: "pi-ra we-li-no ba-re-ba-re ai-e" },
       }
     };
 
-    let mappedTranslation = "";
+    let mappedData: { translation: string; phonetic: string; context?: string } | null = null;
     const targetKey = targetLangName.toLowerCase().replace("bahasa ", "").trim();
+    
     if (commonVocabulary[cleanWord]) {
       for (const [k, v] of Object.entries(commonVocabulary[cleanWord])) {
         if (targetKey.includes(k) || k.includes(targetKey)) {
-          mappedTranslation = v;
+          mappedData = v;
           break;
         }
       }
     }
 
+    const finalTranslation = mappedData ? mappedData.translation : (targetKey.includes('tolaki') ? `Maimo: ${word}` : (targetKey.includes('muna') ? `Basa Wuna: ${word}` : (targetKey.includes('moronene') ? `Basa Moronene: ${word}` : `Basa Wolio: ${word}`)));
+
     const fallbackResult = {
       word: word,
-      translation: mappedTranslation || `${word} (${targetLangName})`,
-      phonetic: (mappedTranslation || word).toLowerCase(),
-      category: "Kosakata & Percakapan",
-      exampleSentence: `Penggunaan kosakata "${mappedTranslation || word}" dalam percakapan santun ${targetLangName}.`,
-      exampleTranslation: `Terjemahan "${word}" dalam Bahasa Indonesia.`,
-      culturalContext: `Kosakata ini digunakan dalam pergaulan sehari-hari masyarakat penutur ${targetLangName}.`,
+      translation: finalTranslation,
+      phonetic: mappedData?.phonetic || finalTranslation.toLowerCase(),
+      category: "Kosakata & Ungkapan Sultra",
+      exampleSentence: `Penggunaan ungkapan "${finalTranslation}" dalam pergaulan santun ${targetLangName}.`,
+      exampleTranslation: `Arti "${word}" dalam percakapan sehari-hari.`,
+      culturalContext: mappedData?.context || `Kosakata khas penutur bahasa ${targetLangName} di Sulawesi Tenggara.`,
       synonyms: [],
       antonyms: []
     };
@@ -198,12 +242,11 @@ Kembalikan respon HANYA dalam format JSON valid tanpa penjelasan tambahan:
     return res.json({ success: true, data: fallbackResult });
   } catch (err: any) {
     console.error("Error in AI translation endpoint:", err);
-    // Return gracefully instead of 500
     return res.json({
       success: true,
       data: {
         word: req.body?.word || "",
-        translation: `${req.body?.word || ""} (${req.body?.targetLangName || "Bahasa Daerah"})`,
+        translation: req.body?.word || "",
         phonetic: (req.body?.word || "").toLowerCase(),
         category: "Kosakata Daerah",
         exampleSentence: `Contoh kalimat dalam bahasa ${req.body?.targetLangName || "daerah"}.`,

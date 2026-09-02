@@ -227,6 +227,7 @@ export default function App() {
             bookmarks={userProfile.bookmarks}
             onToggleBookmark={handleToggleBookmark}
             onSelectWordDetail={handleSelectWordDetail}
+            allWords={mergedDictionary}
           />
         )}
 

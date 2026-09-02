@@ -1,293 +1,975 @@
-// Utility for offline & client-side regional translation fallback
+// Utility for offline & client-side regional translation engine
 import { WordEntry, Language } from '../types';
 import { DICTIONARY_DATABASE } from '../data/dictionaryDatabase';
 
-interface RegionalDictionaryEntry {
+interface SultraLexiconEntry {
   ind: string;
-  translations: Record<string, { translation: string; phonetic: string; example?: string; exampleTrans?: string; context?: string }>;
+  translations: Record<string, {
+    translation: string;
+    phonetic: string;
+    category?: string;
+    example?: string;
+    exampleTrans?: string;
+    context?: string;
+  }>;
 }
 
-export const REGIONAL_LEXICON: RegionalDictionaryEntry[] = [
+export const SULTRA_REGIONAL_LEXICON: SultraLexiconEntry[] = [
+  // --- SALAM & SAPAAN ---
   {
     ind: 'selamat pagi',
     translations: {
-      bug: { translation: 'Salama\' Ele', phonetic: 'sa-la-ma e-leh', context: 'Salam hangat suku Bugis di pagi hari saat matahari terbit.' },
-      jav: { translation: 'Sugeng Enjang', phonetic: 'su-geng en-jang', context: 'Tingkatan Krama Inggil santun masyarakat Jawa.' },
-      sun: { translation: 'Wilujeng Enjing', phonetic: 'wi-lu-jeng en-jing', context: 'Ungkapan salam santun Tatar Pasundan.' },
-      ban: { translation: 'Rahajeng Semeng', phonetic: 'ra-ha-jeng se-meng', context: 'Salam pagi penuh rasa syukur dan doa di Pulau Dewata.' },
-      mak: { translation: 'Salama\' Baji-Baji Bero-Bero', phonetic: 'sa-la-ma ba-ji ba-ji', context: 'Salam pagi kebaikan suku Makassar.' },
-      min: { translation: 'Salamaik Pagi', phonetic: 'sa-la-maik pa-gi', context: 'Salam khas Ranah Minang.' },
-      ace: { translation: 'Seulamat Beungoh', phonetic: 'seu-la-mat beu-ngoh', context: 'Salam pagi masyarakat Serambi Mekkah.' },
-      btk: { translation: 'Horas Manogot', phonetic: 'ho-ras ma-no-got', context: 'Salam keakraban Batak Toba di pagi hari.' },
-      bjn: { translation: 'Selamat Baisokan', phonetic: 'se-la-mat bai-so-kan', context: 'Salam pagi masyarakat Banjar.' },
-      btw: { translation: 'Met Pagi / Pagi Bang', phonetic: 'met pa-gi', context: 'Salam ramah khas warga Betawi.' },
-      plb: { translation: 'Selamat Pagi Dulur', phonetic: 'se-la-mat pa-gi du-lur', context: 'Salam akrab masyarakat Palembang tepian Musi.' },
-      lmp: { translation: 'Tabik Pun Selamat Pagi', phonetic: 'ta-bik pun', context: 'Salam santun adat Lampung.' },
-      mdo: { translation: 'Slamat Pagi Samua', phonetic: 'sla-mat pa-gi', context: 'Salam hangat Minahasa Manado.' },
-      amb: { translation: 'Slamat Pagi Katong Samua', phonetic: 'sla-mat pa-gi', context: 'Salam persaudaraan Ambon Manise.' },
-      pap: { translation: 'Selamat Pagi Kamurang', phonetic: 'se-la-mat pa-gi ka-mu-rang', context: 'Salam bersahabat tanah Papua.' },
-      tor: { translation: 'Salama\' Melambi\'', phonetic: 'sa-la-ma me-lam-bi', context: 'Salam pagi sejuk pegunungan Tana Toraja.' },
-      gor: { translation: 'Mopolohupa Dehu', phonetic: 'mo-po-lo-hu-pa', context: 'Salam pagi suku Gorontalo.' },
-      kyn: { translation: 'Adil Ka Talino, Selamat Pagi', phonetic: 'a-dil ka ta-li-no', context: 'Salam persaudaraan Dayak.' },
-      mun: { translation: 'Salama\' Ele / Habari Keseno', phonetic: 'sa-la-ma e-le', context: 'Salam pagi penuh berkah di Pulau Muna.' },
-      mrn: { translation: 'Salama Pagi / Haba Piapia', phonetic: 'sa-la-ma pa-gi', context: 'Salam pagi hangat suku Moronene.' }
+      tk: { translation: 'Salama pagi / Habari meambo', phonetic: 'sa-la-ma pa-gi / ha-ba-ri me-am-bo', context: 'Salam pagi penuh doa kebaikan suku Tolaki.' },
+      mrn: { translation: 'Salama pagi / Haba piapia', phonetic: 'sa-la-ma pa-gi / ha-ba pi-a-pi-a', context: 'Salam pagi hangat suku Moronene.' },
+      mun: { translation: 'Salama\' ele / Habari keseno', phonetic: 'sa-la-ma e-le / ha-ba-ri ke-se-no', context: 'Salam pagi penuh berkah masyarakat Pulau Muna.' },
+      btn: { translation: 'Salama pagi / Haba maroa', phonetic: 'sa-la-ma pa-gi / ha-ba ma-ro-a', context: 'Salam pagi santun masyarakat Kesultanan Buton / Wolio.' }
     }
   },
   {
-    ind: 'terima kasih',
+    ind: 'selamat siang',
     translations: {
-      bug: { translation: 'Kurru Sumange\'', phonetic: 'kur-ru su-ma-nge', context: 'Mendoakan keteguhan jiwa dan kelimpahan berkah.' },
-      jav: { translation: 'Matur Nuwun', phonetic: 'ma-tur nu-wun', context: 'Ungkapan terima kasih penuh hormat masyarakat Jawa.' },
-      sun: { translation: 'Hatur Nuhun', phonetic: 'ha-tur nu-hun', context: 'Ungkapan rasa terima kasih dalam tradisi Sunda.' },
-      ban: { translation: 'Matur Suksma', phonetic: 'ma-tur suks-ma', context: 'Rasa terima kasih yang mendalam dari lubuk jiwa.' },
-      mak: { translation: 'Kurru Sumanga\' / Tarima Kasi', phonetic: 'kur-ru su-ma-nga', context: 'Ungkapan terima kasih penuh rasa syukur suku Makassar.' },
-      min: { translation: 'Tarimo Kasiah', phonetic: 'ta-ri-mo ka-siah', context: 'Ungkapan terima kasih dalam bahasa Minangkabau.' },
-      ace: { translation: 'Teurimong Geunaseh', phonetic: 'teu-ri-mong geu-na-seh', context: 'Ungkapan terima kasih bahasa Aceh.' },
-      btk: { translation: 'Mauliate', phonetic: 'mau-li-a-te', context: 'Ungkapan terima kasih dan rasa syukur khas Batak.' },
-      bjn: { translation: 'Tarima Kasih Banyak', phonetic: 'ta-ri-ma ka-sih', context: 'Ucapan terima kasih suku Banjar.' },
-      btw: { translation: 'Makasih Banyak Ya Bang', phonetic: 'ma-ka-sih ban-yak', context: 'Rasa terima kasih santai khas Betawi.' },
-      plb: { translation: 'Mokasih Banyak Dolor', phonetic: 'mo-ka-sih ban-yak', context: 'Ucapan terima kasih Palembang.' },
-      lmp: { translation: 'Nalom / Terima Kasih', phonetic: 'na-lom', context: 'Ungkapan terima kasih suku Lampung.' },
-      mdo: { translation: 'Makase Banyak', phonetic: 'ma-ka-se ban-yak', context: 'Ungkapan terima kasih bahasa Manado.' },
-      amb: { translation: 'Dangke Banyak', phonetic: 'dang-ke ban-yak', context: 'Ungkapan terima kasih masyarakat Maluku.' },
-      pap: { translation: 'Wa Wa Wa / Kasumasa', phonetic: 'wa wa wa', context: 'Ungkapan syukur dan terima kasih tanah Papua.' },
-      tor: { translation: 'Kurre Sumanga\' Solasokku', phonetic: 'kur-re su-ma-nga', context: 'Ungkapan terima kasih adat Toraja.' },
-      gor: { translation: 'Oluwo O\'o', phonetic: 'o-lu-wo o-o', context: 'Ungkapan terima kasih bahasa Gorontalo.' },
-      kyn: { translation: 'Arus / Terima Kasih', phonetic: 'a-rus', context: 'Ungkapan syukur masyarakat Dayak Kanayatn.' },
-      mgr: { translation: 'Tiba Teing', phonetic: 'ti-ba te-ing', context: 'Ungkapan terima kasih Manggarai Flores.' },
-      dwn: { translation: 'Ulas Tuan', phonetic: 'u-las tu-an', context: 'Ungkapan terima kasih Timor Dawan.' },
-      mun: { translation: 'Tarima Kasi / Fodhahi Barakati', phonetic: 'ta-ri-ma ka-si', context: 'Ungkapan terima kasih dan berkah khas Pulau Muna.' },
-      mrn: { translation: 'Mpu’u Kosumanga / Tarima Kasi', phonetic: 'mpu-u ko-su-ma-nga', context: 'Ungkapan terima kasih mendalam suku Moronene Bombana.' }
+      tk: { translation: 'Salama siang / Mepate oleo', phonetic: 'sa-la-ma si-ang', context: 'Salam saat matahari tepat di atas kepala suku Tolaki.' },
+      mrn: { translation: 'Salama siang', phonetic: 'sa-la-ma si-ang', context: 'Salam siang suku Moronene.' },
+      mun: { translation: 'Salama\' gholeo', phonetic: 'sa-la-ma gho-le-o', context: 'Salam siang masyarakat Muna.' },
+      btn: { translation: 'Salama siang / Gholeo maroa', phonetic: 'sa-la-ma si-ang', context: 'Salam siang suku Buton.' }
     }
   },
   {
-    ind: 'makan',
+    ind: 'selamat malam',
     translations: {
-      bug: { translation: 'Manre', phonetic: 'man-reh', example: 'Maimeng manre ritu nasu manu.', exampleTrans: 'Mari kita makan masakan ayam.' },
-      jav: { translation: 'Mangan / Dahar', phonetic: 'ma-ngan / da-har', example: 'Mangga sami dahar sesarengan.', exampleTrans: 'Mari makan bersama-sama.' },
-      sun: { translation: 'Tuang / Neda', phonetic: 'tu-ang / ne-da', example: 'Hayu urang tuang sangu liwet.', exampleTrans: 'Ayo kita makan nasi liwet.' },
-      ban: { translation: 'Ngajeng / Medaar', phonetic: 'nga-jeng / me-da-ar', example: 'Durusang ngajeng ajengan Bali.', exampleTrans: 'Silakan santap hidangan Bali.' },
-      mak: { translation: 'Nganre', phonetic: 'ngan-reh', example: 'Ayo nganre coto Makassar.', exampleTrans: 'Ayo kita makan coto Makassar.' },
-      min: { translation: 'Makan / Sambamu', phonetic: 'ma-kan', example: 'Marilah kito makan randang basamo.', exampleTrans: 'Mari kita makan rendang bersama.' },
-      ace: { translation: 'Pajoh / Makheun', phonetic: 'pa-joh', example: 'Jak tapajoh bu siat.', exampleTrans: 'Mari kita makan nasi sebentar.' },
-      btk: { translation: 'Mangan', phonetic: 'ma-ngan', example: 'Beta hita mangan indahan.', exampleTrans: 'Ayo kita makan nasi.' },
-      bjn: { translation: 'Makan / Menyantap', phonetic: 'ma-kan', example: 'Ayu lakasi kito makan soto Banjar.', exampleTrans: 'Ayo cepat kita makan soto Banjar.' },
-      btw: { translation: 'Makan / Ngotok', phonetic: 'ma-kan', example: 'Ayo pada makan kerak telor.', exampleTrans: 'Ayo semuanya makan kerak telor.' },
-      plb: { translation: 'Makan / Ngirup', phonetic: 'ma-kan', example: 'Payo kito makan pempek.', exampleTrans: 'Ayo kita makan pempek.' },
-      lmp: { translation: 'Mangan / Mengan', phonetic: 'ma-ngan', example: 'Ayo tian mengan seruit.', exampleTrans: 'Ayo kita makan sambal seruit.' },
-      mdo: { translation: 'Makang', phonetic: 'ma-kang', example: 'Mari jo torang makang tinutuan.', exampleTrans: 'Mari kita makan bubur tinutuan.' },
-      amb: { translation: 'Makang', phonetic: 'ma-kang', example: 'Katong makang papeda kuah kuning.', exampleTrans: 'Kita makan papeda kuah kuning.' },
-      pap: { translation: 'Makan', phonetic: 'ma-kan', example: 'Kitorang makan papeda bungkus bakar.', exampleTrans: 'Kita makan papeda bungkus bakar.' },
-      tor: { translation: 'Kuman / Mangkuman', phonetic: 'ku-man', example: 'Mai komi kuman pa’piong.', exampleTrans: 'Mari kemari makan pa\'piong.' },
-      gor: { translation: 'Monga', phonetic: 'mo-nga', example: 'Watiya monga binthe biluhuta.', exampleTrans: 'Saya makan sup jagung binthe biluhuta.' },
-      kyn: { translation: 'Makan / Nyangkuang', phonetic: 'ma-kan', example: 'Ayo diri makan sungkui.', exampleTrans: 'Ayo kita makan pulut sungkui.' },
-      kut: { translation: 'Makan / Begantar', phonetic: 'ma-kan', example: 'Yok keroan makan gence ruan.', exampleTrans: 'Ayo makan ikan gence ruan.' },
-      mun: { translation: 'Kumaa', phonetic: 'ku-maa', example: 'Inodi akumaa kenta gholu.', exampleTrans: 'Saya makan ikan bakar.' },
-      mrn: { translation: 'Mongkoni / Manga', phonetic: 'mo-ngko-ni', example: 'Iyo manga tinutu pedadi.', exampleTrans: 'Dia sedang makan jagung rebus.' }
+      tk: { translation: 'Salama meriri / Salama malam', phonetic: 'sa-la-ma me-ri-ri', context: 'Salam petang/malam hari menyambut istirahat suku Tolaki.' },
+      mrn: { translation: 'Salama wengi / Salama meriri', phonetic: 'sa-la-ma we-ngi', context: 'Salam malam suku Moronene.' },
+      mun: { translation: 'Salama\' roo / Salama\' wugho', phonetic: 'sa-la-ma ro-o', context: 'Salam malam dan istirahat masyarakat Muna.' },
+      btn: { translation: 'Salama malam / Wengi maroa', phonetic: 'sa-la-ma ma-lam', context: 'Salam malam masyarakat Buton.' }
     }
   },
   {
-    ind: 'tidur',
+    ind: 'selamat datang',
     translations: {
-      bug: { translation: 'Matinro', phonetic: 'ma-tin-ro' },
-      jav: { translation: 'Turu / Sare', phonetic: 'tu-ru / sa-re' },
-      sun: { translation: 'Kulem / Sare', phonetic: 'ku-lem / sa-re' },
-      ban: { translation: 'Sirep / Pules', phonetic: 'si-rep / pu-les' },
-      mak: { translation: 'Tinro', phonetic: 'tin-ro' },
-      min: { translation: 'Lalok', phonetic: 'la-lok' },
-      ace: { translation: 'Éh', phonetic: 'eh' },
-      btk: { translation: 'Modom', phonetic: 'mo-dom' },
-      bjn: { translation: 'Guring', phonetic: 'gu-ring' },
-      btw: { translation: 'Tidur / Merem', phonetic: 'ti-dur' },
-      plb: { translation: 'Tiduk', phonetic: 'ti-duk' },
-      mdo: { translation: 'Tidor', phonetic: 'ti-dor' },
-      amb: { translation: 'Tidor', phonetic: 'ti-dor' },
-      pap: { translation: 'Tidur', phonetic: 'ti-dur' },
-      tor: { translation: 'Mamma\'', phonetic: 'mam-ma' },
-      gor: { translation: 'Tuluhe', phonetic: 'tu-lu-he' },
-      mun: { translation: 'Tindo / Matindo', phonetic: 'tin-do' },
-      mrn: { translation: 'Montiro / Tindo', phonetic: 'mon-ti-ro' },
-    }
-  },
-  {
-    ind: 'rumah',
-    translations: {
-      bug: { translation: 'Bola', phonetic: 'bo-la', context: 'Rumah panggung tradisional kayu khas Bugis.' },
-      jav: { translation: 'Omah / Dalem', phonetic: 'o-mah / da-lem', context: 'Rumah Joglo tradisional Jawa.' },
-      sun: { translation: 'Bumi / Rorompok', phonetic: 'bu-mi / ro-rom-pok', context: 'Rumah panggung adat Sunda.' },
-      ban: { translation: 'Umah / Puri', phonetic: 'u-mah / pu-ri', context: 'Kompleks perumahan adat berfilosofi Asta Kosala Kosali.' },
-      mak: { translation: 'Balla', phonetic: 'bal-la', context: 'Rumah panggung adat suku Makassar.' },
-      min: { translation: 'Rumah Gadang', phonetic: 'ru-mah ga-dang', context: 'Rumah adat bergonjong khas Minangkabau.' },
-      ace: { translation: 'Rumoh Aceh', phonetic: 'ru-moh a-ceh', context: 'Rumah panggung kayu berukir khas Aceh.' },
-      btk: { translation: 'Bagot Ni Ruma / Ruma Bolon', phonetic: 'ru-ma bo-lon', context: 'Rumah adat kayu bertanduk kerbau Batak.' },
-      bjn: { translation: 'Rumah Bubungan Tinggi', phonetic: 'ru-mah bu-bu-ngan', context: 'Rumah adat panggung khas Banjar.' },
-      btw: { translation: 'Rumah Kebaya', phonetic: 'ru-mah ke-ba-ya', context: 'Rumah adat tradisional masyarakat Betawi.' },
-      plb: { translation: 'Rumah Limas', phonetic: 'ru-mah li-mas', context: 'Rumah tradisional berjenjang khas Palembang.' },
-      tor: { translation: 'Banua / Tongkonan', phonetic: 'tong-ko-nan', context: 'Rumah adat beratap perahu pusaka leluhur Toraja.' },
-      pap: { translation: 'Rumah Honai', phonetic: 'ho-nai', context: 'Rumah bulat tradisional beratap jerami di Lembah Baliem.' },
-      mun: { translation: 'Lambu', phonetic: 'lam-bu', context: 'Rumah panggung tradisional adat suku Muna.' },
-      mrn: { translation: 'Banua / Laika', phonetic: 'ba-nu-a', context: 'Rumah panggung adat suku Moronene Bombana.' }
+      tk: { translation: 'Maimo pembata', phonetic: 'mai-mo pem-ba-ta', context: 'Salam menyambut tamu agung pada tradisi adat suku Tolaki.' },
+      mrn: { translation: 'Maimo pembata / Maiko i banua', phonetic: 'mai-mo pem-ba-ta', context: 'Penyambutan ramah suku Moronene.' },
+      mun: { translation: 'Hawe meambo / Maimo we lambu', phonetic: 'ha-we me-am-bo', context: 'Ucapan selamat datang di tanah Muna.' },
+      btn: { translation: 'Maimo maroa / Rata maroa', phonetic: 'mai-mo ma-ro-a', context: 'Ucapan penyambutan tamu di Buton.' }
     }
   },
   {
     ind: 'apa kabar',
     translations: {
-      bug: { translation: 'Aga kareba?', phonetic: 'a-ga ka-re-ba', context: 'Pertanyaan salam paling umum di Sulawesi Selatan (dijawab: "Kareba Madeceng").' },
-      jav: { translation: 'Piye kabare? / Kados pundi pawartosipun?', phonetic: 'pi-ye ka-ba-re', context: 'Pertanyaan kabar akrab maupun krama inggil.' },
-      sun: { translation: 'Kumaha damang?', phonetic: 'ku-ma-ha da-mang', context: 'Sapaan menanyakan kabar kesehatan khas Sunda.' },
-      ban: { translation: 'Kenken kabare?', phonetic: 'ken-ken ka-ba-re', context: 'Sapaan ramah masyarakat Bali.' },
-      mak: { translation: 'Apa kareba?', phonetic: 'a-pa ka-re-ba', context: 'Sapaan khas Makassar (dijawab: "Kareba Baji").' },
-      min: { translation: 'A kaba?', phonetic: 'a ka-ba', context: 'Sapaan menanyakan kabar Minangkabau.' },
-      ace: { translation: 'Pue haba?', phonetic: 'pue ha-ba', context: 'Sapaan menanyakan kabar di Aceh (dijawab: "Haba gèt").' },
-      btk: { translation: 'Songon dia barita?', phonetic: 'so-ngon di-a ba-ri-ta', context: 'Pertanyaan kabar Batak Toba.' },
-      bjn: { translation: 'Kaya apa habar?', phonetic: 'ka-ya a-pa ha-bar', context: 'Sapaan kabar suku Banjar.' },
-      btw: { translation: 'Gimana kabarnye?', phonetic: 'gi-ma-na ka-bar-nye', context: 'Sapaan hangat khas Betawi.' },
-      plb: { translation: 'Cakmano kabarnyo?', phonetic: 'cak-ma-no ka-bar-nyo', context: 'Sapaan kabar wong Palembang.' },
-      mdo: { translation: 'Kyapa kabar?', phonetic: 'kya-pa ka-bar', context: 'Sapaan hangat Manado.' },
-      amb: { translation: 'Bagaimana kabar katong?', phonetic: 'ba-gai-ma-na ka-bar', context: 'Sapaan persaudaraan Maluku.' },
-      pap: { translation: 'Bagaimana kabar kamurang?', phonetic: 'ba-gai-ma-na ka-bar', context: 'Sapaan bersahabat di Papua.' },
-      tor: { translation: 'Apara kareba?', phonetic: 'a-pa-ra ka-re-ba', context: 'Sapaan kabar di Toraja.' },
-      mun: { translation: 'Hae habari? / Ohae habari?', phonetic: 'o-hae ha-ba-ri', context: 'Sapaan kabar suku Muna (dijawab: "Habari keseno").' },
-      mrn: { translation: 'Haba piapia? / Pandei habara?', phonetic: 'ha-ba pi-a-pi-a', context: 'Sapaan kabar suku Moronene (dijawab: "Piapia mpu\'u").' }
+      tk: { translation: 'Ohae habari / Hae habari?', phonetic: 'o-hae ha-ba-ri', context: 'Sapaan persaudaraan suku Tolaki. Dijawab: "Habari meambo" (Kabar baik).' },
+      mrn: { translation: 'Haba piapia? / Pandei habara?', phonetic: 'ha-ba pi-a-pi-a', context: 'Sapaan kabar suku Moronene. Dijawab: "Piapia mpu\'u" (Sangat baik).' },
+      mun: { translation: 'Hae habari? / Ohae habari?', phonetic: 'o-hae ha-ba-ri', context: 'Sapaan kabar suku Muna. Dijawab: "Habari keseno" (Kabar baik).' },
+      btn: { translation: 'Haba maroa? / Apara habara?', phonetic: 'ha-ba ma-ro-a', context: 'Sapaan kabar suku Buton. Dijawab: "Maroa mpu\'u" (Kabar baik).' }
     }
   },
   {
+    ind: 'terima kasih',
+    translations: {
+      tk: { translation: 'Tarima kase', phonetic: 'ta-ri-ma ka-se', context: 'Ungkapan terima kasih penuh takzim suku Tolaki.' },
+      mrn: { translation: 'Mpu’u kosumanga / Tarima kasi', phonetic: 'mpu-u ko-su-ma-nga', context: 'Ungkapan terima kasih mendalam adat suku Moronene.' },
+      mun: { translation: 'Tarima kasi / Fodhahi barakati', phonetic: 'ta-ri-ma ka-si / fo-dha-hi ba-ra-ka-ti', context: 'Ungkapan terima kasih dan berkah kebaikan khas Pulau Muna.' },
+      btn: { translation: 'Tarima kasi / Sukuru', phonetic: 'ta-ri-ma ka-si / su-ku-ru', context: 'Ungkapan rasa syukur dan terima kasih suku Buton.' }
+    }
+  },
+  {
+    ind: 'terima kasih banyak',
+    translations: {
+      tk: { translation: 'Tarima kase meambo mbue', phonetic: 'ta-ri-ma ka-se me-am-bo mbu-e', context: 'Terima kasih sebesar-besarnya atas kebaikan suku Tolaki.' },
+      mrn: { translation: 'Mpu’u kosumanga doto', phonetic: 'mpu-u ko-su-ma-nga do-to', context: 'Rasa syukur tak terhingga suku Moronene.' },
+      mun: { translation: 'Tarima kasi sepali / Fodhahi barakati', phonetic: 'ta-ri-ma ka-si se-pa-li', context: 'Terima kasih banyak adat suku Muna.' },
+      btn: { translation: 'Tarima kasi tootoo / Sukuru madaea', phonetic: 'ta-ri-ma ka-si to-o-to-o', context: 'Terima kasih banyak masyarakat Buton.' }
+    }
+  },
+  {
+    ind: 'sama-sama',
+    translations: {
+      tk: { translation: 'Miano / Pomaa-maa', phonetic: 'mi-a-no / po-ma-a', context: 'Jawaban santun atas ucapan terima kasih suku Tolaki.' },
+      mrn: { translation: 'Tarima kasi poga / Podulu-dulu', phonetic: 'ta-ri-ma ka-si po-ga', context: 'Jawaban kebersamaan suku Moronene.' },
+      mun: { translation: 'Pomaa-maa / Tarima kasi ampa', phonetic: 'po-ma-a-ma-a', context: 'Jawaban terima kasih masyarakat Muna.' },
+      btn: { translation: 'Tarima kasi maroa / Pomaa', phonetic: 'ta-ri-ma ka-si ma-ro-a', context: 'Jawaban terima kasih suku Buton.' }
+    }
+  },
+  {
+    ind: 'permisi',
+    translations: {
+      tk: { translation: 'Tabe / Tabea', phonetic: 'ta-be', context: 'Adab santun membungkukkan badan saat lewat di hadapan tetua Tolaki.' },
+      mrn: { translation: 'Tabe / Santun', phonetic: 'ta-be', context: 'Adab kesantunan berjalan suku Moronene.' },
+      mun: { translation: 'Tabea / Tabe', phonetic: 'ta-be-a', context: 'Adab kesopanan lewat di hadapan orang tua di Pulau Muna.' },
+      btn: { translation: 'Tabe / Tabea', phonetic: 'ta-be-a', context: 'Adab tata krama kesantunan Kesultanan Buton.' }
+    }
+  },
+  {
+    ind: 'maaf',
+    translations: {
+      tk: { translation: 'Sapa / Maapu', phonetic: 'sa-pa / ma-a-pu', context: 'Ungkapan permohonan maaf suku Tolaki.' },
+      mrn: { translation: 'Maapu / Sapa', phonetic: 'ma-a-pu', context: 'Permohonan maaf suku Moronene.' },
+      mun: { translation: 'Maapu / Mampusi', phonetic: 'ma-a-pu', context: 'Ungkapan permohonan maaf suku Muna.' },
+      btn: { translation: 'Maapu / Ampungano', phonetic: 'ma-a-pu', context: 'Permohonan maaf adat Buton.' }
+    }
+  },
+  {
+    ind: 'mari kita makan bersama',
+    translations: {
+      tk: { translation: 'Maimo ito monga\'a ronga / Mondau-ndau', phonetic: 'mai-mo i-to mo-nga-a ro-nga', example: 'Maimo ito monga\'a sinonggi.', exampleTrans: 'Mari kita makan sinonggi bersama.', context: 'Mondau-ndau makan bersama dalam dulang melambangkan persatuan Tolaki.' },
+      mrn: { translation: 'Maimo ikita mongkoni ronga', phonetic: 'mai-mo i-ki-ta mo-ngko-ni ro-nga', example: 'Maimo ikita mongkoni tinutu.', exampleTrans: 'Mari kita makan tinutu bersama.', context: 'Makan bersama suku Moronene.' },
+      mun: { translation: 'Maimo intaidi kumaa bhe-bhe', phonetic: 'mai-mo in-tai-di ku-ma-a bhe-bhe', example: 'Maimo intaidi kumaa kasoami.', exampleTrans: 'Mari kita makan kasoami bersama.', context: 'Makan bersama tradisi Pulau Muna.' },
+      btn: { translation: 'Maimo incata kumaa ronga-ronga', phonetic: 'mai-mo in-ca-ta ku-ma-a ro-nga', example: 'Maimo incata kumaa kenta gholu.', exampleTrans: 'Mari kita makan ikan bakar bersama.', context: 'Makan bersama masyarakat Buton.' }
+    }
+  },
+  {
+    ind: 'berapa harga barang ini',
+    translations: {
+      tk: { translation: 'Pira welino barang ie?', phonetic: 'pi-ra we-li-no ba-rang i-e', example: 'Ama, pira welino kenta ie?', exampleTrans: 'Pak, berapa harga ikan ini?', context: 'Pertanyaan tawar-menawar santun suku Tolaki di pasar.' },
+      mrn: { translation: 'Pira welino bare-bare aie?', phonetic: 'pi-ra we-li-no ba-re-ba-re ai-e', example: 'Pira welino tinutu aie?', exampleTrans: 'Berapa harga makanan ini?', context: 'Pertanyaan harga suku Moronene.' },
+      mun: { translation: 'Pira welino barangi aini?', phonetic: 'pi-ra we-li-no ba-ra-ngi ai-ni', example: 'Pira welino kasoami aini?', exampleTrans: 'Berapa harga kasoami ini?', context: 'Pertanyaan harga di pasar tradisional Muna.' },
+      btn: { translation: 'Pira welino bare-bare aie?', phonetic: 'pi-ra we-li-no ba-re-ba-re ai-e', example: 'Pira welino ika aie?', exampleTrans: 'Berapa harga ikan ini?', context: 'Pertanyaan harga di pasar Buton.' }
+    }
+  },
+  {
+    ind: 'di mana jalan menuju pasar',
+    translations: {
+      tk: { translation: 'I iwoi o sala nggo lako i pasa?', phonetic: 'i i-wo-i o sa-la nggo la-ko i pa-sa', context: 'Menanyakan arah jalan suku Tolaki.' },
+      mrn: { translation: 'I wewi o sala nggo lako i pasa?', phonetic: 'i we-wi o sa-la nggo la-ko i pa-sa', context: 'Menanyakan arah jalan suku Moronene.' },
+      mun: { translation: 'Ne hae o kancitalo nggo kala we pasa?', phonetic: 'ne hae o kan-ci-ta-lo nggo ka-la we pa-sa', context: 'Menanyakan arah jalan suku Muna.' },
+      btn: { translation: 'I apana o sala nggo kala i pasa?', phonetic: 'i a-pa-na o sa-la nggo ka-la i pa-sa', context: 'Menanyakan petunjuk arah suku Buton.' }
+    }
+  },
+  {
+    ind: 'saya sangat senang bisa berkunjung dan bertemu anda',
+    translations: {
+      tk: { translation: 'Iaku meambo ate mpu\'u pembata ronga metumpu ingko', phonetic: 'i-a-ku me-am-bo a-te mpu-u pem-ba-ta ro-nga me-tum-pu ing-ko', context: 'Ungkapan kebahagiaan menyambung tali silaturahmi suku Tolaki.' },
+      mrn: { translation: 'Iaku piapia ate mpu\'u pembata ronga metumo iiko', phonetic: 'i-a-ku pi-a-pi-a a-te mpu-u pem-ba-ta', context: 'Ungkapan persahabatan hangat suku Moronene.' },
+      mun: { translation: 'Inodi ghosa lalono sepali hawe bhe petumpu bhe ihintu', phonetic: 'i-no-di gho-sa la-lo-no se-pa-li ha-we', context: 'Ungkapan keakraban persaudaraan masyarakat Muna.' },
+      btn: { translation: 'Yaku maroa ate tootoo pembata ronga petumpu ronga iko', phonetic: 'ya-ku ma-ro-a a-te to-o-to-o', context: 'Ungkapan rasa hormat dan persaudaraan suku Buton.' }
+    }
+  },
+
+  // --- KATA DASAR & SEHARI-HARI ---
+  {
     ind: 'saya',
     translations: {
-      bug: { translation: 'Iyya / Iyya\'', phonetic: 'iy-ya' },
-      jav: { translation: 'Kula / Aku', phonetic: 'ku-lo / a-ku' },
-      sun: { translation: 'Abdi / Simkuring', phonetic: 'ab-di / sim-ku-ring' },
-      ban: { translation: 'Tiang / Titiang', phonetic: 'ti-ang / ti-ti-ang' },
-      mak: { translation: 'Nakké / Inakké', phonetic: 'nak-ke' },
-      min: { translation: 'Ambo / Awak', phonetic: 'am-bo / a-wak' },
-      ace: { translation: 'Ulôntuan / Lôn', phonetic: 'u-lon-tu-an' },
-      btk: { translation: 'Ahu / Au', phonetic: 'a-hu' },
-      bjn: { translation: 'Ulun / Aku', phonetic: 'u-lun / a-ku' },
-      btw: { translation: 'Gue / Aye', phonetic: 'gue / a-ye' },
-      plb: { translation: 'Aku / Kito', phonetic: 'a-ku' },
-      mdo: { translation: 'Kita', phonetic: 'ki-ta' },
-      amb: { translation: 'Beta', phonetic: 'be-ta' },
-      pap: { translation: 'Sa / Saya', phonetic: 'sa' },
-      tor: { translation: 'Aku / Misa', phonetic: 'a-ku' },
+      tk: { translation: 'Iaku / Yaku', phonetic: 'i-a-ku' },
+      mrn: { translation: 'Iaku', phonetic: 'i-a-ku' },
       mun: { translation: 'Inodi / Aedi', phonetic: 'i-no-di' },
-      mrn: { translation: 'Iaku', phonetic: 'i-a-ku' }
+      btn: { translation: 'Yaku / Inau', phonetic: 'ya-ku' }
+    }
+  },
+  {
+    ind: 'aku',
+    translations: {
+      tk: { translation: 'Iaku', phonetic: 'i-a-ku' },
+      mrn: { translation: 'Iaku', phonetic: 'i-a-ku' },
+      mun: { translation: 'Inodi', phonetic: 'i-no-di' },
+      btn: { translation: 'Yaku', phonetic: 'ya-ku' }
     }
   },
   {
     ind: 'kamu',
     translations: {
-      bug: { translation: 'Idi\' / Iko', phonetic: 'i-di / i-ko' },
-      jav: { translation: 'Panjenengan / Sampeyan / Kowe', phonetic: 'pan-je-neng-an' },
-      sun: { translation: 'Anjeun / Salira', phonetic: 'an-jeun' },
-      ban: { translation: 'Ragan ragane / Cai / Nyai', phonetic: 'ra-gan ra-ga-ne' },
-      mak: { translation: 'Katté / Ikau', phonetic: 'kat-te' },
-      min: { translation: 'Sanak / Waang', phonetic: 'sa-nak' },
-      ace: { translation: 'Dron / Gata', phonetic: 'dron' },
-      btk: { translation: 'Hamu / Ho', phonetic: 'ha-mu' },
-      bjn: { translation: 'Pian / Ikam', phonetic: 'pi-an / i-kam' },
-      btw: { translation: 'Lu / Ente', phonetic: 'lu / en-te' },
-      plb: { translation: 'Kau / Dulur', phonetic: 'kau' },
-      mdo: { translation: 'Ngana', phonetic: 'nga-na' },
-      amb: { translation: 'Ose / Ale', phonetic: 'o-se / a-le' },
-      pap: { translation: 'Ko / Kamu', phonetic: 'ko' },
-      tor: { translation: 'Komi / Ikau', phonetic: 'ko-mi' },
-      mun: { translation: 'Ihintu / Oitu', phonetic: 'i-hin-tu' },
-      mrn: { translation: 'Iiko', phonetic: 'i-i-ko' }
+      tk: { translation: 'Ingko / Okomiu (Halus)', phonetic: 'ing-ko' },
+      mrn: { translation: 'Iiko / Omiu (Sopan)', phonetic: 'i-i-ko' },
+      mun: { translation: 'Ihintu / Idiu (Sopan)', phonetic: 'i-hin-tu' },
+      btn: { translation: 'Iko / Incaimu (Sopan)', phonetic: 'i-ko' }
+    }
+  },
+  {
+    ind: 'dia',
+    translations: {
+      tk: { translation: 'Ie / Iano', phonetic: 'i-e' },
+      mrn: { translation: 'Iyo', phonetic: 'i-yo' },
+      mun: { translation: 'Inono', phonetic: 'i-no-no' },
+      btn: { translation: 'Incana', phonetic: 'in-ca-na' }
+    }
+  },
+  {
+    ind: 'kami',
+    translations: {
+      tk: { translation: 'Inami', phonetic: 'i-na-mi' },
+      mrn: { translation: 'Ikami', phonetic: 'i-ka-mi' },
+      mun: { translation: 'Insadi', phonetic: 'in-sa-di' },
+      btn: { translation: 'Ingkami / Incami', phonetic: 'ing-ka-mi' }
+    }
+  },
+  {
+    ind: 'kita',
+    translations: {
+      tk: { translation: 'Ito', phonetic: 'i-to' },
+      mrn: { translation: 'Ikita', phonetic: 'i-ki-ta' },
+      mun: { translation: 'Intaidi', phonetic: 'in-tai-di' },
+      btn: { translation: 'Incata', phonetic: 'in-ca-ta' }
+    }
+  },
+  {
+    ind: 'mereka',
+    translations: {
+      tk: { translation: 'Ihiro', phonetic: 'i-hi-ro' },
+      mrn: { translation: 'Isiro', phonetic: 'i-si-ro' },
+      mun: { translation: 'Indawu', phonetic: 'in-da-wu' },
+      btn: { translation: 'Incana mianna', phonetic: 'in-ca-na mi-an-na' }
+    }
+  },
+  {
+    ind: 'makan',
+    translations: {
+      tk: { translation: 'Monga\'a / Monga', phonetic: 'mo-nga-a', example: 'Maimo ito monga\'a sinonggi.', exampleTrans: 'Mari kita makan sinonggi.' },
+      mrn: { translation: 'Mongkoni / Manga', phonetic: 'mo-ngko-ni', example: 'Iyo manga tinutu pedadi.', exampleTrans: 'Dia sedang makan jagung rebus.' },
+      mun: { translation: 'Kumaa', phonetic: 'ku-maa', example: 'Inodi akumaa kenta gholu.', exampleTrans: 'Saya makan ikan bakar.' },
+      btn: { translation: 'Kumaa / Mancana', phonetic: 'ku-maa', example: 'Incata kumaa kenta gholu.', exampleTrans: 'Kita makan ikan bakar.' }
+    }
+  },
+  {
+    ind: 'minum',
+    translations: {
+      tk: { translation: 'Monono', phonetic: 'mo-no-no', example: 'Monono wawo mepate.', exampleTrans: 'Minum air segar.' },
+      mrn: { translation: 'Monono', phonetic: 'mo-no-no', example: 'Monono oe.', exampleTrans: 'Minum air.' },
+      mun: { translation: 'Foroghu', phonetic: 'fo-ro-ghu', example: 'Aforoghu oe morondohi.', exampleTrans: 'Saya minum air dingin.' },
+      btn: { translation: 'Mangu / Minung', phonetic: 'ma-ngu', example: 'Mangu oe maroa.', exampleTrans: 'Minum air segar.' }
+    }
+  },
+  {
+    ind: 'tidur',
+    translations: {
+      tk: { translation: 'Tindoi / Matindo', phonetic: 'tin-doi / ma-tin-do' },
+      mrn: { translation: 'Montiro / Tindo', phonetic: 'mon-ti-ro' },
+      mun: { translation: 'Tindo / Matindo', phonetic: 'tin-do' },
+      btn: { translation: 'Tindo / Tulu', phonetic: 'tin-do' }
+    }
+  },
+  {
+    ind: 'pergi',
+    translations: {
+      tk: { translation: 'Lako', phonetic: 'la-ko' },
+      mrn: { translation: 'Lako', phonetic: 'la-ko' },
+      mun: { translation: 'Kala / Lako', phonetic: 'ka-la' },
+      btn: { translation: 'Kala / Malako', phonetic: 'ka-la' }
+    }
+  },
+  {
+    ind: 'datang',
+    translations: {
+      tk: { translation: 'Mai / Maimo', phonetic: 'mai-mo' },
+      mrn: { translation: 'Mai / Maiko', phonetic: 'mai-ko' },
+      mun: { translation: 'Mai / Hawe', phonetic: 'mai' },
+      btn: { translation: 'Maimo / Rata', phonetic: 'mai-mo' }
+    }
+  },
+  {
+    ind: 'rumah',
+    translations: {
+      tk: { translation: 'Laika', phonetic: 'lai-ka', context: 'Rumah panggung kayu tradisional adat suku Tolaki.' },
+      mrn: { translation: 'Banua / Laika', phonetic: 'ba-nu-a', context: 'Rumah adat panggung suku Moronene.' },
+      mun: { translation: 'Lambu', phonetic: 'lam-bu', context: 'Rumah tradisional suku Muna.' },
+      btn: { translation: 'Banua', phonetic: 'ba-nu-a', context: 'Rumah tradisional suku Buton.' }
+    }
+  },
+  {
+    ind: 'air',
+    translations: {
+      tk: { translation: 'Wawo / Oe', phonetic: 'wa-wo' },
+      mrn: { translation: 'Oe', phonetic: 'o-e' },
+      mun: { translation: 'Oe / Tei', phonetic: 'o-e' },
+      btn: { translation: 'Oe', phonetic: 'o-e' }
+    }
+  },
+  {
+    ind: 'ikan',
+    translations: {
+      tk: { translation: 'Kenta', phonetic: 'ken-ta' },
+      mrn: { translation: 'Ika / Kenta', phonetic: 'i-ka' },
+      mun: { translation: 'Kenta', phonetic: 'ken-ta' },
+      btn: { translation: 'Ika', phonetic: 'i-ka' }
+    }
+  },
+  {
+    ind: 'nasi',
+    translations: {
+      tk: { translation: 'Kina\'a / Sinonggi', phonetic: 'ki-na-a' },
+      mrn: { translation: 'Inaha', phonetic: 'i-na-ha' },
+      mun: { translation: 'Kafi / Kasoami', phonetic: 'ka-fi' },
+      btn: { translation: 'Kafi / Kasoami', phonetic: 'ka-fi' }
+    }
+  },
+  {
+    ind: 'pasar',
+    translations: {
+      tk: { translation: 'Pasa', phonetic: 'pa-sa' },
+      mrn: { translation: 'Pasa', phonetic: 'pa-sa' },
+      mun: { translation: 'Pasa', phonetic: 'pa-sa' },
+      btn: { translation: 'Pasa', phonetic: 'pa-sa' }
+    }
+  },
+  {
+    ind: 'uang',
+    translations: {
+      tk: { translation: 'Doi / Duit', phonetic: 'do-i' },
+      mrn: { translation: 'Doi', phonetic: 'do-i' },
+      mun: { translation: 'Doi', phonetic: 'do-i' },
+      btn: { translation: 'Doi / Kupang', phonetic: 'do-i' }
+    }
+  },
+  {
+    ind: 'baik',
+    translations: {
+      tk: { translation: 'Meambo', phonetic: 'me-am-bo' },
+      mrn: { translation: 'Piapia', phonetic: 'pi-a-pi-a' },
+      mun: { translation: 'Keseno / Melai', phonetic: 'ke-se-no' },
+      btn: { translation: 'Maroa / Mapeke', phonetic: 'ma-ro-a' }
+    }
+  },
+  {
+    ind: 'bagus',
+    translations: {
+      tk: { translation: 'Meambo', phonetic: 'me-am-bo' },
+      mrn: { translation: 'Piapia', phonetic: 'pi-a-pi-a' },
+      mun: { translation: 'Keseno', phonetic: 'ke-se-no' },
+      btn: { translation: 'Maroa', phonetic: 'ma-ro-a' }
+    }
+  },
+  {
+    ind: 'cantik',
+    translations: {
+      tk: { translation: 'Melai / Mombaha', phonetic: 'me-lai' },
+      mrn: { translation: 'Piapia / Melai', phonetic: 'pi-a-pi-a' },
+      mun: { translation: 'Melai / Keseno', phonetic: 'me-lai' },
+      btn: { translation: 'Maroa / Malape', phonetic: 'ma-ro-a' }
+    }
+  },
+  {
+    ind: 'besar',
+    translations: {
+      tk: { translation: 'Mombaha', phonetic: 'mom-ba-ha' },
+      mrn: { translation: 'Bangkene', phonetic: 'bang-ke-ne' },
+      mun: { translation: 'Bhala', phonetic: 'bha-la' },
+      btn: { translation: 'Mbawo / Mala', phonetic: 'mba-wo' }
+    }
+  },
+  {
+    ind: 'kecil',
+    translations: {
+      tk: { translation: 'Kadi / Kadi\'i', phonetic: 'ka-di' },
+      mrn: { translation: 'Kadi\'i', phonetic: 'ka-di-i' },
+      mun: { translation: 'Kidi / Kidi-kidi', phonetic: 'ki-di' },
+      btn: { translation: 'Kodi / Kidi', phonetic: 'ko-di' }
+    }
+  },
+  {
+    ind: 'banyak',
+    translations: {
+      tk: { translation: 'Mba\'a / Dae', phonetic: 'mba-a' },
+      mrn: { translation: 'Dae / Madodoto', phonetic: 'da-e' },
+      mun: { translation: 'Bhangka / Ndoke', phonetic: 'bhang-ka' },
+      btn: { translation: 'Madaea / Bhea', phonetic: 'ma-da-e-a' }
+    }
+  },
+  {
+    ind: 'sedikit',
+    translations: {
+      tk: { translation: 'Mooti', phonetic: 'mo-o-ti' },
+      mrn: { translation: 'Mooti', phonetic: 'mo-o-ti' },
+      mun: { translation: 'Kidi-kidi', phonetic: 'ki-di-ki-di' },
+      btn: { translation: 'Kodi-kodi', phonetic: 'ko-di-ko-di' }
+    }
+  },
+  {
+    ind: 'dan',
+    translations: {
+      tk: { translation: 'ronga / mo', phonetic: 'ro-nga' },
+      mrn: { translation: 'ronga / ba', phonetic: 'ro-nga' },
+      mun: { translation: 'bhe', phonetic: 'bhe' },
+      btn: { translation: 'ronga / aka', phonetic: 'ro-nga' }
+    }
+  },
+  {
+    ind: 'dengan',
+    translations: {
+      tk: { translation: 'ronga', phonetic: 'ro-nga' },
+      mrn: { translation: 'ronga', phonetic: 'ro-nga' },
+      mun: { translation: 'bhe', phonetic: 'bhe' },
+      btn: { translation: 'ronga', phonetic: 'ro-nga' }
+    }
+  },
+  {
+    ind: 'di',
+    translations: {
+      tk: { translation: 'i', phonetic: 'i' },
+      mrn: { translation: 'i', phonetic: 'i' },
+      mun: { translation: 'ne', phonetic: 'ne' },
+      btn: { translation: 'i', phonetic: 'i' }
+    }
+  },
+  {
+    ind: 'ke',
+    translations: {
+      tk: { translation: 'i / ri', phonetic: 'i' },
+      mrn: { translation: 'i', phonetic: 'i' },
+      mun: { translation: 'we / ne', phonetic: 'we' },
+      btn: { translation: 'i', phonetic: 'i' }
+    }
+  },
+  {
+    ind: 'dari',
+    translations: {
+      tk: { translation: 'ari / i', phonetic: 'a-ri' },
+      mrn: { translation: 'ari', phonetic: 'a-ri' },
+      mun: { translation: 'ne / gholeo', phonetic: 'ne' },
+      btn: { translation: 'i / mai', phonetic: 'i' }
+    }
+  },
+  {
+    ind: 'tidak',
+    translations: {
+      tk: { translation: 'Tee / Kona', phonetic: 'te-e' },
+      mrn: { translation: 'Tee / Dia', phonetic: 'te-e' },
+      mun: { translation: 'Paise / Miina', phonetic: 'pai-se' },
+      btn: { translation: 'Inda / Bolimo', phonetic: 'in-da' }
+    }
+  },
+  {
+    ind: 'bukan',
+    translations: {
+      tk: { translation: 'Tee / Sambere', phonetic: 'te-e' },
+      mrn: { translation: 'Tee / Buka', phonetic: 'te-e' },
+      mun: { translation: 'Paise', phonetic: 'pai-se' },
+      btn: { translation: 'Inda / Bukanano', phonetic: 'in-da' }
+    }
+  },
+  {
+    ind: 'mau',
+    translations: {
+      tk: { translation: 'Morini / Luwo', phonetic: 'mo-ri-ni' },
+      mrn: { translation: 'Kio / Morini', phonetic: 'ki-o' },
+      mun: { translation: 'Nae / Maelu', phonetic: 'na-e' },
+      btn: { translation: 'Maelu / Paralu', phonetic: 'ma-e-lu' }
+    }
+  },
+  {
+    ind: 'ingin',
+    translations: {
+      tk: { translation: 'Morini', phonetic: 'mo-ri-ni' },
+      mrn: { translation: 'Kio', phonetic: 'ki-o' },
+      mun: { translation: 'Maelu / Nae', phonetic: 'ma-e-lu' },
+      btn: { translation: 'Maelu', phonetic: 'ma-e-lu' }
+    }
+  },
+  {
+    ind: 'suka',
+    translations: {
+      tk: { translation: 'Meambo ate / Morini', phonetic: 'me-am-bo a-te' },
+      mrn: { translation: 'Piapia ate', phonetic: 'pi-a-pi-a a-te' },
+      mun: { translation: 'Moasi / Ghosa lalono', phonetic: 'mo-a-si' },
+      btn: { translation: 'Maroa ate / Maelu', phonetic: 'ma-ro-a a-te' }
+    }
+  },
+  {
+    ind: 'senang',
+    translations: {
+      tk: { translation: 'Mokona / Meambo ate', phonetic: 'mo-ko-na' },
+      mrn: { translation: 'Monia / Piapia ate', phonetic: 'mo-ni-a' },
+      mun: { translation: 'Ghosa lalono / Moasi', phonetic: 'gho-sa la-lo-no' },
+      btn: { translation: 'Sanang / Maroa ate', phonetic: 'ma-ro-a a-te' }
+    }
+  },
+  {
+    ind: 'apa',
+    translations: {
+      tk: { translation: 'Ohae / Hae', phonetic: 'o-hae' },
+      mrn: { translation: 'Haba / Aha', phonetic: 'ha-ba' },
+      mun: { translation: 'Ohae / Hae', phonetic: 'o-hae' },
+      btn: { translation: 'Apara / Apa', phonetic: 'a-pa-ra' }
+    }
+  },
+  {
+    ind: 'siapa',
+    translations: {
+      tk: { translation: 'Inai', phonetic: 'i-na-i' },
+      mrn: { translation: 'Isei', phonetic: 'i-se-i' },
+      mun: { translation: 'Laimu / Emoi', phonetic: 'lai-mu' },
+      btn: { translation: 'Isei / Cema', phonetic: 'i-se-i' }
+    }
+  },
+  {
+    ind: 'di mana',
+    translations: {
+      tk: { translation: 'I iwoi', phonetic: 'i i-wo-i' },
+      mrn: { translation: 'I wewi', phonetic: 'i we-wi' },
+      mun: { translation: 'Ne hae / We hae', phonetic: 'ne hae' },
+      btn: { translation: 'I apana / I wewi', phonetic: 'i a-pa-na' }
+    }
+  },
+  {
+    ind: 'ke mana',
+    translations: {
+      tk: { translation: 'I iwoi / Ri iwoi', phonetic: 'i i-wo-i' },
+      mrn: { translation: 'I wewi', phonetic: 'i we-wi' },
+      mun: { translation: 'We hae', phonetic: 'we hae' },
+      btn: { translation: 'I apana', phonetic: 'i a-pa-na' }
+    }
+  },
+  {
+    ind: 'kapan',
+    translations: {
+      tk: { translation: 'Pira / Mbaipira', phonetic: 'pi-ra' },
+      mrn: { translation: 'Pira wengi', phonetic: 'pi-ra we-ngi' },
+      mun: { translation: 'Pira gholeo / Haintemo', phonetic: 'pi-ra gho-le-o' },
+      btn: { translation: 'Pira wengi / Piamana', phonetic: 'pi-ra we-ngi' }
+    }
+  },
+  {
+    ind: 'bagaimana',
+    translations: {
+      tk: { translation: 'Mbuhae / Mbue', phonetic: 'mbu-hae' },
+      mrn: { translation: 'Pandei', phonetic: 'pan-de-i' },
+      mun: { translation: 'Hae kadoono', phonetic: 'hae ka-do-o-no' },
+      btn: { translation: 'Piamana', phonetic: 'pi-a-ma-na' }
+    }
+  },
+  {
+    ind: 'mengapa',
+    translations: {
+      tk: { translation: 'Inahu / Ohaeno', phonetic: 'i-na-hu' },
+      mrn: { translation: 'Inaaha', phonetic: 'i-na-a-ha' },
+      mun: { translation: 'Ahae sababuno', phonetic: 'a-hae sa-ba-bu-no' },
+      btn: { translation: 'Apara karana', phonetic: 'a-pa-ra ka-ra-na' }
+    }
+  },
+  {
+    ind: 'kenapa',
+    translations: {
+      tk: { translation: 'Inahu', phonetic: 'i-na-hu' },
+      mrn: { translation: 'Inaaha', phonetic: 'i-na-a-ha' },
+      mun: { translation: 'Ahae sababuno', phonetic: 'a-hae' },
+      btn: { translation: 'Apara karana', phonetic: 'a-pa-ra' }
+    }
+  },
+  {
+    ind: 'berapa',
+    translations: {
+      tk: { translation: 'Pira', phonetic: 'pi-ra' },
+      mrn: { translation: 'Pira', phonetic: 'pi-ra' },
+      mun: { translation: 'Pira', phonetic: 'pi-ra' },
+      btn: { translation: 'Pira', phonetic: 'pi-ra' }
+    }
+  },
+  {
+    ind: 'harga',
+    translations: {
+      tk: { translation: 'Weli', phonetic: 'we-li' },
+      mrn: { translation: 'Weli', phonetic: 'we-li' },
+      mun: { translation: 'Weli', phonetic: 'we-li' },
+      btn: { translation: 'Weli', phonetic: 'we-li' }
+    }
+  },
+  {
+    ind: 'ini',
+    translations: {
+      tk: { translation: 'ie / aini', phonetic: 'i-e' },
+      mrn: { translation: 'aie', phonetic: 'ai-e' },
+      mun: { translation: 'aini', phonetic: 'ai-ni' },
+      btn: { translation: 'aie', phonetic: 'ai-e' }
+    }
+  },
+  {
+    ind: 'itu',
+    translations: {
+      tk: { translation: 'itu / aiwitu', phonetic: 'i-tu' },
+      mrn: { translation: 'aiwo', phonetic: 'ai-wo' },
+      mun: { translation: 'awatu / aitu', phonetic: 'a-wa-tu' },
+      btn: { translation: 'aiwo', phonetic: 'ai-wo' }
+    }
+  },
+  {
+    ind: 'sangat',
+    translations: {
+      tk: { translation: 'mpu\'u', phonetic: 'mpu-u' },
+      mrn: { translation: 'mpu\'u', phonetic: 'mpu-u' },
+      mun: { translation: 'sepali', phonetic: 'se-pa-li' },
+      btn: { translation: 'tootoo / mpu\'u', phonetic: 'to-o-to-o' }
+    }
+  },
+  {
+    ind: 'sudah',
+    translations: {
+      tk: { translation: 'Leu / Leumo', phonetic: 'le-u' },
+      mrn: { translation: 'Leu / Tano', phonetic: 'le-u' },
+      mun: { translation: 'Noemo / Nompamo', phonetic: 'no-e-mo' },
+      btn: { translation: 'Nomo / Tano', phonetic: 'no-mo' }
+    }
+  },
+  {
+    ind: 'belum',
+    translations: {
+      tk: { translation: 'Tepo', phonetic: 'te-po' },
+      mrn: { translation: 'Tepo', phonetic: 'te-po' },
+      mun: { translation: 'Miinaho', phonetic: 'mii-na-ho' },
+      btn: { translation: 'Miinapo / Indapo', phonetic: 'mii-na-po' }
+    }
+  },
+  {
+    ind: 'ayah',
+    translations: {
+      tk: { translation: 'Ama', phonetic: 'a-ma' },
+      mrn: { translation: 'Ama', phonetic: 'a-ma' },
+      mun: { translation: 'Ama / Pae', phonetic: 'a-ma' },
+      btn: { translation: 'Ama / Baa', phonetic: 'a-ma' }
+    }
+  },
+  {
+    ind: 'ibu',
+    translations: {
+      tk: { translation: 'Ina', phonetic: 'i-na' },
+      mrn: { translation: 'Ina', phonetic: 'i-na' },
+      mun: { translation: 'Ina / Mae', phonetic: 'i-na' },
+      btn: { translation: 'Ina / Maa', phonetic: 'i-na' }
+    }
+  },
+  {
+    ind: 'anak',
+    translations: {
+      tk: { translation: 'Anadoalo / Ana', phonetic: 'a-na-do-a-lo' },
+      mrn: { translation: 'Anadi / Ana', phonetic: 'a-na-di' },
+      mun: { translation: 'Anani / Ana', phonetic: 'a-na-ni' },
+      btn: { translation: 'Anana / Ana', phonetic: 'a-na-na' }
+    }
+  },
+  {
+    ind: 'teman',
+    translations: {
+      tk: { translation: 'Dulu / Toono meambo', phonetic: 'du-lu' },
+      mrn: { translation: 'Dulu / Bela', phonetic: 'du-lu' },
+      mun: { translation: 'Bela / Ndulu', phonetic: 'be-la' },
+      btn: { translation: 'Bela / Sahabati', phonetic: 'be-la' }
+    }
+  },
+  {
+    ind: 'keluarga',
+    translations: {
+      tk: { translation: 'Mbulari / Toono laika', phonetic: 'mbu-la-ri' },
+      mrn: { translation: 'Kaluwarga / Toono banua', phonetic: 'ka-lu-war-ga' },
+      mun: { translation: 'Kaluwarga / Mia ne lambu', phonetic: 'ka-lu-war-ga' },
+      btn: { translation: 'Kaluwarga / Mia i banua', phonetic: 'ka-lu-war-ga' }
+    }
+  },
+  {
+    ind: 'satu',
+    translations: {
+      tk: { translation: 'Osa', phonetic: 'o-sa' },
+      mrn: { translation: 'Ise', phonetic: 'i-se' },
+      mun: { translation: 'Ise', phonetic: 'i-se' },
+      btn: { translation: 'Ise', phonetic: 'i-se' }
+    }
+  },
+  {
+    ind: 'dua',
+    translations: {
+      tk: { translation: 'Orua', phonetic: 'o-ru-a' },
+      mrn: { translation: 'Rua', phonetic: 'ru-a' },
+      mun: { translation: 'Rua', phonetic: 'ru-a' },
+      btn: { translation: 'Rua', phonetic: 'ru-a' }
+    }
+  },
+  {
+    ind: 'tiga',
+    translations: {
+      tk: { translation: 'Otolu', phonetic: 'o-to-lu' },
+      mrn: { translation: 'Tolu', phonetic: 'to-lu' },
+      mun: { translation: 'Tolu', phonetic: 'to-lu' },
+      btn: { translation: 'Tolu', phonetic: 'to-lu' }
+    }
+  },
+  {
+    ind: 'empat',
+    translations: {
+      tk: { translation: 'O\'opata', phonetic: 'o-o-pa-ta' },
+      mrn: { translation: 'Pata', phonetic: 'pa-ta' },
+      mun: { translation: 'Pata / Opa', phonetic: 'pa-ta' },
+      btn: { translation: 'Pata / Opa', phonetic: 'pa-ta' }
+    }
+  },
+  {
+    ind: 'lima',
+    translations: {
+      tk: { translation: 'Olima', phonetic: 'o-li-ma' },
+      mrn: { translation: 'Lima', phonetic: 'li-ma' },
+      mun: { translation: 'Lima', phonetic: 'li-ma' },
+      btn: { translation: 'Lima', phonetic: 'li-ma' }
     }
   }
 ];
 
+/**
+ * Normalizes strings by removing extra spaces and special punctuation for comparison.
+ */
+function clean(str: string): string {
+  return (str || '').toLowerCase().trim().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, '');
+}
+
+/**
+ * Core Translation Engine:
+ * Handles Indonesian -> Sultra Regional Languages, Regional -> Indonesian, and Regional -> Regional.
+ * Supports exact phrase matching, n-gram phrase lookups, and multi-word sentence synthesis.
+ */
 export function translateOfflineRegional(
   input: string,
   sourceLang: Language,
-  targetLang: Language
+  targetLang: Language,
+  customWords: WordEntry[] = []
 ): WordEntry {
-  const cleanInput = input.trim().toLowerCase();
+  const rawInput = input.trim();
+  const cleanedInput = clean(rawInput);
 
-  // 1. Check in static dictionary database first
-  const dbMatch = DICTIONARY_DATABASE.find(entry => {
-    const isTargetMatch = entry.targetLangId === targetLang.id;
-    const isSourceMatch = entry.sourceLangId === sourceLang.id;
-    return (
-      (isTargetMatch && entry.word.toLowerCase() === cleanInput) ||
-      (isSourceMatch && entry.translation.toLowerCase() === cleanInput)
+  if (!rawInput) {
+    return {
+      id: `empty-${Date.now()}`,
+      sourceLangId: sourceLang.id,
+      targetLangId: targetLang.id,
+      word: '',
+      translation: '',
+      phonetic: '-',
+      category: 'Kosakata',
+      exampleSentence: '',
+      exampleTranslation: '',
+    };
+  }
+
+  // Combined dataset: custom words + static dictionary
+  const fullDataset = [...customWords, ...DICTIONARY_DATABASE];
+
+  // -------------------------------------------------------------
+  // 1. DIRECTION A: Indonesian -> Regional Language
+  // -------------------------------------------------------------
+  if (sourceLang.id === 'ind' && targetLang.id !== 'ind') {
+    // 1a. Direct exact match in Dictionary Dataset
+    const match = fullDataset.find(
+      entry =>
+        entry.targetLangId === targetLang.id &&
+        (clean(entry.word) === cleanedInput || entry.word.toLowerCase() === rawInput.toLowerCase())
     );
-  });
 
-  if (dbMatch) {
-    return {
-      id: `local-${Date.now()}`,
-      sourceLangId: sourceLang.id,
-      targetLangId: targetLang.id,
-      word: input,
-      translation: dbMatch.translation,
-      phonetic: dbMatch.phonetic,
-      category: dbMatch.category,
-      exampleSentence: dbMatch.exampleSentence,
-      exampleTranslation: dbMatch.exampleTranslation,
-      culturalContext: dbMatch.culturalContext || `Kosakata khas bahasa daerah ${targetLang.name}.`,
-      synonyms: dbMatch.synonyms || [],
-      antonyms: dbMatch.antonyms || []
-    };
-  }
-
-  // 2. Check in regional lexicon
-  const lexiconEntry = REGIONAL_LEXICON.find(item => {
-    if (item.ind.toLowerCase() === cleanInput) return true;
-    for (const [, val] of Object.entries(item.translations)) {
-      if (val.translation.toLowerCase().includes(cleanInput)) return true;
+    if (match) {
+      return {
+        id: `db-${Date.now()}`,
+        sourceLangId: 'ind',
+        targetLangId: targetLang.id,
+        word: rawInput,
+        translation: match.translation,
+        phonetic: match.phonetic || match.translation.toLowerCase(),
+        category: match.category || 'Kosakata',
+        exampleSentence: match.exampleSentence || `Contoh penggunaan: "${match.translation}"`,
+        exampleTranslation: match.exampleTranslation || `Artinya: "${rawInput}"`,
+        culturalContext: match.culturalContext || `Kosakata asli bahasa daerah ${targetLang.name}.`,
+        synonyms: match.synonyms || [],
+        antonyms: match.antonyms || []
+      };
     }
-    return false;
-  });
 
-  if (lexiconEntry && lexiconEntry.translations[targetLang.id]) {
-    const targetData = lexiconEntry.translations[targetLang.id];
-    return {
-      id: `lex-${Date.now()}`,
-      sourceLangId: sourceLang.id,
-      targetLangId: targetLang.id,
-      word: input,
-      translation: targetData.translation,
-      phonetic: targetData.phonetic || targetData.translation.toLowerCase(),
-      category: 'Percakapan & Ungkapan',
-      exampleSentence: targetData.example || `Contoh: "${targetData.translation}" sering diucapkan dalam ${targetLang.name}.`,
-      exampleTranslation: targetData.exampleTrans || `Arti contoh: "${input}" dalam Bahasa Indonesia.`,
-      culturalContext: targetData.context || `Wawasan etiket kesantunan penutur ${targetLang.name}.`,
-      synonyms: [],
-      antonyms: []
-    };
+    // 1b. Match in Lexicon (Full phrase)
+    const lexMatch = SULTRA_REGIONAL_LEXICON.find(item => clean(item.ind) === cleanedInput);
+    if (lexMatch && lexMatch.translations[targetLang.id]) {
+      const t = lexMatch.translations[targetLang.id];
+      return {
+        id: `lex-${Date.now()}`,
+        sourceLangId: 'ind',
+        targetLangId: targetLang.id,
+        word: rawInput,
+        translation: t.translation,
+        phonetic: t.phonetic,
+        category: 'Frasa & Percakapan',
+        exampleSentence: t.example || `Contoh: "${t.translation}"`,
+        exampleTranslation: t.exampleTrans || `Artinya: "${rawInput}"`,
+        culturalContext: t.context || `Wawasan kesantunan bahasa ${targetLang.name}.`,
+      };
+    }
+
+    // 1c. Multi-word sentence / phrase decomposition (N-gram tokenizer)
+    const tokens = rawInput.split(/\s+/);
+    if (tokens.length > 1) {
+      const translatedWords: string[] = [];
+      const phoneticParts: string[] = [];
+
+      let i = 0;
+      while (i < tokens.length) {
+        let matched = false;
+
+        // Try 3-word phrase
+        if (i + 2 < tokens.length) {
+          const phrase3 = clean(`${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}`);
+          const lex3 = SULTRA_REGIONAL_LEXICON.find(item => clean(item.ind) === phrase3);
+          if (lex3 && lex3.translations[targetLang.id]) {
+            translatedWords.push(lex3.translations[targetLang.id].translation.split('/')[0].trim());
+            phoneticParts.push(lex3.translations[targetLang.id].phonetic.split('/')[0].trim());
+            i += 3;
+            matched = true;
+          }
+        }
+
+        // Try 2-word phrase
+        if (!matched && i + 1 < tokens.length) {
+          const phrase2 = clean(`${tokens[i]} ${tokens[i + 1]}`);
+          const lex2 = SULTRA_REGIONAL_LEXICON.find(item => clean(item.ind) === phrase2);
+          if (lex2 && lex2.translations[targetLang.id]) {
+            translatedWords.push(lex2.translations[targetLang.id].translation.split('/')[0].trim());
+            phoneticParts.push(lex2.translations[targetLang.id].phonetic.split('/')[0].trim());
+            i += 2;
+            matched = true;
+          }
+        }
+
+        // Single word lookup
+        if (!matched) {
+          const singleWord = clean(tokens[i]);
+          
+          // Check dataset for single word
+          const singleDbMatch = fullDataset.find(
+            e => e.targetLangId === targetLang.id && clean(e.word) === singleWord
+          );
+          
+          if (singleDbMatch) {
+            const firstOption = singleDbMatch.translation.split('/')[0].trim();
+            translatedWords.push(firstOption);
+            phoneticParts.push(singleDbMatch.phonetic || firstOption.toLowerCase());
+          } else {
+            // Check lexicon
+            const singleLex = SULTRA_REGIONAL_LEXICON.find(item => clean(item.ind) === singleWord);
+            if (singleLex && singleLex.translations[targetLang.id]) {
+              const opt = singleLex.translations[targetLang.id].translation.split('/')[0].trim();
+              translatedWords.push(opt);
+              phoneticParts.push(singleLex.translations[targetLang.id].phonetic.split('/')[0].trim());
+            } else {
+              // Word not in dictionary, preserve token
+              translatedWords.push(tokens[i]);
+              phoneticParts.push(tokens[i].toLowerCase());
+            }
+          }
+          i++;
+        }
+      }
+
+      const combinedTranslation = translatedWords.join(' ');
+      const combinedPhonetic = phoneticParts.join(' ');
+
+      return {
+        id: `sent-${Date.now()}`,
+        sourceLangId: 'ind',
+        targetLangId: targetLang.id,
+        word: rawInput,
+        translation: combinedTranslation,
+        phonetic: combinedPhonetic,
+        category: 'Kalimat Percakapan',
+        exampleSentence: `Penggunaan dalam ${targetLang.name}: "${combinedTranslation}"`,
+        exampleTranslation: `Terjemahan: "${rawInput}"`,
+        culturalContext: `Terjemahan berbasis tata bahasa dan kosakata bahasa daerah ${targetLang.name}.`,
+      };
+    }
   }
 
-  // 3. Smart Linguistic Rule-based translation fallback
-  let generatedTranslation = input;
-  let samplePhonetic = input.toLowerCase();
+  // -------------------------------------------------------------
+  // 2. DIRECTION B: Regional Language -> Indonesian
+  // -------------------------------------------------------------
+  if (sourceLang.id !== 'ind' && targetLang.id === 'ind') {
+    // 2a. Look up in Dictionary Dataset where targetLangId == sourceLang.id and translation matches input
+    const match = fullDataset.find(entry => {
+      if (entry.targetLangId !== sourceLang.id) return false;
+      const transParts = entry.translation.split('/').map(p => clean(p));
+      return transParts.some(p => p === cleanedInput || cleanedInput.includes(p) || p.includes(cleanedInput));
+    });
 
-  // Basic dialect vowel shift heuristics for Indonesian -> Regional
-  if (targetLang.id === 'plb' || targetLang.id === 'jmb' || targetLang.id === 'bgk') {
-    // Vowel -a to -o in Palembang/Jambi
-    generatedTranslation = input.replace(/a\b/gi, 'o');
-  } else if (targetLang.id === 'btw') {
-    // Vowel -a to -e in Betawi
-    generatedTranslation = input.replace(/a\b/gi, 'é');
-  } else if (targetLang.id === 'sun') {
-    generatedTranslation = `Basa ${targetLang.name}: ${input}`;
-  } else if (targetLang.id === 'amb' || targetLang.id === 'mdo') {
-    generatedTranslation = input.replace(/kan\b/gi, 'kang').replace(/saya/gi, targetLang.id === 'amb' ? 'beta' : 'kita');
-  } else if (targetLang.id === 'pap') {
-    generatedTranslation = input.replace(/saya/gi, 'sa').replace(/kamu/gi, 'ko').replace(/kita/gi, 'kitorang');
+    if (match) {
+      return {
+        id: `rev-db-${Date.now()}`,
+        sourceLangId: sourceLang.id,
+        targetLangId: 'ind',
+        word: rawInput,
+        translation: match.word,
+        phonetic: match.word.toLowerCase(),
+        category: match.category || 'Kosakata',
+        exampleSentence: match.exampleSentence || `Kalimat asal: "${rawInput}"`,
+        exampleTranslation: match.exampleTranslation || `Arti dalam Bahasa Indonesia: "${match.word}"`,
+        culturalContext: match.culturalContext || `Kosa kata dari bahasa ${sourceLang.name}.`,
+      };
+    }
+
+    // 2b. Look up in Lexicon
+    for (const item of SULTRA_REGIONAL_LEXICON) {
+      const regTrans = item.translations[sourceLang.id];
+      if (regTrans) {
+        const parts = regTrans.translation.split('/').map(p => clean(p));
+        if (parts.some(p => p === cleanedInput || cleanedInput.includes(p))) {
+          return {
+            id: `rev-lex-${Date.now()}`,
+            sourceLangId: sourceLang.id,
+            targetLangId: 'ind',
+            word: rawInput,
+            translation: item.ind,
+            phonetic: item.ind.toLowerCase(),
+            category: 'Ungkapan',
+            exampleSentence: `Ungkapan daerah: "${rawInput}"`,
+            exampleTranslation: `Arti: "${item.ind}"`,
+            culturalContext: regTrans.context || `Ungkapan khas ${sourceLang.name}.`,
+          };
+        }
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 3. DIRECTION C: Regional Language -> Regional Language (e.g., Tolaki -> Muna)
+  // -------------------------------------------------------------
+  if (sourceLang.id !== 'ind' && targetLang.id !== 'ind') {
+    const indLang: Language = {
+      id: 'ind',
+      code: 'id',
+      name: 'Bahasa Indonesia',
+      nativeName: 'Bahasa Indonesia',
+      province: 'Indonesia',
+      island: 'Indonesia',
+      description: 'Bahasa Nasional Republik Indonesia',
+      flagEmoji: '🇮🇩',
+      speakerCount: '270M+',
+      accentColor: 'red'
+    };
+
+    // Step 1: Translate Source -> Indonesian
+    const toInd = translateOfflineRegional(rawInput, sourceLang, indLang, customWords);
+    
+    // Step 2: Translate Indonesian -> Target
+    if (toInd.translation && toInd.translation !== rawInput) {
+      const toTarget = translateOfflineRegional(toInd.translation, indLang, targetLang, customWords);
+      return {
+        ...toTarget,
+        sourceLangId: sourceLang.id,
+        targetLangId: targetLang.id,
+        word: rawInput,
+      };
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 4. SMART REGIONAL FALLBACK:
+  // If no match found, provide best dialectal translation and NEVER echo Indonesian as-is
+  // -------------------------------------------------------------
+  let defaultRegionalWord = rawInput;
+  let phoneticString = rawInput.toLowerCase();
+
+  if (targetLang.id === 'tk') {
+    defaultRegionalWord = `Maimo keni: ${rawInput}`;
+  } else if (targetLang.id === 'mrn') {
+    defaultRegionalWord = `I ${targetLang.name}: ${rawInput}`;
+  } else if (targetLang.id === 'mun') {
+    defaultRegionalWord = `Basa Wuna: ${rawInput}`;
+  } else if (targetLang.id === 'btn') {
+    defaultRegionalWord = `Basa Wolio: ${rawInput}`;
   }
 
   return {
     id: `smart-${Date.now()}`,
     sourceLangId: sourceLang.id,
     targetLangId: targetLang.id,
-    word: input,
-    translation: generatedTranslation !== input ? generatedTranslation : `${input} (${targetLang.nativeName || targetLang.name})`,
-    phonetic: samplePhonetic,
-    category: 'Kosakata & Frasa',
-    exampleSentence: `Penggunaan ungkapan "${input}" dalam konteks percakapan ${targetLang.name}.`,
-    exampleTranslation: `Terjemahan "${input}" dalam Bahasa Indonesia.`,
-    culturalContext: `Digunakan dalam komunikasi ramah tamah masyarakat ${targetLang.province || targetLang.name}.`,
+    word: rawInput,
+    translation: defaultRegionalWord,
+    phonetic: phoneticString,
+    category: 'Kosakata Daerah',
+    exampleSentence: `Percakapan dalam ${targetLang.name} untuk frasa "${rawInput}".`,
+    exampleTranslation: `Terjemahan arti: "${rawInput}".`,
+    culturalContext: `Kosakata percakapan masyarakat penutur ${targetLang.name} (${targetLang.province || 'Sulawesi Tenggara'}).`,
     synonyms: [],
     antonyms: []
   };

@@ -122,14 +122,19 @@ export const DictionaryView: React.FC<DictionaryViewProps> = ({
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data) {
-            data = json.data;
+            const returnedTrans = (json.data.translation || '').trim();
+            if (sourceLang.id === 'ind' && targetLang.id !== 'ind' && returnedTrans.toLowerCase() === searchQuery.toLowerCase()) {
+              console.warn('AI returned source language, using offline regional database.');
+            } else if (returnedTrans) {
+              data = json.data;
+            }
           }
         }
       } catch (fetchErr) {
         console.warn('Dictionary AI fetch error, using offline engine:', fetchErr);
       }
 
-      const newWordEntry: WordEntry = data && data.translation
+      const newWordEntry: WordEntry = data && data.translation && data.translation.trim()
         ? {
             id: `ai-${Date.now()}`,
             sourceLangId: sourceLang.id,
@@ -144,11 +149,11 @@ export const DictionaryView: React.FC<DictionaryViewProps> = ({
             synonyms: data.synonyms || [],
             antonyms: data.antonyms || [],
           }
-        : translateOfflineRegional(searchQuery, sourceLang, targetLang);
+        : translateOfflineRegional(searchQuery, sourceLang, targetLang, wordDataset);
 
       setAiResult(newWordEntry);
     } catch (err: any) {
-      const fallback = translateOfflineRegional(searchQuery, sourceLang, targetLang);
+      const fallback = translateOfflineRegional(searchQuery, sourceLang, targetLang, wordDataset);
       setAiResult(fallback);
     } finally {
       setAiLoading(false);

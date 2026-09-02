@@ -28,6 +28,7 @@ interface TranslatorViewProps {
   bookmarks: string[];
   onToggleBookmark: (wordId: string) => void;
   onSelectWordDetail: (word: WordEntry) => void;
+  allWords?: WordEntry[];
 }
 
 interface TranslationHistoryItem {
@@ -58,6 +59,7 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
   bookmarks,
   onToggleBookmark,
   onSelectWordDetail,
+  allWords = [],
 }) => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -106,7 +108,13 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data) {
-            data = json.data;
+            const returnedTrans = (json.data.translation || '').trim();
+            // Validate: if translating from Indonesian to regional, the translation cannot be identical to source text
+            if (sourceLang.id === 'ind' && targetLang.id !== 'ind' && returnedTrans.toLowerCase() === text.toLowerCase()) {
+              console.warn('API returned Indonesian instead of regional language, falling back to local linguistic engine.');
+            } else if (returnedTrans) {
+              data = json.data;
+            }
           }
         }
       } catch (fetchErr) {
@@ -114,7 +122,7 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
       }
 
       // If backend API returned valid data, use it; otherwise, use local regional translation engine
-      const newEntry: WordEntry = data && data.translation
+      const newEntry: WordEntry = data && data.translation && data.translation.trim()
         ? {
             id: `trans-${Date.now()}`,
             sourceLangId: sourceLang.id,
@@ -129,7 +137,7 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
             synonyms: data.synonyms || [],
             antonyms: data.antonyms || [],
           }
-        : translateOfflineRegional(text, sourceLang, targetLang);
+        : translateOfflineRegional(text, sourceLang, targetLang, allWords);
 
       setTranslationResult(newEntry);
 
@@ -148,7 +156,7 @@ export const TranslatorView: React.FC<TranslatorViewProps> = ({
       setHistory(prev => [histItem, ...prev.filter(h => h.sourceText !== text)].slice(0, 10));
     } catch (err: any) {
       // Guaranteed safe fallback
-      const fallbackEntry = translateOfflineRegional(text, sourceLang, targetLang);
+      const fallbackEntry = translateOfflineRegional(text, sourceLang, targetLang, allWords);
       setTranslationResult(fallbackEntry);
     } finally {
       setIsLoading(false);
