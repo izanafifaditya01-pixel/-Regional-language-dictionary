@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { DictionaryView } from './components/DictionaryView';
@@ -11,8 +12,10 @@ import { UserProfileView } from './components/UserProfileView';
 import { WordContributionView } from './components/WordContributionView';
 import { WordDetailModal } from './components/WordDetailModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
+import { AdminDashboardView } from './components/AdminDashboardView';
+import { AdminLoginModal } from './components/AdminLoginModal';
 
-import { WordEntry, Language, UserProfile, AppTab } from './types';
+import { WordEntry, Language, UserProfile, AppTab, AdminUser, AppViewMode } from './types';
 import { LANGUAGES_DATA } from './data/languagesData';
 import {
   loadUserProfile,
@@ -31,8 +34,16 @@ import {
   deleteContributedWord,
   getMergedDictionary
 } from './utils/userContributedWords';
+import { getAdminSession, logoutAdmin } from './utils/adminAuth';
 
 export default function App() {
+  // App View Mode: 'user' (Public User Mode - No login required) or 'admin' (Admin Dashboard - Login required)
+  const [viewMode, setViewMode] = useState<AppViewMode>('user');
+
+  // Admin Authentication State
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(() => getAdminSession());
+  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<AppTab>('dictionary');
 
@@ -177,14 +188,79 @@ export default function App() {
     setContributedWords(updatedList);
   };
 
+  // ==========================================
+  // ADMIN AUTHENTICATION HANDLERS
+  // ==========================================
+  const handleAdminLoginSuccess = (admin: AdminUser) => {
+    setAdminUser(admin);
+    setViewMode('admin');
+    setIsAdminLoginModalOpen(false);
+  };
+
+  const handleAdminLogout = () => {
+    logoutAdmin();
+    setAdminUser(null);
+    setViewMode('user');
+  };
+
+  // -------------------------------------------------------------
+  // RENDER 1: HALAMAN ADMIN (Memerlukan Login Administrator)
+  // -------------------------------------------------------------
+  if (viewMode === 'admin' && adminUser) {
+    return (
+      <AdminDashboardView
+        adminUser={adminUser}
+        onLogout={handleAdminLogout}
+        onSwitchToUserView={() => setViewMode('user')}
+        allWords={mergedDictionary}
+        contributedWords={contributedWords}
+        onAddWord={handleAddContributedWord}
+        onUpdateWord={handleUpdateContributedWord}
+        onDeleteWord={handleDeleteContributedWord}
+      />
+    );
+  }
+
+  // -------------------------------------------------------------
+  // RENDER 2: HALAMAN USER / PENGGUNA (Bebas Akses Tanpa Login)
+  // -------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col antialiased selection:bg-emerald-100 selection:text-emerald-900">
       
+      {/* Admin Session Indicator when Admin previews User Mode */}
+      {adminUser && (
+        <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 shadow-inner sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>
+              Anda sedang melihat <strong>Mode Tampilan Pengguna</strong> sebagai <strong>{adminUser.name}</strong> ({adminUser.role})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode('admin')}
+              className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors shadow-xs"
+            >
+              Kembali ke Dashboard Admin →
+            </button>
+            <button
+              onClick={handleAdminLogout}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs cursor-pointer transition-colors"
+            >
+              Logout Admin
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Header Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userProfile={userProfile}
+        isAdminLoggedIn={!!adminUser}
+        onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
+        onGoToAdminDashboard={() => setViewMode('admin')}
       />
 
       {/* Hero Spotlight Section (Only on Dictionary & Learn Tabs) */}
@@ -307,15 +383,37 @@ export default function App() {
         />
       )}
 
+      {/* Admin Login Modal */}
+      <AdminLoginModal
+        isOpen={isAdminLoginModalOpen}
+        onClose={() => setIsAdminLoginModalOpen(false)}
+        onLoginSuccess={handleAdminLoginSuccess}
+      />
+
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs text-center">
-        <div className="max-w-7xl mx-auto px-4 space-y-2">
+        <div className="max-w-7xl mx-auto px-4 space-y-3">
           <p className="font-semibold text-slate-300">
             Kamus & Pelestarian Bahasa Daerah Sulawesi Tenggara (Tolaki • Moronene • Muna • Buton)
           </p>
           <p>
             Platform Edukasi Digital, Kosakata Komunitas & Game Pembelajaran Bahasa Sultra 🌾🌿🪁🏰
           </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-400 border-t border-slate-800/80">
+            <span className="text-slate-400">Mode Akses: Pengguna Umum Bebas Tanpa Login</span>
+            <span className="hidden sm:inline">•</span>
+            <button
+              id="footer-admin-btn"
+              onClick={() => {
+                if (adminUser) setViewMode('admin');
+                else setIsAdminLoginModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold transition-colors cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>{adminUser ? 'Buka Dashboard Admin' : 'Portal Administrator (Login)'}</span>
+            </button>
+          </div>
         </div>
       </footer>
 

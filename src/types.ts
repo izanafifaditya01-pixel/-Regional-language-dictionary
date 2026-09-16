@@ -125,3 +125,16 @@ export interface AIChatMessage {
   languageContext?: string;
   suggestedWords?: { word: string; translation: string; lang: string }[];
 }
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: 'Super Administrator' | 'Linguist Editor' | 'Moderator';
+  avatarUrl?: string;
+  lastLogin?: string;
+}
+
+export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'backup' | 'settings';
+export type AppViewMode = 'user' | 'admin';

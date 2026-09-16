@@ -1,14 +1,24 @@
 import React from 'react';
-import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2, PlusCircle } from 'lucide-react';
+import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2, PlusCircle, ShieldCheck, Lock } from 'lucide-react';
 import { UserProfile, AppTab } from '../types';
 
 interface NavbarProps {
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
   userProfile: UserProfile;
+  isAdminLoggedIn?: boolean;
+  onOpenAdminLogin: () => void;
+  onGoToAdminDashboard: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userProfile }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  activeTab,
+  setActiveTab,
+  userProfile,
+  isAdminLoggedIn = false,
+  onOpenAdminLogin,
+  onGoToAdminDashboard,
+}) => {
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -194,6 +204,29 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userPro
             >
               <User className="w-5 h-5" />
             </button>
+
+            {/* Portal Admin Entry Point */}
+            {isAdminLoggedIn ? (
+              <button
+                id="nav-btn-admin-dashboard"
+                onClick={onGoToAdminDashboard}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-black shadow-xs border border-slate-700 transition-all cursor-pointer"
+                title="Buka Dashboard Administrator"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="hidden sm:inline">Portal Admin</span>
+              </button>
+            ) : (
+              <button
+                id="nav-btn-admin-login"
+                onClick={onOpenAdminLogin}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition-all cursor-pointer"
+                title="Masuk ke Halaman Admin (Login Diperlukan)"
+              >
+                <Lock className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">Admin</span>
+              </button>
+            )}
           </div>
 
         </div>

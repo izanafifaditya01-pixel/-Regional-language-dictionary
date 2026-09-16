@@ -343,6 +343,57 @@ app.post("/api/ai/tts", async (req, res) => {
   }
 });
 
+// ------------------- ADMIN AUTH & MANAGEMENT API -------------------
+// Admin login endpoint
+app.post("/api/admin/login", (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const cleanUser = (username || "").trim().toLowerCase();
+    const cleanPass = (password || "").trim();
+
+    // Default admin credential validation
+    const validUsers = ["admin", "admin@leksika.id", "superadmin"];
+    const validPass = "admin123";
+
+    if (validUsers.includes(cleanUser) && cleanPass === validPass) {
+      return res.json({
+        success: true,
+        token: `admin-token-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        admin: {
+          id: "adm-001",
+          username: "admin",
+          email: "admin@leksika.id",
+          name: "Administrator Leksika",
+          role: "Super Administrator",
+          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        },
+        message: "Otentikasi administrator berhasil!",
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: "Username atau kata sandi admin tidak valid. Gunakan admin / admin123.",
+    });
+  } catch (err: any) {
+    console.error("Admin login error:", err);
+    return res.status(500).json({ success: false, message: "Terjadi kesalahan pada server." });
+  }
+});
+
+// Admin stats summary endpoint
+app.get("/api/admin/stats", (req, res) => {
+  res.json({
+    success: true,
+    stats: {
+      serverUptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      activeLanguages: 4, // Tolaki, Moronene, Muna, Buton
+      aiStatus: !!process.env.GEMINI_API_KEY ? "Connected" : "Fallback Mode",
+    },
+  });
+});
+
 // ------------------- VITE SERVER INTEGRATION -------------------
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
