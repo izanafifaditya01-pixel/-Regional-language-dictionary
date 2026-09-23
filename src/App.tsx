@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Link2, LogIn, ExternalLink, Globe } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { DictionaryView } from './components/DictionaryView';
@@ -13,9 +13,11 @@ import { WordContributionView } from './components/WordContributionView';
 import { WordDetailModal } from './components/WordDetailModal';
 import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { AdminDashboardView } from './components/AdminDashboardView';
-import { AdminLoginModal } from './components/AdminLoginModal';
+import { AdminLoginPage } from './components/AdminLoginPage';
+import { UserLoginPage } from './components/UserLoginPage';
+import { RouteLinksModal } from './components/RouteLinksModal';
 
-import { WordEntry, Language, UserProfile, AppTab, AdminUser, AppViewMode } from './types';
+import { WordEntry, Language, UserProfile, AppTab, AdminUser, PageRoute } from './types';
 import { LANGUAGES_DATA } from './data/languagesData';
 import {
   loadUserProfile,
@@ -36,15 +38,37 @@ import {
 } from './utils/userContributedWords';
 import { getAdminSession, logoutAdmin } from './utils/adminAuth';
 
+// Helper to determine initial route from URL path, hash, or query parameter
+function getInitialRoute(): PageRoute {
+  if (typeof window === 'undefined') return 'user';
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const search = new URLSearchParams(window.location.search);
+  const pageParam = search.get('page') || search.get('view') || search.get('route');
+
+  if (path.includes('/admin/login') || hash.includes('admin/login') || pageParam === 'admin-login') {
+    return 'admin-login';
+  }
+  if (path.includes('/admin') || hash.includes('admin') || pageParam === 'admin') {
+    return 'admin';
+  }
+  if (path.includes('/user/login') || hash.includes('user/login') || path.includes('/login') || pageParam === 'user-login' || pageParam === 'login') {
+    return 'user-login';
+  }
+  return 'user';
+}
+
 export default function App() {
-  // App View Mode: 'user' (Public User Mode - No login required) or 'admin' (Admin Dashboard - Login required)
-  const [viewMode, setViewMode] = useState<AppViewMode>('user');
+  // Dedicated Page Routing: 'user' | 'user-login' | 'admin' | 'admin-login'
+  const [currentRoute, setCurrentRoute] = useState<PageRoute>(getInitialRoute);
 
   // Admin Authentication State
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => getAdminSession());
-  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
 
-  // Navigation State
+  // Direct Links Modal State
+  const [isRouteLinksModalOpen, setIsRouteLinksModalOpen] = useState(false);
+
+  // Navigation State inside User view
   const [activeTab, setActiveTab] = useState<AppTab>('dictionary');
 
   // Languages State (Default: Indonesia -> Tolaki)
@@ -189,40 +213,130 @@ export default function App() {
   };
 
   // ==========================================
+  // ROUTING & NAVIGATION HANDLERS
+  // ==========================================
+  const navigateTo = (route: PageRoute) => {
+    setCurrentRoute(route);
+    if (typeof window !== 'undefined') {
+      let newPath = '/';
+      if (route === 'admin') newPath = '/admin';
+      else if (route === 'admin-login') newPath = '/admin/login';
+      else if (route === 'user-login') newPath = '/user/login';
+      else if (route === 'user') newPath = '/user';
+
+      try {
+        window.history.pushState({ route }, '', newPath);
+      } catch {
+        // Fallback for constrained iframe environments
+      }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentRoute(getInitialRoute());
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, []);
+
+  const handleUpdateUserNameAndEmail = (name: string, email?: string) => {
+    setUserProfile(prev => {
+      const updated = { ...prev, name, email };
+      saveUserProfile(updated);
+      return updated;
+    });
+  };
+
+  // ==========================================
   // ADMIN AUTHENTICATION HANDLERS
   // ==========================================
   const handleAdminLoginSuccess = (admin: AdminUser) => {
     setAdminUser(admin);
-    setViewMode('admin');
-    setIsAdminLoginModalOpen(false);
+    navigateTo('admin');
   };
 
   const handleAdminLogout = () => {
     logoutAdmin();
     setAdminUser(null);
-    setViewMode('user');
+    navigateTo('user');
   };
 
   // -------------------------------------------------------------
-  // RENDER 1: HALAMAN ADMIN (Memerlukan Login Administrator)
+  // HALAMAN 1: HALAMAN LOGIN ADMIN (Dedicated Link: /admin atau /admin/login)
   // -------------------------------------------------------------
-  if (viewMode === 'admin' && adminUser) {
+  if (currentRoute === 'admin-login' || (currentRoute === 'admin' && !adminUser)) {
     return (
-      <AdminDashboardView
-        adminUser={adminUser}
-        onLogout={handleAdminLogout}
-        onSwitchToUserView={() => setViewMode('user')}
-        allWords={mergedDictionary}
-        contributedWords={contributedWords}
-        onAddWord={handleAddContributedWord}
-        onUpdateWord={handleUpdateContributedWord}
-        onDeleteWord={handleDeleteContributedWord}
-      />
+      <>
+        <AdminLoginPage
+          onLoginSuccess={handleAdminLoginSuccess}
+          onNavigateToUser={() => navigateTo('user')}
+          onNavigateToUserLogin={() => navigateTo('user-login')}
+        />
+        <RouteLinksModal
+          isOpen={isRouteLinksModalOpen}
+          onClose={() => setIsRouteLinksModalOpen(false)}
+          onNavigate={navigateTo}
+        />
+      </>
     );
   }
 
   // -------------------------------------------------------------
-  // RENDER 2: HALAMAN USER / PENGGUNA (Bebas Akses Tanpa Login)
+  // HALAMAN 2: HALAMAN DASHBOARD ADMIN (Dedicated Link: /admin terautentikasi)
+  // -------------------------------------------------------------
+  if (currentRoute === 'admin' && adminUser) {
+    return (
+      <>
+        <AdminDashboardView
+          adminUser={adminUser}
+          onLogout={handleAdminLogout}
+          onSwitchToUserView={() => navigateTo('user')}
+          onOpenLinksModal={() => setIsRouteLinksModalOpen(true)}
+          onSwitchAdminUser={setAdminUser}
+          allWords={mergedDictionary}
+          contributedWords={contributedWords}
+          onAddWord={handleAddContributedWord}
+          onUpdateWord={handleUpdateContributedWord}
+          onDeleteWord={handleDeleteContributedWord}
+        />
+        <RouteLinksModal
+          isOpen={isRouteLinksModalOpen}
+          onClose={() => setIsRouteLinksModalOpen(false)}
+          onNavigate={navigateTo}
+        />
+      </>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // HALAMAN 3: HALAMAN LOGIN PENGGUNA (Dedicated Link: /user/login)
+  // -------------------------------------------------------------
+  if (currentRoute === 'user-login') {
+    return (
+      <>
+        <UserLoginPage
+          currentUserProfile={userProfile}
+          onUpdateUserProfile={handleUpdateUserNameAndEmail}
+          onContinueAsGuest={() => navigateTo('user')}
+          onNavigateToAdminLogin={() => navigateTo('admin')}
+        />
+        <RouteLinksModal
+          isOpen={isRouteLinksModalOpen}
+          onClose={() => setIsRouteLinksModalOpen(false)}
+          onNavigate={navigateTo}
+        />
+      </>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // HALAMAN 4: HALAMAN USER / PENGGUNA (Dedicated Link: / atau /user - Bebas Akses Tanpa Login)
   // -------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col antialiased selection:bg-emerald-100 selection:text-emerald-900">
@@ -233,12 +347,12 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>
-              Anda sedang melihat <strong>Mode Tampilan Pengguna</strong> sebagai <strong>{adminUser.name}</strong> ({adminUser.role})
+              Anda sedang melihat <strong>Halaman Pengguna (User Mode)</strong> sebagai <strong>{adminUser.name}</strong> ({adminUser.role})
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setViewMode('admin')}
+              onClick={() => navigateTo('admin')}
               className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors shadow-xs"
             >
               Kembali ke Dashboard Admin →
@@ -259,8 +373,10 @@ export default function App() {
         setActiveTab={setActiveTab}
         userProfile={userProfile}
         isAdminLoggedIn={!!adminUser}
-        onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
-        onGoToAdminDashboard={() => setViewMode('admin')}
+        onOpenAdminLogin={() => navigateTo(adminUser ? 'admin' : 'admin-login')}
+        onGoToAdminDashboard={() => navigateTo('admin')}
+        onNavigateToUserLogin={() => navigateTo('user-login')}
+        onOpenLinksModal={() => setIsRouteLinksModalOpen(true)}
       />
 
       {/* Hero Spotlight Section (Only on Dictionary & Learn Tabs) */}
@@ -383,15 +499,62 @@ export default function App() {
         />
       )}
 
-      {/* Admin Login Modal */}
-      <AdminLoginModal
-        isOpen={isAdminLoginModalOpen}
-        onClose={() => setIsAdminLoginModalOpen(false)}
-        onLoginSuccess={handleAdminLoginSuccess}
+      {/* Route Links Selector Modal */}
+      <RouteLinksModal
+        isOpen={isRouteLinksModalOpen}
+        onClose={() => setIsRouteLinksModalOpen(false)}
+        onNavigate={navigateTo}
       />
 
+      {/* Direct Page Navigation Bar */}
+      <aside className="bg-slate-900 border-t border-slate-800 text-slate-300 py-3 px-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="font-bold text-slate-200">Tautan Langsung Halaman:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => navigateTo('user')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer border border-slate-700 transition-colors"
+              title="Akses Langsung Halaman Pengguna"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Halaman Pengguna (/user)</span>
+            </button>
+
+            <button
+              onClick={() => navigateTo('user-login')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-200 font-semibold cursor-pointer border border-blue-800 transition-colors"
+              title="Akses Langsung Halaman Login Pengguna"
+            >
+              <LogIn className="w-3.5 h-3.5 text-blue-400" />
+              <span>Login Pengguna (/user/login)</span>
+            </button>
+
+            <button
+              onClick={() => navigateTo('admin')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950 hover:bg-amber-900 text-amber-200 font-semibold cursor-pointer border border-amber-800 transition-colors"
+              title="Akses Langsung Halaman Login/Dashboard Admin"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span>Halaman Admin (/admin)</span>
+            </button>
+
+            <button
+              onClick={() => setIsRouteLinksModalOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-colors shadow-2xs"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              <span>Daftar & Salin Link</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs text-center">
+      <footer className="bg-slate-950 text-slate-400 py-8 border-t border-slate-900 text-xs text-center">
         <div className="max-w-7xl mx-auto px-4 space-y-3">
           <p className="font-semibold text-slate-300">
             Kamus & Pelestarian Bahasa Daerah Sulawesi Tenggara (Tolaki • Moronene • Muna • Buton)
@@ -399,19 +562,23 @@ export default function App() {
           <p>
             Platform Edukasi Digital, Kosakata Komunitas & Game Pembelajaran Bahasa Sultra 🌾🌿🪁🏰
           </p>
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-400 border-t border-slate-800/80">
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-400 border-t border-slate-900">
             <span className="text-slate-400">Mode Akses: Pengguna Umum Bebas Tanpa Login</span>
             <span className="hidden sm:inline">•</span>
             <button
+              onClick={() => navigateTo('user-login')}
+              className="text-blue-400 hover:text-blue-300 font-medium transition-colors cursor-pointer"
+            >
+              Login Pengguna (/user/login)
+            </button>
+            <span className="hidden sm:inline">•</span>
+            <button
               id="footer-admin-btn"
-              onClick={() => {
-                if (adminUser) setViewMode('admin');
-                else setIsAdminLoginModalOpen(true);
-              }}
+              onClick={() => navigateTo('admin')}
               className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold transition-colors cursor-pointer"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>{adminUser ? 'Buka Dashboard Admin' : 'Portal Administrator (Login)'}</span>
+              <span>{adminUser ? 'Buka Dashboard Admin (/admin)' : 'Portal Administrator Login (/admin)'}</span>
             </button>
           </div>
         </div>

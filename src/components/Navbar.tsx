@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2, PlusCircle, ShieldCheck, Lock } from 'lucide-react';
+import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2, PlusCircle, ShieldCheck, Lock, Link2, LogIn } from 'lucide-react';
 import { UserProfile, AppTab } from '../types';
 
 interface NavbarProps {
@@ -9,6 +9,8 @@ interface NavbarProps {
   isAdminLoggedIn?: boolean;
   onOpenAdminLogin: () => void;
   onGoToAdminDashboard: () => void;
+  onNavigateToUserLogin?: () => void;
+  onOpenLinksModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,6 +20,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   isAdminLoggedIn = false,
   onOpenAdminLogin,
   onGoToAdminDashboard,
+  onNavigateToUserLogin,
+  onOpenLinksModal,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-2xs">
@@ -205,13 +209,38 @@ export const Navbar: React.FC<NavbarProps> = ({
               <User className="w-5 h-5" />
             </button>
 
+            {/* Direct Links Modal Trigger */}
+            {onOpenLinksModal && (
+              <button
+                id="nav-btn-links"
+                onClick={onOpenLinksModal}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer hidden sm:flex items-center justify-center"
+                title="Lihat & Salin Tautan Halaman (Admin / User)"
+              >
+                <Link2 className="w-4 h-4 text-slate-600" />
+              </button>
+            )}
+
+            {/* Login Pengguna (Dedicated Link) */}
+            {onNavigateToUserLogin && (
+              <button
+                id="nav-btn-user-login"
+                onClick={onNavigateToUserLogin}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-all cursor-pointer"
+                title="Halaman Login Akun Pengguna (/user/login)"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login User</span>
+              </button>
+            )}
+
             {/* Portal Admin Entry Point */}
             {isAdminLoggedIn ? (
               <button
                 id="nav-btn-admin-dashboard"
                 onClick={onGoToAdminDashboard}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-black shadow-xs border border-slate-700 transition-all cursor-pointer"
-                title="Buka Dashboard Administrator"
+                title="Buka Halaman Dashboard Administrator (/admin)"
               >
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span className="hidden sm:inline">Portal Admin</span>
@@ -220,10 +249,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="nav-btn-admin-login"
                 onClick={onOpenAdminLogin}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-200 transition-all cursor-pointer"
-                title="Masuk ke Halaman Admin (Login Diperlukan)"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-bold border border-slate-700 transition-all cursor-pointer shadow-xs"
+                title="Masuk ke Halaman Login Admin (/admin)"
               >
-                <Lock className="w-3.5 h-3.5 text-slate-500" />
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden sm:inline">Admin</span>
               </button>
             )}

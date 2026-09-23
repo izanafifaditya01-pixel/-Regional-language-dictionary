@@ -351,29 +351,74 @@ app.post("/api/admin/login", (req, res) => {
     const cleanUser = (username || "").trim().toLowerCase();
     const cleanPass = (password || "").trim();
 
-    // Default admin credential validation
-    const validUsers = ["admin", "admin@leksika.id", "superadmin"];
-    const validPass = "admin123";
+    // Multi-role admin credential validation
+    const serverAccounts = [
+      {
+        id: "adm-001",
+        username: "admin",
+        aliases: ["admin", "admin@leksika.id", "superadmin"],
+        password: "admin123",
+        name: "Dr. Muh. Arifin, M.Hum",
+        role: "Super Administrator",
+        status: "active",
+        avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      },
+      {
+        id: "adm-002",
+        username: "editor",
+        aliases: ["editor", "editor.sultra@leksika.id", "linguis"],
+        password: "editor123",
+        name: "La Ode Suriadin, S.Pd (Linguis)",
+        role: "Linguist Editor",
+        status: "active",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      },
+      {
+        id: "adm-003",
+        username: "moderator",
+        aliases: ["moderator", "waode.moderator@leksika.id"],
+        password: "moderator123",
+        name: "Wa Ode Nurul Fadhilah",
+        role: "Moderator",
+        status: "active",
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      },
+      {
+        id: "adm-004",
+        username: "viewer",
+        aliases: ["viewer", "peneliti@balaibahasasultra.kemdikbud.go.id"],
+        password: "viewer123",
+        name: "Tim Peneliti Balai Bahasa",
+        role: "Viewer",
+        status: "active",
+        avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      },
+    ];
 
-    if (validUsers.includes(cleanUser) && cleanPass === validPass) {
+    const matched = serverAccounts.find(
+      (acc) => acc.aliases.includes(cleanUser) && acc.password === cleanPass
+    );
+
+    if (matched) {
       return res.json({
         success: true,
         token: `admin-token-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         admin: {
-          id: "adm-001",
-          username: "admin",
-          email: "admin@leksika.id",
-          name: "Administrator Leksika",
-          role: "Super Administrator",
-          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          id: matched.id,
+          username: matched.username,
+          email: `${matched.username}@leksika.id`,
+          name: matched.name,
+          role: matched.role,
+          status: matched.status,
+          avatarUrl: matched.avatarUrl,
         },
-        message: "Otentikasi administrator berhasil!",
+        message: `Otentikasi berhasil sebagai ${matched.role}!`,
       });
     }
 
     return res.status(401).json({
       success: false,
-      message: "Username atau kata sandi admin tidak valid. Gunakan admin / admin123.",
+      message: "Username atau kata sandi tidak valid. Coba: admin/admin123, editor/editor123, atau moderator/moderator123.",
     });
   } catch (err: any) {
     console.error("Admin login error:", err);

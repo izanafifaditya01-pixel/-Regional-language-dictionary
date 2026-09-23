@@ -126,15 +126,53 @@ export interface AIChatMessage {
   suggestedWords?: { word: string; translation: string; lang: string }[];
 }
 
+export type AdminRole = 'Super Administrator' | 'Linguist Editor' | 'Moderator' | 'Viewer';
+
+export type PermissionKey =
+  | 'can_view_analytics'
+  | 'can_manage_words'
+  | 'can_delete_words'
+  | 'can_moderate_contributions'
+  | 'can_manage_languages'
+  | 'can_export_backup'
+  | 'can_import_restore'
+  | 'can_manage_users'
+  | 'can_edit_permissions'
+  | 'can_view_audit_logs'
+  | 'can_system_settings';
+
+export interface RolePermissionDefinition {
+  name: string;
+  description: string;
+  badgeColor: string;
+  defaultPermissions: PermissionKey[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  userRole: AdminRole;
+  action: string;
+  target: string;
+  category: 'words' | 'moderation' | 'users' | 'roles' | 'backup' | 'system';
+  ipAddress?: string;
+}
+
 export interface AdminUser {
   id: string;
   username: string;
   email: string;
   name: string;
-  role: 'Super Administrator' | 'Linguist Editor' | 'Moderator';
+  role: AdminRole;
   avatarUrl?: string;
+  status: 'active' | 'suspended';
   lastLogin?: string;
+  createdAt?: string;
+  customPermissions?: PermissionKey[];
 }
 
-export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'backup' | 'settings';
+export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'users' | 'audit' | 'backup' | 'settings';
 export type AppViewMode = 'user' | 'admin';
+export type PageRoute = 'user' | 'user-login' | 'admin' | 'admin-login';

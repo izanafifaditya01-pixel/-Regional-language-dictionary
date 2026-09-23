@@ -28,11 +28,29 @@ import {
   Flame,
   ArrowRight,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Lock,
+  Unlock,
+  Key,
+  FileText,
+  Shield,
+  UserCheck,
+  ChevronDown,
+  AlertTriangle,
+  Link2
 } from 'lucide-react';
-import { WordEntry, Language, AdminUser, AdminTab } from '../types';
+import { WordEntry, Language, AdminUser, AdminTab, AdminRole } from '../types';
 import { LANGUAGES_DATA } from '../data/languagesData';
-import { getAdminCredentials, saveAdminCredentials } from '../utils/adminAuth';
+import {
+  hasPermission,
+  getAdminUsers,
+  switchActiveAdminUser,
+  addAuditLog,
+  getAuditLogs,
+  updateAdminUser,
+} from '../utils/adminAuth';
+import { AdminUsersTab } from './AdminUsersTab';
+import { AdminAuditLogTab } from './AdminAuditLogTab';
 
 interface AdminDashboardViewProps {
   adminUser: AdminUser;
@@ -43,6 +61,8 @@ interface AdminDashboardViewProps {
   onAddWord: (wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>, contributorName: string) => void;
   onUpdateWord: (wordId: string, updatedFields: Partial<WordEntry>) => void;
   onDeleteWord: (wordId: string) => void;
+  onOpenLinksModal?: () => void;
+  onSwitchAdminUser?: (newAdmin: AdminUser) => void;
 }
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
@@ -54,6 +74,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onAddWord,
   onUpdateWord,
   onDeleteWord,
+  onOpenLinksModal,
+  onSwitchAdminUser,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
 
@@ -85,6 +107,29 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [adminDisplayName, setAdminDisplayName] = useState(adminUser.name);
   const [settingsMessage, setSettingsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // RBAC Permissions resolution for current admin user
+  const canManageWords = hasPermission(adminUser, 'can_manage_words');
+  const canDeleteWords = hasPermission(adminUser, 'can_delete_words');
+  const canModerate = hasPermission(adminUser, 'can_moderate_contributions');
+  const canManageLanguages = hasPermission(adminUser, 'can_manage_languages');
+  const canExport = hasPermission(adminUser, 'can_export_backup');
+  const canRestore = hasPermission(adminUser, 'can_import_restore');
+  const canManageUsers = hasPermission(adminUser, 'can_manage_users');
+  const canViewAudit = hasPermission(adminUser, 'can_view_audit_logs');
+  const canEditPermissions = hasPermission(adminUser, 'can_edit_permissions');
+  const canSystemSettings = hasPermission(adminUser, 'can_system_settings');
+
+  // Multi-account and Live Role Switching helper
+  const allAdminAccounts = getAdminUsers();
+  const handleSwitchAdmin = (userId: string) => {
+    const target = switchActiveAdminUser(userId);
+    if (target && onSwitchAdminUser) {
+      onSwitchAdminUser(target);
+      setFormNotification(`Beralih ke akun: ${target.name} (${target.role})`);
+      setTimeout(() => setFormNotification(null), 3500);
+    }
+  };
 
   // Sultra Languages list
   const sultraLanguages = useMemo(() => {
@@ -176,6 +221,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       return;
     }
 
+    if (!canManageWords) {
+      setFormNotification('Akses ditolak: Akun Anda tidak memiliki hak akses mengubah kosakata (can_manage_words).');
+      setTimeout(() => setFormNotification(null), 3500);
+      setIsWordModalOpen(false);
+      return;
+    }
+
     if (editingWord) {
       // Update existing word
       onUpdateWord(editingWord.id, {
@@ -189,6 +241,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         culturalContext: formCulturalContext.trim(),
         isPopular: formIsPopular,
         isWordOfTheDay: formIsWordOfTheDay,
+      });
+      addAuditLog({
+        userId: adminUser.id,
+        userName: adminUser.name,
+        userRole: adminUser.role,
+        action: 'Memperbarui Kosakata',
+        target: `${formWord.trim()} (${formTargetLangId.toUpperCase()})`,
+        category: 'words',
       });
       setFormNotification(`Kosakata "${formWord}" berhasil diperbarui.`);
     } else {
@@ -207,8 +267,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           isPopular: formIsPopular,
           isWordOfTheDay: formIsWordOfTheDay,
         },
-        'Admin Resmi Leksika'
+        adminUser.name
       );
+      addAuditLog({
+        userId: adminUser.id,
+        userName: adminUser.name,
+        userRole: adminUser.role,
+        action: 'Menambah Kosakata Baru',
+        target: `${formWord.trim()} (${formTargetLangId.toUpperCase()})`,
+        category: 'words',
+      });
       setFormNotification(`Kosakata baru "${formWord}" berhasil ditambahkan ke basis data.`);
     }
 
@@ -218,6 +286,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   // Export database as JSON
   const handleExportJson = () => {
+    if (!canExport) {
+      setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin ekspor cadangan data (can_export_backup).');
+      setTimeout(() => setFormNotification(null), 3500);
+      return;
+    }
+    addAuditLog({
+      userId: adminUser.id,
+      userName: adminUser.name,
+      userRole: adminUser.role,
+      action: 'Ekspor Data JSON',
+      target: `${allWords.length} entri kata kamus`,
+      category: 'backup',
+    });
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(allWords, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
@@ -229,6 +310,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   // Export database as CSV
   const handleExportCsv = () => {
+    if (!canExport) {
+      setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin ekspor cadangan data (can_export_backup).');
+      setTimeout(() => setFormNotification(null), 3500);
+      return;
+    }
+    addAuditLog({
+      userId: adminUser.id,
+      userName: adminUser.name,
+      userRole: adminUser.role,
+      action: 'Ekspor Data CSV',
+      target: `${allWords.length} entri kata kamus`,
+      category: 'backup',
+    });
     const headers = ['ID', 'Bahasa Asal', 'Bahasa Tujuan', 'Kata', 'Terjemahan', 'Fonetik', 'Kategori', 'Contoh Kalimat', 'Arti Kalimat', 'Konteks Budaya', 'Tipe Kontributor'];
     const rows = allWords.map(w => [
       `"${w.id}"`,
@@ -262,17 +356,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       return;
     }
 
-    const creds = getAdminCredentials();
-    const updated = {
-      ...creds,
-      name: adminDisplayName.trim() || creds.name,
+    const success = updateAdminUser(adminUser.id, {
+      name: adminDisplayName.trim() || adminUser.name,
       ...(newPassword ? { passwordHash: newPassword } : {}),
-    };
-    saveAdminCredentials(updated);
-    setSettingsMessage({ type: 'success', text: 'Pengaturan akun administrator berhasil disimpan!' });
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setSettingsMessage(null), 3000);
+    });
+
+    if (success) {
+      setSettingsMessage({ type: 'success', text: 'Pengaturan profil administrator berhasil disimpan!' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSettingsMessage(null), 3000);
+    } else {
+      setSettingsMessage({ type: 'error', text: 'Gagal memperbarui pengaturan akun.' });
+    }
   };
 
   const getLanguageName = (langId: string) => {
@@ -309,30 +405,70 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </div>
             </div>
 
-            {/* Quick Actions (Switch to User Mode & Logout) */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Actions (Role Switcher, User Mode & Logout) */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              {/* Quick Persona / Role Switcher for RBAC verification */}
+              <div className="hidden lg:flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs">
+                <span className="text-slate-400 font-medium">Uji Role:</span>
+                <select
+                  value={adminUser.id}
+                  onChange={e => handleSwitchAdmin(e.target.value)}
+                  className="bg-transparent text-white font-bold border-none focus:outline-none cursor-pointer text-xs"
+                  title="Ganti akun / role langsung untuk menguji RBAC"
+                >
+                  {allAdminAccounts.map(acc => (
+                    <option key={acc.id} value={acc.id} className="bg-slate-900 text-white">
+                      {acc.role === 'Super Administrator' ? '👑' : acc.role === 'Linguist Editor' ? '📖' : acc.role === 'Moderator' ? '🛡️' : '👁️'} {acc.name} ({acc.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* User Profile Badge */}
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs">
+                <img
+                  src={adminUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
+                  alt={adminUser.name}
+                  className="w-6 h-6 rounded-full object-cover border border-slate-600"
+                />
+                <div className="text-left hidden sm:block">
+                  <div className="font-bold text-white text-[11px] leading-tight truncate max-w-[110px]">{adminUser.name}</div>
+                  <div className="text-[10px] text-purple-300 font-semibold">{adminUser.role}</div>
+                </div>
+              </div>
+
+              {/* Direct Links Modal */}
+              {onOpenLinksModal && (
+                <button
+                  onClick={onOpenLinksModal}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all cursor-pointer shadow-xs"
+                  title="Lihat & Salin Daftar Tautan Halaman"
+                >
+                  <Link2 className="w-4 h-4 text-emerald-400" />
+                  <span className="hidden xl:inline">Tautan Halaman</span>
+                </button>
+              )}
+
               {/* Switch to Public User Mode */}
               <button
                 id="btn-switch-user-mode"
                 onClick={onSwitchToUserView}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-emerald-300 hover:text-emerald-200 border border-slate-700 transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-600 transition-all cursor-pointer shadow-xs"
                 title="Buka tampilan pengguna tanpa logout"
               >
                 <Eye className="w-4 h-4" />
-                <span className="hidden sm:inline">Tampilan Pengguna (User Mode)</span>
-                <span className="sm:hidden">User View</span>
+                <span className="hidden md:inline">User View</span>
               </button>
 
               {/* Admin Profile & Logout Button */}
               <button
                 id="btn-admin-logout"
                 onClick={onLogout}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-900/40 hover:bg-rose-900/60 text-rose-200 hover:text-rose-100 border border-rose-800/60 transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-900/40 hover:bg-rose-900/60 text-rose-200 hover:text-rose-100 border border-rose-800/60 transition-all cursor-pointer shadow-xs"
                 title="Keluar dari sesi admin"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Keluar (Logout)</span>
-                <span className="sm:hidden">Keluar</span>
+                <span className="hidden md:inline">Logout</span>
               </button>
             </div>
 
@@ -395,6 +531,35 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               <span>Bahasa Daerah Sultra</span>
             </button>
 
+            {/* TAB: Users & Role Access Control (RBAC) */}
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === 'users'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              <Users className="w-4 h-4 text-purple-400" />
+              <span>Pengguna & RBAC</span>
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-purple-950 text-purple-300 border border-purple-800">
+                {allAdminAccounts.length}
+              </span>
+            </button>
+
+            {/* TAB: Audit Logs */}
+            <button
+              onClick={() => setActiveTab('audit')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === 'audit'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              <FileText className="w-4 h-4 text-emerald-400" />
+              <span>Catatan Audit</span>
+            </button>
+
             <button
               onClick={() => setActiveTab('backup')}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
@@ -420,6 +585,34 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Active Role Simulator & Permissions Banner (if not Super Admin) */}
+        {adminUser.role !== 'Super Administrator' && (
+          <div className="bg-purple-950/60 border-b border-purple-800/60 px-4 py-2">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-purple-200">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-purple-400 shrink-0" />
+                <span>
+                  <strong>Simulasi Role Aktif: {adminUser.role}</strong> — Sebagian aksi sistem dibatasi sesuai kebijakan izin RBAC.
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-purple-300">Ganti Akun/Role Uji:</span>
+                <select
+                  value={adminUser.id}
+                  onChange={e => handleSwitchAdmin(e.target.value)}
+                  className="bg-purple-900/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg border border-purple-700 focus:outline-none cursor-pointer"
+                >
+                  {allAdminAccounts.map(acc => (
+                    <option key={acc.id} value={acc.id} className="bg-slate-900 text-white">
+                      {acc.name} ({acc.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Notification Toast */}
@@ -642,10 +835,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   <span className="hidden sm:inline">Unduh JSON</span>
                 </button>
                 <button
-                  onClick={handleOpenAddModal}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  onClick={canManageWords ? handleOpenAddModal : undefined}
+                  disabled={!canManageWords}
+                  className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 ${
+                    canManageWords
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer'
+                      : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
+                  }`}
+                  title={canManageWords ? 'Tambah Kosakata' : 'Akses Ditolak: Memerlukan izin can_manage_words'}
                 >
-                  <Plus className="w-4 h-4" />
+                  {canManageWords ? <Plus className="w-4 h-4" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
                   <span>Tambah Kosakata</span>
                 </button>
               </div>
@@ -769,22 +968,52 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                           <td className="px-4 py-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
-                                onClick={() => handleOpenEditModal(entry)}
-                                className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
-                                title="Edit Kosakata"
+                                onClick={() => {
+                                  if (!canManageWords) {
+                                    setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin edit kosakata (can_manage_words).');
+                                    setTimeout(() => setFormNotification(null), 3000);
+                                    return;
+                                  }
+                                  handleOpenEditModal(entry);
+                                }}
+                                disabled={!canManageWords}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  canManageWords
+                                    ? 'text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer'
+                                    : 'text-slate-600 cursor-not-allowed opacity-40'
+                                }`}
+                                title={canManageWords ? 'Edit Kosakata' : 'Akses Ditolak: Memerlukan izin can_manage_words'}
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => {
+                                  if (!canDeleteWords) {
+                                    setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin menghapus kosakata (can_delete_words).');
+                                    setTimeout(() => setFormNotification(null), 3000);
+                                    return;
+                                  }
                                   if (confirm(`Hapus kosakata "${entry.word} - ${entry.translation}"?`)) {
                                     onDeleteWord(entry.id);
+                                    addAuditLog({
+                                      userId: adminUser.id,
+                                      userName: adminUser.name,
+                                      userRole: adminUser.role,
+                                      action: 'Menghapus Kosakata',
+                                      target: `${entry.word} (${entry.targetLangId.toUpperCase()})`,
+                                      category: 'words',
+                                    });
                                     setFormNotification(`Kosakata "${entry.word}" telah dihapus.`);
                                     setTimeout(() => setFormNotification(null), 3000);
                                   }
                                 }}
-                                className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-900/40 rounded-lg transition-colors cursor-pointer"
-                                title="Hapus Kosakata"
+                                disabled={!canDeleteWords}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  canDeleteWords
+                                    ? 'text-rose-400 hover:text-rose-200 hover:bg-rose-900/40 cursor-pointer'
+                                    : 'text-slate-600 cursor-not-allowed opacity-40'
+                                }`}
+                                title={canDeleteWords ? 'Hapus Kosakata' : 'Akses Ditolak: Memerlukan izin can_delete_words'}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -875,36 +1104,87 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-700/60">
                       <button
                         onClick={() => {
+                          if (!canModerate) {
+                            setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin moderasi usulan (can_moderate_contributions).');
+                            setTimeout(() => setFormNotification(null), 3000);
+                            return;
+                          }
                           if (confirm(`Tolak dan hapus usulan kosakata "${word.word}"?`)) {
                             onDeleteWord(word.id);
+                            addAuditLog({
+                              userId: adminUser.id,
+                              userName: adminUser.name,
+                              userRole: adminUser.role,
+                              action: 'Menolak Usulan Komunitas',
+                              target: `${word.word} (${word.targetLangId.toUpperCase()})`,
+                              category: 'moderation',
+                            });
                             setFormNotification(`Usulan "${word.word}" berhasil dihapus.`);
                             setTimeout(() => setFormNotification(null), 3000);
                           }
                         }}
-                        className="px-3 py-1.5 bg-rose-900/30 hover:bg-rose-900/60 text-rose-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        disabled={!canModerate}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                          canModerate
+                            ? 'bg-rose-900/30 hover:bg-rose-900/60 text-rose-300 cursor-pointer'
+                            : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+                        }`}
+                        title={canModerate ? 'Tolak & Hapus' : 'Akses Ditolak: Memerlukan izin can_moderate_contributions'}
                       >
                         Tolak & Hapus
                       </button>
 
                       <button
-                        onClick={() => handleOpenEditModal(word)}
-                        className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (!canManageWords) {
+                            setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin edit kosakata.');
+                            setTimeout(() => setFormNotification(null), 3000);
+                            return;
+                          }
+                          handleOpenEditModal(word);
+                        }}
+                        disabled={!canManageWords}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                          canManageWords
+                            ? 'bg-slate-700 hover:bg-slate-600 text-white cursor-pointer'
+                            : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+                        }`}
+                        title={canManageWords ? 'Edit Detail' : 'Akses Ditolak: Memerlukan izin can_manage_words'}
                       >
                         Edit Detail
                       </button>
 
                       <button
                         onClick={() => {
+                          if (!canModerate) {
+                            setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin moderasi usulan (can_moderate_contributions).');
+                            setTimeout(() => setFormNotification(null), 3000);
+                            return;
+                          }
                           onUpdateWord(word.id, {
                             isUserContributed: false,
                             updatedAt: new Date().toISOString().split('T')[0]
                           });
+                          addAuditLog({
+                            userId: adminUser.id,
+                            userName: adminUser.name,
+                            userRole: adminUser.role,
+                            action: 'Menyetujui Usulan Komunitas',
+                            target: `${word.word} (${word.targetLangId.toUpperCase()})`,
+                            category: 'moderation',
+                          });
                           setFormNotification(`Kosakata "${word.word}" resmi disetujui & dipublikasikan!`);
                           setTimeout(() => setFormNotification(null), 3500);
                         }}
-                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        disabled={!canModerate}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs ${
+                          canModerate
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
+                        }`}
+                        title={canModerate ? 'Setujui & Publikasikan' : 'Akses Ditolak: Memerlukan izin can_moderate_contributions'}
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {canModerate ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
                         <span>Setujui Resmi</span>
                       </button>
                     </div>
@@ -1200,6 +1480,37 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 <span>Simpan Perubahan Pengaturan</span>
               </button>
             </form>
+          </div>
+        )}
+
+        {/* ========================================== */}
+        {/* TAB 7: MANAJEMEN PENGGUNA & RBAC           */}
+        {/* ========================================== */}
+        {activeTab === 'users' && (
+          <div className="animate-in fade-in duration-200">
+            <AdminUsersTab
+              currentAdmin={adminUser}
+              onSwitchActiveAdmin={handleSwitchAdmin}
+              onNotification={msg => {
+                setFormNotification(msg);
+                setTimeout(() => setFormNotification(null), 3500);
+              }}
+            />
+          </div>
+        )}
+
+        {/* ========================================== */}
+        {/* TAB 8: CATATAN AUDIT SISTEM (AUDIT LOGS)   */}
+        {/* ========================================== */}
+        {activeTab === 'audit' && (
+          <div className="animate-in fade-in duration-200">
+            <AdminAuditLogTab
+              currentAdmin={adminUser}
+              onNotification={msg => {
+                setFormNotification(msg);
+                setTimeout(() => setFormNotification(null), 3500);
+              }}
+            />
           </div>
         )}
       </main>
