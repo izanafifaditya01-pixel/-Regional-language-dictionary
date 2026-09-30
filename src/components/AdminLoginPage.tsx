@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, Sparkles, CheckCircle2, ArrowLeft, Copy, Check, Globe } from 'lucide-react';
+import { ShieldCheck, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, Sparkles, CheckCircle2, ArrowLeft, Copy, Check, Globe, Link2 } from 'lucide-react';
 import { authenticateAdmin } from '../utils/adminAuth';
 import { AdminUser } from '../types';
 
@@ -7,12 +7,14 @@ interface AdminLoginPageProps {
   onLoginSuccess: (admin: AdminUser) => void;
   onNavigateToUser: () => void;
   onNavigateToUserLogin: () => void;
+  onOpenLinksModal?: () => void;
 }
 
 export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   onLoginSuccess,
   onNavigateToUser,
   onNavigateToUserLogin,
+  onOpenLinksModal,
 }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -76,6 +78,18 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          {onOpenLinksModal && (
+            <button
+              type="button"
+              onClick={onOpenLinksModal}
+              className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-950/80 border border-amber-800/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-bold shadow-2xs"
+              title="Lihat & Salin Semua Link Akses Role Deployed"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              <span>Link Tiap Role</span>
+            </button>
+          )}
+
           <button
             onClick={handleCopyLink}
             className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 hover:bg-emerald-950/80 border border-emerald-800/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer"

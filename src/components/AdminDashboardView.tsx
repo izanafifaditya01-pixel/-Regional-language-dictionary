@@ -51,6 +51,7 @@ import {
 } from '../utils/adminAuth';
 import { AdminUsersTab } from './AdminUsersTab';
 import { AdminAuditLogTab } from './AdminAuditLogTab';
+import { AdminSupabaseTab } from './AdminSupabaseTab';
 
 interface AdminDashboardViewProps {
   adminUser: AdminUser;
@@ -63,6 +64,7 @@ interface AdminDashboardViewProps {
   onDeleteWord: (wordId: string) => void;
   onOpenLinksModal?: () => void;
   onSwitchAdminUser?: (newAdmin: AdminUser) => void;
+  onWordsUpdated?: (updatedWords: WordEntry[]) => void;
 }
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
@@ -76,6 +78,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onDeleteWord,
   onOpenLinksModal,
   onSwitchAdminUser,
+  onWordsUpdated,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
 
@@ -445,7 +448,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   title="Lihat & Salin Daftar Tautan Halaman"
                 >
                   <Link2 className="w-4 h-4 text-emerald-400" />
-                  <span className="hidden xl:inline">Tautan Halaman</span>
+                  <span className="hidden sm:inline">Link Tiap Role</span>
                 </button>
               )}
 
@@ -570,6 +573,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             >
               <Download className="w-4 h-4" />
               <span>Ekspor & Cadangan Data</span>
+            </button>
+
+            {/* TAB: Supabase Cloud Database */}
+            <button
+              onClick={() => setActiveTab('supabase')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === 'supabase'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Database Supabase</span>
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800">
+                Cloud
+              </span>
             </button>
 
             <button
@@ -1510,6 +1529,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 setFormNotification(msg);
                 setTimeout(() => setFormNotification(null), 3500);
               }}
+            />
+          </div>
+        )}
+
+        {/* ========================================== */}
+        {/* TAB 9: DATABASE SUPABASE CLOUD             */}
+        {/* ========================================== */}
+        {activeTab === 'supabase' && (
+          <div className="animate-in fade-in duration-200">
+            <AdminSupabaseTab
+              words={allWords}
+              canManageBackup={canExport}
+              adminName={adminUser.name}
+              onWordsUpdated={onWordsUpdated}
             />
           </div>
         )}

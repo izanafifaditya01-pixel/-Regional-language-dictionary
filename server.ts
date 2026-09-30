@@ -35,6 +35,17 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", appName: "Kamus Bahasa Nusantara" });
 });
 
+// Supabase metadata & config health
+app.get("/api/supabase/config", (req, res) => {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://mzdnmqkgebbfqgdgulln.supabase.co";
+  res.json({
+    supabaseUrl,
+    hasAnonKey: true,
+    targetProject: "https://mzdnmqkgebbfqgdgulln.supabase.co",
+    status: "active"
+  });
+});
+
 // AI Translation endpoint
 app.post("/api/ai/translate", async (req, res) => {
   try {

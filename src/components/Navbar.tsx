@@ -214,10 +214,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="nav-btn-links"
                 onClick={onOpenLinksModal}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer hidden sm:flex items-center justify-center"
-                title="Lihat & Salin Tautan Halaman (Admin / User)"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                title="Lihat & Salin Tautan Akses Khusus Tiap Role (Admin, Editor, Moderator, Viewer, Pengguna)"
               >
-                <Link2 className="w-4 h-4 text-slate-600" />
+                <Link2 className="w-3.5 h-3.5 text-emerald-700" />
+                <span className="hidden sm:inline">Tautan Role</span>
               </button>
             )}
 

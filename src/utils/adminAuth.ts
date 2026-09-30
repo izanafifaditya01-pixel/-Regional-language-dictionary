@@ -532,6 +532,43 @@ export function switchActiveAdminUser(userId: string): AdminUser | null {
   return adminUser;
 }
 
+/**
+ * Login langsung / berganti ke akun default berdasarkan role atau alias URL (misal: 'admin', 'editor', 'moderator', 'viewer')
+ */
+export function loginAsRoleQuick(roleOrAlias: string): AdminUser | null {
+  const users = getAdminUsers();
+  const clean = roleOrAlias.trim().toLowerCase();
+
+  let target = users.find(u => {
+    if (clean === 'admin' || clean === 'superadmin' || clean === 'super administrator') {
+      return u.role === 'Super Administrator';
+    }
+    if (clean === 'editor' || clean === 'linguis' || clean === 'linguist' || clean === 'linguist editor') {
+      return u.role === 'Linguist Editor';
+    }
+    if (clean === 'moderator') {
+      return u.role === 'Moderator';
+    }
+    if (clean === 'viewer' || clean === 'peneliti') {
+      return u.role === 'Viewer';
+    }
+    return (
+      u.username.toLowerCase() === clean ||
+      u.role.toLowerCase() === clean ||
+      u.id.toLowerCase() === clean
+    );
+  });
+
+  if (!target) {
+    target = users[0];
+  }
+
+  if (target) {
+    return switchActiveAdminUser(target.id);
+  }
+  return null;
+}
+
 export function logoutAdmin(): void {
   try {
     const session = getAdminSession();

@@ -34,6 +34,7 @@ export interface WordEntry {
   exampleSentence: string;
   exampleTranslation: string;
   culturalContext?: string;
+  dialect?: string;
   synonyms?: string[];
   antonyms?: string[];
   audioUrl?: string;
@@ -173,6 +174,6 @@ export interface AdminUser {
   customPermissions?: PermissionKey[];
 }
 
-export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'users' | 'audit' | 'backup' | 'settings';
+export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'users' | 'audit' | 'backup' | 'supabase' | 'settings';
 export type AppViewMode = 'user' | 'admin';
 export type PageRoute = 'user' | 'user-login' | 'admin' | 'admin-login';

@@ -36,7 +36,12 @@ import {
   deleteContributedWord,
   getMergedDictionary
 } from './utils/userContributedWords';
-import { getAdminSession, logoutAdmin } from './utils/adminAuth';
+import { getAdminSession, logoutAdmin, loginAsRoleQuick } from './utils/adminAuth';
+import {
+  upsertWordToSupabase,
+  deleteWordFromSupabase,
+  fetchWordsFromSupabase
+} from './utils/supabaseService';
 
 // Helper to determine initial route from URL path, hash, or query parameter
 function getInitialRoute(): PageRoute {
@@ -45,16 +50,51 @@ function getInitialRoute(): PageRoute {
   const hash = window.location.hash.toLowerCase();
   const search = new URLSearchParams(window.location.search);
   const pageParam = search.get('page') || search.get('view') || search.get('route');
+  const roleParam = search.get('role');
+
+  if (
+    roleParam === 'user-login' ||
+    path.includes('/user/login') ||
+    hash.includes('user/login') ||
+    pageParam === 'user-login' ||
+    pageParam === 'login'
+  ) {
+    return 'user-login';
+  }
+
+  if (
+    roleParam === 'user' ||
+    path === '/user' ||
+    hash.includes('#/user') ||
+    pageParam === 'user'
+  ) {
+    return 'user';
+  }
+
+  if (
+    roleParam === 'admin' ||
+    roleParam === 'superadmin' ||
+    roleParam === 'editor' ||
+    roleParam === 'linguis' ||
+    roleParam === 'moderator' ||
+    roleParam === 'viewer' ||
+    path.includes('/admin') ||
+    path.includes('/editor') ||
+    path.includes('/moderator') ||
+    path.includes('/viewer') ||
+    hash.includes('admin') ||
+    hash.includes('editor') ||
+    hash.includes('moderator') ||
+    hash.includes('viewer') ||
+    pageParam === 'admin'
+  ) {
+    return 'admin';
+  }
 
   if (path.includes('/admin/login') || hash.includes('admin/login') || pageParam === 'admin-login') {
     return 'admin-login';
   }
-  if (path.includes('/admin') || hash.includes('admin') || pageParam === 'admin') {
-    return 'admin';
-  }
-  if (path.includes('/user/login') || hash.includes('user/login') || path.includes('/login') || pageParam === 'user-login' || pageParam === 'login') {
-    return 'user-login';
-  }
+
   return 'user';
 }
 
@@ -67,6 +107,9 @@ export default function App() {
 
   // Direct Links Modal State
   const [isRouteLinksModalOpen, setIsRouteLinksModalOpen] = useState(false);
+
+  // Active Role Toast Notification
+  const [roleWelcomeToast, setRoleWelcomeToast] = useState<string | null>(null);
 
   // Navigation State inside User view
   const [activeTab, setActiveTab] = useState<AppTab>('dictionary');
@@ -94,6 +137,94 @@ export default function App() {
   const [selectedWordForDetail, setSelectedWordForDetail] = useState<WordEntry | null>(null);
   const [languageModalType, setLanguageModalType] = useState<'source' | 'target' | null>(null);
   const [aiPromptWord, setAiPromptWord] = useState<WordEntry | null>(null);
+
+  // Auto-detect role URL parameters and deep-linking on mount & URL changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkAndApplyRoleUrl = () => {
+      const search = new URLSearchParams(window.location.search);
+      const roleParam = search.get('role');
+      const path = window.location.pathname.toLowerCase();
+
+      if (roleParam) {
+        if (roleParam === 'user') {
+          setCurrentRoute('user');
+        } else if (roleParam === 'user-login') {
+          setCurrentRoute('user-login');
+        } else if (['admin', 'superadmin', 'editor', 'linguis', 'moderator', 'viewer'].includes(roleParam.toLowerCase())) {
+          const user = loginAsRoleQuick(roleParam);
+          if (user) {
+            setAdminUser(user);
+            setCurrentRoute('admin');
+            setRoleWelcomeToast(`Terhubung via Tautan Akses Role: ${user.name} (${user.role})`);
+            setTimeout(() => setRoleWelcomeToast(null), 5000);
+          }
+        }
+      } else if (path.includes('/editor')) {
+        const user = loginAsRoleQuick('editor');
+        if (user) {
+          setAdminUser(user);
+          setCurrentRoute('admin');
+          setRoleWelcomeToast(`Terhubung via Tautan Akses Role: ${user.name} (${user.role})`);
+          setTimeout(() => setRoleWelcomeToast(null), 5000);
+        }
+      } else if (path.includes('/moderator')) {
+        const user = loginAsRoleQuick('moderator');
+        if (user) {
+          setAdminUser(user);
+          setCurrentRoute('admin');
+          setRoleWelcomeToast(`Terhubung via Tautan Akses Role: ${user.name} (${user.role})`);
+          setTimeout(() => setRoleWelcomeToast(null), 5000);
+        }
+      } else if (path.includes('/viewer')) {
+        const user = loginAsRoleQuick('viewer');
+        if (user) {
+          setAdminUser(user);
+          setCurrentRoute('admin');
+          setRoleWelcomeToast(`Terhubung via Tautan Akses Role: ${user.name} (${user.role})`);
+          setTimeout(() => setRoleWelcomeToast(null), 5000);
+        }
+      }
+    };
+
+    checkAndApplyRoleUrl();
+  }, []);
+
+  const handleSelectRoleFromModal = (roleTarget: string) => {
+    if (roleTarget === 'user') {
+      navigateTo('user');
+      setRoleWelcomeToast('Beralih ke Portal Pengguna Publik (Bebas Akses Tanpa Sandi)');
+      setTimeout(() => setRoleWelcomeToast(null), 4000);
+    } else if (roleTarget === 'user-login') {
+      navigateTo('user-login');
+      setRoleWelcomeToast('Beralih ke Halaman Login Akun Pengguna Terdaftar');
+      setTimeout(() => setRoleWelcomeToast(null), 4000);
+    } else {
+      const user = loginAsRoleQuick(roleTarget);
+      if (user) {
+        setAdminUser(user);
+        navigateTo('admin');
+        setRoleWelcomeToast(`Aktif sebagai ${user.name} (${user.role})`);
+        setTimeout(() => setRoleWelcomeToast(null), 4500);
+      }
+    }
+  };
+
+  // Fetch live words from Supabase on mount if configured
+  useEffect(() => {
+    fetchWordsFromSupabase().then(res => {
+      if (res.success && res.data && res.data.length > 0) {
+        setContributedWords(prev => {
+          const prevMap = new Map(prev.map(w => [w.id, w]));
+          res.data!.forEach(w => prevMap.set(w.id, w));
+          return Array.from(prevMap.values());
+        });
+      }
+    }).catch(() => {
+      // Graceful fallback to offline local dictionary
+    });
+  }, []);
 
   // Word of the Day (Spotlight for current target language)
   const wordOfTheDay = useMemo(() => {
@@ -200,16 +331,29 @@ export default function App() {
     setContributedWords(updatedList);
     // Award +30 XP for contributing a word
     handleAddXp(30);
+    // Asynchronously upsert to Supabase if configured
+    upsertWordToSupabase(word).catch(err => {
+      console.warn('Supabase async upsert notice:', err);
+    });
   };
 
   const handleUpdateContributedWord = (wordId: string, updatedFields: Partial<WordEntry>) => {
     const updatedList = updateContributedWord(wordId, updatedFields);
     setContributedWords(updatedList);
+    const updatedWord = updatedList.find(w => w.id === wordId);
+    if (updatedWord) {
+      upsertWordToSupabase(updatedWord).catch(err => {
+        console.warn('Supabase async update notice:', err);
+      });
+    }
   };
 
   const handleDeleteContributedWord = (wordId: string) => {
     const updatedList = deleteContributedWord(wordId);
     setContributedWords(updatedList);
+    deleteWordFromSupabase(wordId).catch(err => {
+      console.warn('Supabase async delete notice:', err);
+    });
   };
 
   // ==========================================
@@ -277,12 +421,28 @@ export default function App() {
           onLoginSuccess={handleAdminLoginSuccess}
           onNavigateToUser={() => navigateTo('user')}
           onNavigateToUserLogin={() => navigateTo('user-login')}
+          onOpenLinksModal={() => setIsRouteLinksModalOpen(true)}
         />
         <RouteLinksModal
           isOpen={isRouteLinksModalOpen}
           onClose={() => setIsRouteLinksModalOpen(false)}
           onNavigate={navigateTo}
+          onSelectRole={handleSelectRoleFromModal}
         />
+        {roleWelcomeToast && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+            <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-bold text-slate-100">{roleWelcomeToast}</span>
+              <button
+                onClick={() => setRoleWelcomeToast(null)}
+                className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer font-bold"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -304,12 +464,28 @@ export default function App() {
           onAddWord={handleAddContributedWord}
           onUpdateWord={handleUpdateContributedWord}
           onDeleteWord={handleDeleteContributedWord}
+          onWordsUpdated={setContributedWords}
         />
         <RouteLinksModal
           isOpen={isRouteLinksModalOpen}
           onClose={() => setIsRouteLinksModalOpen(false)}
           onNavigate={navigateTo}
+          onSelectRole={handleSelectRoleFromModal}
         />
+        {roleWelcomeToast && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+            <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-bold text-slate-100">{roleWelcomeToast}</span>
+              <button
+                onClick={() => setRoleWelcomeToast(null)}
+                className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer font-bold"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -330,7 +506,22 @@ export default function App() {
           isOpen={isRouteLinksModalOpen}
           onClose={() => setIsRouteLinksModalOpen(false)}
           onNavigate={navigateTo}
+          onSelectRole={handleSelectRoleFromModal}
         />
+        {roleWelcomeToast && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+            <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-bold text-slate-100">{roleWelcomeToast}</span>
+              <button
+                onClick={() => setRoleWelcomeToast(null)}
+                className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer font-bold"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -504,7 +695,24 @@ export default function App() {
         isOpen={isRouteLinksModalOpen}
         onClose={() => setIsRouteLinksModalOpen(false)}
         onNavigate={navigateTo}
+        onSelectRole={handleSelectRoleFromModal}
       />
+
+      {/* Role Switch / URL Welcome Toast */}
+      {roleWelcomeToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-xs font-bold text-slate-100">{roleWelcomeToast}</span>
+            <button
+              onClick={() => setRoleWelcomeToast(null)}
+              className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Direct Page Navigation Bar */}
       <aside className="bg-slate-900 border-t border-slate-800 text-slate-300 py-3 px-4">
