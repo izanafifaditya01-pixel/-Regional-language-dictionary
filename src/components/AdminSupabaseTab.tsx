@@ -99,9 +99,11 @@ export const AdminSupabaseTab: React.FC<AdminSupabaseTabProps> = ({
     const def = getSupabaseConfig();
     setConfig(def);
     setUrlInput(def.url);
-    setKeyInput('');
+    setKeyInput(def.anonKey);
     showToast('info', 'Konfigurasi dikembalikan ke default.');
-    setStatus(null);
+    setTimeout(() => {
+      handleTestConnection();
+    }, 300);
   };
 
   const handleSyncToSupabase = async () => {

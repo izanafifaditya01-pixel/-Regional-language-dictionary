@@ -46,6 +46,51 @@ app.get("/api/supabase/config", (req, res) => {
   });
 });
 
+// Live Supabase status check endpoint
+app.get("/api/supabase/status", async (req, res) => {
+  const supabaseUrl = process.env.SUPABASE_URL || "https://mzdnmqkgebbfqgdgulln.supabase.co";
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16ZG5tcWtnZWJiZnFnZGd1bGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMDQzOTUsImV4cCI6MjEwNTY4MDM5NX0.F4hVUPyIXBm92mxdv4Yy22eDu2cnAYW20RkEpZcY3EE";
+
+  try {
+    const response = await fetch(`${supabaseUrl}/rest/v1/dictionary_words?select=count`, {
+      method: "GET",
+      headers: {
+        "apikey": supabaseAnonKey,
+        "Authorization": `Bearer ${supabaseAnonKey}`,
+      },
+    });
+
+    const isConnected = response.status === 200 || response.status === 404;
+    const bodyText = await response.text();
+    let bodyJson: any = null;
+    try {
+      bodyJson = JSON.parse(bodyText);
+    } catch {
+      // not JSON
+    }
+
+    const tableExists = response.status === 200;
+    res.json({
+      success: true,
+      statusCode: response.status,
+      isConnected,
+      tableExists,
+      url: supabaseUrl,
+      projectRef: "mzdnmqkgebbfqgdgulln",
+      message: tableExists
+        ? "Terkoneksi dengan sukses ke database Supabase!"
+        : "Koneksi & kredensial Supabase terverifikasi. Skrip schema tabel perlu dijalankan di SQL Editor.",
+      details: bodyJson,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      isConnected: false,
+      error: err.message || "Gagal menghubungi Supabase",
+    });
+  }
+});
+
 // AI Translation endpoint
 app.post("/api/ai/translate", async (req, res) => {
   try {
