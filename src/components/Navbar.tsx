@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookMarked, BrainCircuit, Sparkles, User, Award, Flame, Languages, Search, BookOpen, Gamepad2, PlusCircle, ShieldCheck, Lock, Link2, LogIn } from 'lucide-react';
 import { UserProfile, AppTab } from '../types';
+import { shouldShowAdminInNavbar, shouldShowRoleLinksTrigger } from '../utils/portalConfig';
 
 interface NavbarProps {
   activeTab: AppTab;
@@ -209,8 +210,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               <User className="w-5 h-5" />
             </button>
 
-            {/* Direct Links Modal Trigger */}
-            {onOpenLinksModal && (
+            {/* Direct Links Modal Trigger (Hanya tampil di mode dev/testing, disembunyikan di user portal) */}
+            {onOpenLinksModal && shouldShowRoleLinksTrigger() && (
               <button
                 id="nav-btn-links"
                 onClick={onOpenLinksModal}
@@ -235,27 +236,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Portal Admin Entry Point */}
-            {isAdminLoggedIn ? (
-              <button
-                id="nav-btn-admin-dashboard"
-                onClick={onGoToAdminDashboard}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-black shadow-xs border border-slate-700 transition-all cursor-pointer"
-                title="Buka Halaman Dashboard Administrator (/admin)"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span className="hidden sm:inline">Portal Admin</span>
-              </button>
-            ) : (
-              <button
-                id="nav-btn-admin-login"
-                onClick={onOpenAdminLogin}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-bold border border-slate-700 transition-all cursor-pointer shadow-xs"
-                title="Masuk ke Halaman Login Admin (/admin)"
-              >
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Admin</span>
-              </button>
+            {/* Portal Admin Entry Point - Hanya tampil jika admin sedang login, atau di subdomain admin, atau query khusus */}
+            {shouldShowAdminInNavbar(Boolean(isAdminLoggedIn)) && (
+              isAdminLoggedIn ? (
+                <button
+                  id="nav-btn-admin-dashboard"
+                  onClick={onGoToAdminDashboard}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-black shadow-xs border border-slate-700 transition-all cursor-pointer"
+                  title="Buka Halaman Dashboard Administrator (/admin)"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span className="hidden sm:inline">Portal Admin</span>
+                </button>
+              ) : (
+                <button
+                  id="nav-btn-admin-login"
+                  onClick={onOpenAdminLogin}
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-bold border border-slate-700 transition-all cursor-pointer shadow-xs"
+                  title="Masuk ke Halaman Login Admin (/admin)"
+                >
+                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Admin</span>
+                </button>
+              )
             )}
           </div>
 

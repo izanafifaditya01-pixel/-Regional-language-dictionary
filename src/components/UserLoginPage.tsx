@@ -6,14 +6,13 @@ interface UserLoginPageProps {
   currentUserProfile: UserProfile;
   onUpdateUserProfile: (name: string, email?: string) => void;
   onContinueAsGuest: () => void;
-  onNavigateToAdminLogin: () => void;
+  onNavigateToAdminLogin?: () => void;
 }
 
 export const UserLoginPage: React.FC<UserLoginPageProps> = ({
   currentUserProfile,
   onUpdateUserProfile,
   onContinueAsGuest,
-  onNavigateToAdminLogin,
 }) => {
   const [name, setName] = useState(currentUserProfile.name === 'Penjelajah Bahasa' ? '' : currentUserProfile.name);
   const [email, setEmail] = useState('');
@@ -157,20 +156,6 @@ export const UserLoginPage: React.FC<UserLoginPageProps> = ({
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span>Jelajahi Langsung Tanpa Perlu Login (Mode Tamu)</span>
             </button>
-
-            {/* Link to Admin Login */}
-            <div className="pt-4 border-t border-slate-100 text-center text-xs">
-              <div className="flex items-center justify-center gap-1.5 text-slate-500">
-                <ShieldCheck className="w-3.5 h-3.5 text-slate-600" />
-                <span>Pengelola kamus?</span>
-                <button
-                  onClick={onNavigateToAdminLogin}
-                  className="text-emerald-700 hover:text-emerald-800 font-black underline cursor-pointer"
-                >
-                  Masuk ke Halaman Admin
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>

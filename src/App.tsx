@@ -42,6 +42,7 @@ import {
   deleteWordFromSupabase,
   fetchWordsFromSupabase
 } from './utils/supabaseService';
+import { isCurrentAdminPortal, shouldShowRoleLinksTrigger, shouldShowAdminInNavbar } from './utils/portalConfig';
 
 // Helper to determine initial route from URL path, hash, or query parameter
 function getInitialRoute(): PageRoute {
@@ -69,6 +70,12 @@ function getInitialRoute(): PageRoute {
     pageParam === 'user'
   ) {
     return 'user';
+  }
+
+  // Jika diakses melalui Subdomain Admin (misal: admin.domain.com di Cloudflare)
+  if (isCurrentAdminPortal()) {
+    const adminSession = getAdminSession();
+    return adminSession ? 'admin' : 'admin-login';
   }
 
   if (
@@ -420,15 +427,16 @@ export default function App() {
         <AdminLoginPage
           onLoginSuccess={handleAdminLoginSuccess}
           onNavigateToUser={() => navigateTo('user')}
-          onNavigateToUserLogin={() => navigateTo('user-login')}
           onOpenLinksModal={() => setIsRouteLinksModalOpen(true)}
         />
-        <RouteLinksModal
-          isOpen={isRouteLinksModalOpen}
-          onClose={() => setIsRouteLinksModalOpen(false)}
-          onNavigate={navigateTo}
-          onSelectRole={handleSelectRoleFromModal}
-        />
+        {shouldShowRoleLinksTrigger() && (
+          <RouteLinksModal
+            isOpen={isRouteLinksModalOpen}
+            onClose={() => setIsRouteLinksModalOpen(false)}
+            onNavigate={navigateTo}
+            onSelectRole={handleSelectRoleFromModal}
+          />
+        )}
         {roleWelcomeToast && (
           <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
             <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
@@ -466,12 +474,14 @@ export default function App() {
           onDeleteWord={handleDeleteContributedWord}
           onWordsUpdated={setContributedWords}
         />
-        <RouteLinksModal
-          isOpen={isRouteLinksModalOpen}
-          onClose={() => setIsRouteLinksModalOpen(false)}
-          onNavigate={navigateTo}
-          onSelectRole={handleSelectRoleFromModal}
-        />
+        {shouldShowRoleLinksTrigger() && (
+          <RouteLinksModal
+            isOpen={isRouteLinksModalOpen}
+            onClose={() => setIsRouteLinksModalOpen(false)}
+            onNavigate={navigateTo}
+            onSelectRole={handleSelectRoleFromModal}
+          />
+        )}
         {roleWelcomeToast && (
           <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
             <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
@@ -500,14 +510,15 @@ export default function App() {
           currentUserProfile={userProfile}
           onUpdateUserProfile={handleUpdateUserNameAndEmail}
           onContinueAsGuest={() => navigateTo('user')}
-          onNavigateToAdminLogin={() => navigateTo('admin')}
         />
-        <RouteLinksModal
-          isOpen={isRouteLinksModalOpen}
-          onClose={() => setIsRouteLinksModalOpen(false)}
-          onNavigate={navigateTo}
-          onSelectRole={handleSelectRoleFromModal}
-        />
+        {shouldShowRoleLinksTrigger() && (
+          <RouteLinksModal
+            isOpen={isRouteLinksModalOpen}
+            onClose={() => setIsRouteLinksModalOpen(false)}
+            onNavigate={navigateTo}
+            onSelectRole={handleSelectRoleFromModal}
+          />
+        )}
         {roleWelcomeToast && (
           <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
             <div className="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/50 flex items-center gap-3 backdrop-blur-md">
@@ -714,52 +725,54 @@ export default function App() {
         </div>
       )}
 
-      {/* Direct Page Navigation Bar */}
-      <aside className="bg-slate-900 border-t border-slate-800 text-slate-300 py-3 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="font-bold text-slate-200">Tautan Langsung Halaman:</span>
+      {/* Direct Page Navigation Bar (Hanya tampil di mode dev/testing) */}
+      {shouldShowRoleLinksTrigger() && (
+        <aside className="bg-slate-900 border-t border-slate-800 text-slate-300 py-3 px-4">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="font-bold text-slate-200">Tautan Langsung Halaman:</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => navigateTo('user')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer border border-slate-700 transition-colors"
+                title="Akses Langsung Halaman Pengguna"
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Halaman Pengguna (/user)</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo('user-login')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-200 font-semibold cursor-pointer border border-blue-800 transition-colors"
+                title="Akses Langsung Halaman Login Pengguna"
+              >
+                <LogIn className="w-3.5 h-3.5 text-blue-400" />
+                <span>Login Pengguna (/user/login)</span>
+              </button>
+
+              <button
+                onClick={() => navigateTo('admin')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950 hover:bg-amber-900 text-amber-200 font-semibold cursor-pointer border border-amber-800 transition-colors"
+                title="Akses Langsung Halaman Login/Dashboard Admin"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Halaman Admin (/admin)</span>
+              </button>
+
+              <button
+                onClick={() => setIsRouteLinksModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-colors shadow-2xs"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>Daftar & Salin Link</span>
+              </button>
+            </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => navigateTo('user')}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer border border-slate-700 transition-colors"
-              title="Akses Langsung Halaman Pengguna"
-            >
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Halaman Pengguna (/user)</span>
-            </button>
-
-            <button
-              onClick={() => navigateTo('user-login')}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-200 font-semibold cursor-pointer border border-blue-800 transition-colors"
-              title="Akses Langsung Halaman Login Pengguna"
-            >
-              <LogIn className="w-3.5 h-3.5 text-blue-400" />
-              <span>Login Pengguna (/user/login)</span>
-            </button>
-
-            <button
-              onClick={() => navigateTo('admin')}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950 hover:bg-amber-900 text-amber-200 font-semibold cursor-pointer border border-amber-800 transition-colors"
-              title="Akses Langsung Halaman Login/Dashboard Admin"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Halaman Admin (/admin)</span>
-            </button>
-
-            <button
-              onClick={() => setIsRouteLinksModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-colors shadow-2xs"
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              <span>Daftar & Salin Link</span>
-            </button>
-          </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       {/* Footer */}
       <footer className="bg-slate-950 text-slate-400 py-8 border-t border-slate-900 text-xs text-center">
@@ -779,15 +792,19 @@ export default function App() {
             >
               Login Pengguna (/user/login)
             </button>
-            <span className="hidden sm:inline">•</span>
-            <button
-              id="footer-admin-btn"
-              onClick={() => navigateTo('admin')}
-              className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold transition-colors cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>{adminUser ? 'Buka Dashboard Admin (/admin)' : 'Portal Administrator Login (/admin)'}</span>
-            </button>
+            {shouldShowAdminInNavbar(Boolean(adminUser)) && (
+              <>
+                <span className="hidden sm:inline">•</span>
+                <button
+                  id="footer-admin-btn"
+                  onClick={() => navigateTo('admin')}
+                  className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold transition-colors cursor-pointer"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{adminUser ? 'Buka Dashboard Admin (/admin)' : 'Portal Administrator Login (/admin)'}</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </footer>

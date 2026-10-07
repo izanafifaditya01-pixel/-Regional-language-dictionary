@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, Sparkles, CheckCircle2, ArrowLeft, Copy, Check, Globe, Link2 } from 'lucide-react';
+import { ShieldCheck, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, Sparkles, CheckCircle2, ArrowLeft, Copy, Check, Globe, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { authenticateAdmin } from '../utils/adminAuth';
 import { AdminUser } from '../types';
+import { shouldShowRoleLinksTrigger, isCurrentAdminPortal, isDemoCredentialsEnabled } from '../utils/portalConfig';
 
 interface AdminLoginPageProps {
   onLoginSuccess: (admin: AdminUser) => void;
   onNavigateToUser: () => void;
-  onNavigateToUserLogin: () => void;
+  onNavigateToUserLogin?: () => void;
   onOpenLinksModal?: () => void;
 }
 
@@ -23,6 +24,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showDemoBox, setShowDemoBox] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,18 +69,25 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 font-sans">
-      {/* Top Bar with Navigation Back to User Page */}
+      {/* Top Bar */}
       <header className="max-w-5xl w-full mx-auto flex items-center justify-between py-2">
-        <button
-          onClick={onNavigateToUser}
-          className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 px-3.5 py-2 rounded-xl border border-slate-700 transition-all cursor-pointer shadow-xs"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Ke Halaman Pengguna (Tanpa Login)</span>
-        </button>
+        {!isCurrentAdminPortal() ? (
+          <button
+            onClick={onNavigateToUser}
+            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 px-3.5 py-2 rounded-xl border border-slate-700 transition-all cursor-pointer shadow-xs"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Ke Halaman Pengguna (Tanpa Login)</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Portal Khusus Administrator</span>
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
-          {onOpenLinksModal && (
+          {onOpenLinksModal && shouldShowRoleLinksTrigger() && (
             <button
               type="button"
               onClick={onOpenLinksModal}
@@ -125,65 +134,83 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
 
           {/* Body Content */}
           <div className="p-6 sm:p-8 space-y-5">
-            {/* Quick Demo Fill Alert with Role Options */}
-            <div className="p-3.5 bg-slate-800/80 border border-slate-700/80 rounded-2xl space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="font-bold text-white flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  Pilih Role untuk Uji Coba (RBAC):
-                </span>
-                <span className="text-[10px] text-slate-400">1-Klik Isi</span>
+            {/* Quick Demo Fill (Collapsible accordion for testing/demo) */}
+            {isDemoCredentialsEnabled() && (
+              <div className="border border-slate-800 rounded-2xl bg-slate-950/40 overflow-hidden text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowDemoBox(!showDemoBox)}
+                  className="w-full px-3.5 py-2.5 flex items-center justify-between text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                >
+                  <span className="flex items-center gap-1.5 font-bold text-[11px] text-amber-300/90">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Mode Pengujian RBAC (Akun Demo)</span>
+                  </span>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                    <span>{showDemoBox ? 'Sembunyikan' : 'Buka'}</span>
+                    {showDemoBox ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </div>
+                </button>
+
+                {showDemoBox && (
+                  <div className="p-3 border-t border-slate-800/80 bg-slate-900/60 space-y-2">
+                    <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                      <span>Pilih role untuk uji coba:</span>
+                      <span className="font-mono text-emerald-400">1-Klik Isi</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleFillDemoRole('admin', 'admin123')}
+                        className="p-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/60 text-left transition-all cursor-pointer group"
+                      >
+                        <div className="font-bold text-purple-200 text-[11px] group-hover:text-purple-100 flex items-center justify-between">
+                          <span>👑 Super Admin</span>
+                          <span className="text-[9px] px-1 rounded bg-purple-900/80 text-purple-300">Semua</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">admin / admin123</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleFillDemoRole('editor', 'editor123')}
+                        className="p-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800/60 text-left transition-all cursor-pointer group"
+                      >
+                        <div className="font-bold text-emerald-200 text-[11px] group-hover:text-emerald-100 flex items-center justify-between">
+                          <span>📖 Editor</span>
+                          <span className="text-[9px] px-1 rounded bg-emerald-900/80 text-emerald-300">Kamus</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">editor / editor123</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleFillDemoRole('moderator', 'moderator123')}
+                        className="p-2 rounded-xl bg-blue-950/60 hover:bg-blue-900/80 border border-blue-800/60 text-left transition-all cursor-pointer group"
+                      >
+                        <div className="font-bold text-blue-200 text-[11px] group-hover:text-blue-100 flex items-center justify-between">
+                          <span>🛡️ Moderator</span>
+                          <span className="text-[9px] px-1 rounded bg-blue-900/80 text-blue-300">Verif</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">moderator / moderator123</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleFillDemoRole('viewer', 'viewer123')}
+                        className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-700/80 border border-slate-700 text-left transition-all cursor-pointer group"
+                      >
+                        <div className="font-bold text-slate-300 text-[11px] group-hover:text-white flex items-center justify-between">
+                          <span>👁️ Viewer</span>
+                          <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400">Read</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">viewer / viewer123</div>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleFillDemoRole('admin', 'admin123')}
-                  className="p-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-800/60 text-left transition-all cursor-pointer group"
-                >
-                  <div className="font-bold text-purple-200 text-[11px] group-hover:text-purple-100 flex items-center justify-between">
-                    <span>👑 Super Admin</span>
-                    <span className="text-[9px] px-1 rounded bg-purple-900/80 text-purple-300">Semua Akses</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">admin / admin123</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleFillDemoRole('editor', 'editor123')}
-                  className="p-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800/60 text-left transition-all cursor-pointer group"
-                >
-                  <div className="font-bold text-emerald-200 text-[11px] group-hover:text-emerald-100 flex items-center justify-between">
-                    <span>📖 Linguist Editor</span>
-                    <span className="text-[9px] px-1 rounded bg-emerald-900/80 text-emerald-300">Kamus & Edit</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">editor / editor123</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleFillDemoRole('moderator', 'moderator123')}
-                  className="p-2 rounded-xl bg-blue-950/60 hover:bg-blue-900/80 border border-blue-800/60 text-left transition-all cursor-pointer group"
-                >
-                  <div className="font-bold text-blue-200 text-[11px] group-hover:text-blue-100 flex items-center justify-between">
-                    <span>🛡️ Moderator</span>
-                    <span className="text-[9px] px-1 rounded bg-blue-900/80 text-blue-300">Verif +Kata</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">moderator / moderator123</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleFillDemoRole('viewer', 'viewer123')}
-                  className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-700/80 border border-slate-700 text-left transition-all cursor-pointer group"
-                >
-                  <div className="font-bold text-slate-300 text-[11px] group-hover:text-white flex items-center justify-between">
-                    <span>👁️ Viewer</span>
-                    <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400">Read-Only</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">viewer / viewer123</div>
-                </button>
-              </div>
-            </div>
+            )}
 
             {/* Error Banner */}
             {errorMessage && (
@@ -273,28 +300,20 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
               </button>
             </form>
 
-            {/* Alternative Links */}
-            <div className="pt-4 border-t border-slate-800 space-y-2 text-center text-xs">
-              <div className="flex items-center justify-center gap-2 text-slate-400">
-                <span>Bukan Administrator?</span>
-                <button
-                  onClick={onNavigateToUser}
-                  className="text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
-                >
-                  Ke Halaman User (Tanpa Login)
-                </button>
+            {/* Alternative Links (Hanya tampil jika bukan di subdomain/portal khusus admin) */}
+            {!isCurrentAdminPortal() && (
+              <div className="pt-4 border-t border-slate-800 text-center text-xs">
+                <div className="flex items-center justify-center gap-2 text-slate-400">
+                  <span>Bukan Administrator?</span>
+                  <button
+                    onClick={onNavigateToUser}
+                    className="text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
+                  >
+                    Ke Halaman User (Tanpa Login)
+                  </button>
+                </div>
               </div>
-
-              <div className="flex items-center justify-center gap-2 text-slate-500 text-[11px]">
-                <span>Ingin login akun user?</span>
-                <button
-                  onClick={onNavigateToUserLogin}
-                  className="text-slate-300 hover:text-white font-medium underline cursor-pointer"
-                >
-                  Halaman Login Pengguna
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

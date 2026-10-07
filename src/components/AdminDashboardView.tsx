@@ -52,6 +52,7 @@ import {
 import { AdminUsersTab } from './AdminUsersTab';
 import { AdminAuditLogTab } from './AdminAuditLogTab';
 import { AdminSupabaseTab } from './AdminSupabaseTab';
+import { shouldShowRoleLinksTrigger } from '../utils/portalConfig';
 
 interface AdminDashboardViewProps {
   adminUser: AdminUser;
@@ -440,8 +441,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </div>
               </div>
 
-              {/* Direct Links Modal */}
-              {onOpenLinksModal && (
+              {/* Direct Links Modal (Hanya tampil jika show_links=1 atau dev=1) */}
+              {onOpenLinksModal && shouldShowRoleLinksTrigger() && (
                 <button
                   onClick={onOpenLinksModal}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all cursor-pointer shadow-xs"
