@@ -112,7 +112,7 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
 
     playSuccessSound();
     setNotification({
-      message: `Usulan kosakata "${translationRegional}" berhasil dikirim ke antrean moderasi kurator (+30 XP). Kata akan tampil di kamus utama setelah disetujui Administrator.`,
+      message: `Usulan kosakata "${translationRegional}" berhasil dikirim (+30 XP). Kata akan tampil di kamus utama setelah disetujui Admin.`,
       type: 'success',
     });
     resetForm();
@@ -152,16 +152,16 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
         </h1>
         <p className="text-stone-600 text-xs sm:text-sm max-w-3xl leading-relaxed">
           Ajukan kosakata baru untuk <strong>Bahasa Tolaki</strong>, <strong>Bahasa Moronene</strong>,{' '}
-          <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Demi menjaga keakuratan linguistik, setiap usulan pengguna masuk ke{' '}
-          <strong>Antrean Moderasi Kurator</strong> sebelum dipublikasikan ke kamus resmi.
+          <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Setiap usulan kata dari User akan diperiksa oleh{' '}
+          <strong>Admin</strong> sebelum ditampilkan di kamus resmi.
         </p>
 
         <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-stone-500 tabular-nums">
           <span className="text-[#14532D] font-semibold">+30 XP per Pengajuan</span>
           <span aria-hidden="true">·</span>
-          <span>{approvedCount} Usulan Disetujui Kurator</span>
+          <span>{approvedCount} Usulan Disetujui Admin</span>
           <span aria-hidden="true">·</span>
-          <span>{pendingCount} Menunggu Verifikasi Admin</span>
+          <span>{pendingCount} Menunggu Persetujuan Admin</span>
         </div>
       </div>
 
@@ -239,7 +239,7 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
                 Formulir Pengajuan Kosakata Baru
               </h2>
               <p className="text-xs sm:text-sm text-stone-500 mt-1">
-                Usulan Anda akan diperiksa oleh Moderator atau Editor Bahasa di Portal Administrator sebelum masuk kamus publik.
+                Usulan Anda akan diperiksa oleh Admin sebelum ditambahkan ke kamus utama.
               </p>
             </div>
 
@@ -404,7 +404,7 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
                   className="w-full flex items-center justify-center gap-2 bg-[#14532D] hover:bg-[#166534] text-white py-3 px-6 rounded-xl text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Kirim Usulan ke Moderasi Kurator (+30 XP)</span>
+                  <span>Kirim Usulan Kata (+30 XP)</span>
                 </button>
               </div>
             </form>
@@ -418,7 +418,7 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
                   Pratinjau Usulan Entri
                 </span>
                 <span className="text-amber-700 font-medium">
-                  Status Awal: Menunggu Moderasi
+                  Status Awal: Menunggu Admin
                 </span>
               </div>
 
@@ -475,9 +475,9 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
             <div className="p-5 rounded-2xl bg-[#EFECE4]/75 border border-stone-200/90 text-xs text-stone-700 flex items-start gap-3">
               <Info className="w-4 h-4 text-[#14532D] shrink-0 mt-0.5" />
               <div className="space-y-1 leading-relaxed">
-                <strong className="text-stone-900 block">Alur Pemisahan Wewenang Pengguna &amp; Admin</strong>
+                <strong className="text-stone-900 block">Alur Pemisahan User &amp; Admin</strong>
                 <p>
-                  Sebagai <strong>Pengguna</strong>, Anda dapat mengusulkan kosakata baru. Wewenang penyuntingan kamus master, persetujuan publikasi, serta penghapusan entri dikelola secara terpisah oleh <strong>Moderator &amp; Kurator</strong> di Portal Administrator.
+                  Sebagai <strong>User</strong>, Anda dapat mengusulkan kosakata baru. Wewenang penyuntingan kamus master, persetujuan publikasi, serta penghapusan entri dikelola sepenuhnya oleh <strong>Admin</strong>.
                 </p>
               </div>
             </div>

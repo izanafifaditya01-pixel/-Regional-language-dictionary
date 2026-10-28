@@ -37,54 +37,68 @@ import {
   UserCheck,
   ChevronDown,
   AlertTriangle,
-  Link2
+  Link2,
+  Menu,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { WordEntry, Language, AdminUser, AdminTab, AdminRole } from '../types';
 import { LANGUAGES_DATA } from '../data/languagesData';
 import {
   hasPermission,
   getAdminUsers,
-  switchActiveAdminUser,
   addAuditLog,
-  getAuditLogs,
   updateAdminUser,
 } from '../utils/adminAuth';
 import { AdminUsersTab } from './AdminUsersTab';
 import { AdminAuditLogTab } from './AdminAuditLogTab';
 import { AdminSupabaseTab } from './AdminSupabaseTab';
-import { shouldShowRoleLinksTrigger, isStrictAdminPortal } from '../utils/portalConfig';
+import { getSecretAdminUrl } from '../utils/portalConfig';
 
 interface AdminDashboardViewProps {
   adminUser: AdminUser;
   onLogout: () => void;
-  onNavigateToPortalGateway?: () => void;
   allWords: WordEntry[];
   contributedWords: WordEntry[];
   onAddWord: (wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>, contributorName: string) => void;
   onUpdateWord: (wordId: string, updatedFields: Partial<WordEntry>) => void;
   onDeleteWord: (wordId: string) => void;
-  onOpenLinksModal?: () => void;
-  onSwitchAdminUser?: (newAdmin: AdminUser) => void;
   onWordsUpdated?: (updatedWords: WordEntry[]) => void;
 }
+
+const ADMIN_TAB_TITLES: Record<AdminTab, string> = {
+  overview: 'Ringkasan Dashboard',
+  words: 'Kelola Kosakata Master',
+  moderation: 'Usulan Kata dari User',
+  languages: 'Rumpun Bahasa Daerah',
+  users: 'Manajemen Akun Admin',
+  audit: 'Riwayat Aktivitas Admin',
+  backup: 'Ekspor & Cadangan Data',
+  supabase: 'Database Cloud Supabase',
+  settings: 'Pengaturan Akun Admin',
+};
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   adminUser,
   onLogout,
-  onNavigateToPortalGateway,
   allWords,
   contributedWords,
   onAddWord,
   onUpdateWord,
   onDeleteWord,
-  onOpenLinksModal,
-  onSwitchAdminUser,
   onWordsUpdated,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [moderationSubFilter, setModerationSubFilter] = useState<'pending' | 'approved'>('pending');
-  const strictAdminOnly = isStrictAdminPortal();
+  const [copiedSecretUrl, setCopiedSecretUrl] = useState(false);
+
+  const handleCopySecretUrl = () => {
+    navigator.clipboard.writeText(getSecretAdminUrl());
+    setCopiedSecretUrl(true);
+    setTimeout(() => setCopiedSecretUrl(false), 2500);
+  };
 
   const pendingContributions = useMemo(
     () => contributedWords.filter(w => w.moderationStatus === 'pending'),
@@ -127,28 +141,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [adminDisplayName, setAdminDisplayName] = useState(adminUser.name);
   const [settingsMessage, setSettingsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // RBAC Permissions resolution for current admin user
+  // Full Admin permissions
   const canManageWords = hasPermission(adminUser, 'can_manage_words');
   const canDeleteWords = hasPermission(adminUser, 'can_delete_words');
   const canModerate = hasPermission(adminUser, 'can_moderate_contributions');
-  const canManageLanguages = hasPermission(adminUser, 'can_manage_languages');
   const canExport = hasPermission(adminUser, 'can_export_backup');
-  const canRestore = hasPermission(adminUser, 'can_import_restore');
-  const canManageUsers = hasPermission(adminUser, 'can_manage_users');
-  const canViewAudit = hasPermission(adminUser, 'can_view_audit_logs');
-  const canEditPermissions = hasPermission(adminUser, 'can_edit_permissions');
-  const canSystemSettings = hasPermission(adminUser, 'can_system_settings');
 
-  // Multi-account and Live Role Switching helper
   const allAdminAccounts = getAdminUsers();
-  const handleSwitchAdmin = (userId: string) => {
-    const target = switchActiveAdminUser(userId);
-    if (target && onSwitchAdminUser) {
-      onSwitchAdminUser(target);
-      setFormNotification(`Beralih ke akun: ${target.name} (${target.role})`);
-      setTimeout(() => setFormNotification(null), 3500);
-    }
-  };
 
   // Sultra Languages list
   const sultraLanguages = useMemo(() => {
@@ -396,305 +395,353 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     return found ? found.name : langId.toUpperCase();
   };
 
-  return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
-      {/* ======================================================== */}
-      {/* TOP ADMIN HEADER BAR                                     */}
-      {/* ======================================================== */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18">
-            
-            {/* Admin Brand Logo & Badge */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xl shadow-md shrink-0">
-                <ShieldCheck className="w-6 h-6 text-white" />
+  const handleSelectSidebarTab = (tab: AdminTab) => {
+    setActiveTab(tab);
+    setMobileSidebarOpen(false);
+  };
+
+  const renderSidebarContent = () => (
+    <div className="h-full flex flex-col justify-between bg-[#070B14] text-slate-200">
+      {/* Top Sidebar Brand & Navigation Groups */}
+      <div className="p-4 space-y-6 overflow-y-auto">
+        {/* Console Brand Lockup */}
+        <div className="flex items-center justify-between gap-2 pb-4 border-b border-slate-800/90">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-sky-600 flex items-center justify-center text-white shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-sm text-white tracking-tight truncate">
+                Leksika Console
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-base sm:text-lg tracking-tight text-white">
-                    Portal Admin Leksika
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md">
-                    Administrator
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 hidden sm:block">
-                  Pusat Kelola Kosakata & Preservasi Bahasa Sulawesi Tenggara
-                </p>
+              <div className="text-[10px] font-mono text-sky-400 truncate">
+                BACK-OFFICE CMS
               </div>
             </div>
-
-            {/* Quick Actions (Role Switcher, User Mode & Logout) */}
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              {/* Quick Persona / Role Switcher for RBAC verification */}
-              <div className="hidden lg:flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs">
-                <span className="text-slate-400 font-medium">Uji Role:</span>
-                <select
-                  value={adminUser.id}
-                  onChange={e => handleSwitchAdmin(e.target.value)}
-                  className="bg-transparent text-white font-bold border-none focus:outline-none cursor-pointer text-xs"
-                  title="Ganti akun / role langsung untuk menguji RBAC"
-                >
-                  {allAdminAccounts.map(acc => (
-                    <option key={acc.id} value={acc.id} className="bg-slate-900 text-white">
-                      {acc.role === 'Super Administrator' ? '👑' : acc.role === 'Linguist Editor' ? '📖' : acc.role === 'Moderator' ? '🛡️' : '👁️'} {acc.name} ({acc.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Admin Monogram Profile Badge */}
-              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs">
-                <div className="w-6 h-6 rounded-full bg-emerald-700 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                  {adminUser.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div className="text-left hidden sm:block">
-                  <div className="font-bold text-white text-[11px] leading-tight truncate max-w-[110px]">{adminUser.name}</div>
-                  <div className="text-[10px] text-emerald-300 font-semibold">{adminUser.role}</div>
-                </div>
-              </div>
-
-              {/* Direct Links Modal (Hanya tampil jika show_links=1 atau dev=1) */}
-              {onOpenLinksModal && shouldShowRoleLinksTrigger() && (
-                <button
-                  onClick={onOpenLinksModal}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all cursor-pointer shadow-xs"
-                  title="Lihat & Salin Daftar Tautan Halaman"
-                >
-                  <Link2 className="w-4 h-4 text-emerald-400" />
-                  <span className="hidden sm:inline">Link Tiap Role</span>
-                </button>
-              )}
-
-              {/* Return to Portal Gateway (Only in Unified Preview — Absent in Strict Admin Build) */}
-              {!strictAdminOnly && onNavigateToPortalGateway && (
-                <button
-                  id="btn-switch-portal-gateway"
-                  onClick={onNavigateToPortalGateway}
-                  className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all cursor-pointer whitespace-nowrap"
-                  title="Kembali ke Gerbang Pemilih Portal"
-                >
-                  <span>Gerbang Portal</span>
-                </button>
-              )}
-
-              {/* Admin Logout Button */}
-              <button
-                id="btn-admin-logout"
-                onClick={onLogout}
-                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-900/40 hover:bg-rose-900/60 text-rose-200 hover:text-rose-100 border border-rose-800/60 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                title="Keluar dari sesi admin"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden md:inline">Logout Admin</span>
-              </button>
-            </div>
-
           </div>
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Sub-nav Tabs */}
-        <div className="bg-slate-900/90 border-t border-slate-800/80 px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar">
-          <div className="max-w-7xl mx-auto flex items-center gap-2 py-2">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'overview'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Ringkasan</span>
-            </button>
+        {/* Group 1: Operasional Leksikon */}
+        <div className="space-y-1">
+          <div className="px-2.5 pb-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+            Operasional Leksikon
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('overview')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'overview'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              <span>Ringkasan Sistem</span>
+            </span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('words')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'words'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Kelola Kosakata ({allWords.length})</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('words')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
+              activeTab === 'words'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <BookOpen className="w-4 h-4 shrink-0" />
+              <span>Database Kosakata</span>
+            </span>
+            <span className="font-mono text-[11px] text-slate-400">{allWords.length}</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('moderation')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer tabular-nums ${
-                activeTab === 'moderation'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <CheckSquare className="w-4 h-4" />
-              <span>Moderasi Usulan ({pendingContributions.length})</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('languages')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'languages'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Globe2 className="w-4 h-4 shrink-0" />
+              <span>Rumpun Bahasa</span>
+            </span>
+            <span className="font-mono text-[11px] text-slate-500">4</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('languages')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'languages'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <Globe2 className="w-4 h-4" />
-              <span>Bahasa Daerah Sultra</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('moderation')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
+              activeTab === 'moderation'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <CheckSquare className="w-4 h-4 shrink-0" />
+              <span>Usulan Kata User</span>
+            </span>
+            <span className="font-mono text-[11px] text-amber-400 font-bold">
+              {pendingContributions.length}
+            </span>
+          </button>
+        </div>
 
-            {/* TAB: Users & Role Access Control (RBAC) */}
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'users'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <Users className="w-4 h-4 text-purple-400" />
-              <span>Pengguna & RBAC</span>
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-purple-950 text-purple-300 border border-purple-800">
-                {allAdminAccounts.length}
-              </span>
-            </button>
+        {/* Group 2: Sistem & Akun Admin */}
+        <div className="space-y-1">
+          <div className="px-2.5 pb-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+            Sistem &amp; Akun Admin
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('users')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
+              activeTab === 'users'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Users className="w-4 h-4 shrink-0" />
+              <span>Akun Admin</span>
+            </span>
+            <span className="font-mono text-[11px] text-slate-400">{allAdminAccounts.length}</span>
+          </button>
 
-            {/* TAB: Audit Logs */}
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'audit'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <FileText className="w-4 h-4 text-emerald-400" />
-              <span>Catatan Audit</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('audit')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'audit'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <FileText className="w-4 h-4 shrink-0" />
+              <span>Riwayat Aktivitas</span>
+            </span>
+          </button>
+        </div>
 
-            <button
-              onClick={() => setActiveTab('backup')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'backup'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <Download className="w-4 h-4" />
-              <span>Ekspor & Cadangan Data</span>
-            </button>
+        {/* Group 3: Infrastruktur Data */}
+        <div className="space-y-1">
+          <div className="px-2.5 pb-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">
+            Infrastruktur Data
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('backup')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'backup'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Download className="w-4 h-4 shrink-0" />
+              <span>Cadangan JSON/CSV</span>
+            </span>
+          </button>
 
-            {/* TAB: Supabase Cloud Database */}
-            <button
-              onClick={() => setActiveTab('supabase')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'supabase'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <Database className="w-4 h-4 text-emerald-400" />
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('supabase')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'supabase'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Database className="w-4 h-4 shrink-0" />
               <span>Database Supabase</span>
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800">
-                Cloud
-              </span>
-            </button>
+            </span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'settings'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <Settings className="w-4 h-4" />
+          <button
+            type="button"
+            onClick={() => handleSelectSidebarTab('settings')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeTab === 'settings'
+                ? 'bg-sky-600/15 text-sky-300 border border-sky-500/30'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Settings className="w-4 h-4 shrink-0" />
               <span>Pengaturan Admin</span>
-            </button>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Bottom Sidebar Active Admin Account & Logout */}
+      <div className="p-4 border-t border-slate-800/90 space-y-3 bg-slate-950/80">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-sky-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
+            {adminUser.name.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-white text-xs truncate">{adminUser.name}</div>
+            <div className="text-[11px] font-mono text-sky-400 truncate">Role: Admin</div>
           </div>
         </div>
 
-        {/* Active Role Simulator & Permissions Banner (if not Super Admin) */}
-        {adminUser.role !== 'Super Administrator' && (
-          <div className="bg-purple-950/60 border-b border-purple-800/60 px-4 py-2">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-purple-200">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-purple-400 shrink-0" />
-                <span>
-                  <strong>Simulasi Role Aktif: {adminUser.role}</strong> — Sebagian aksi sistem dibatasi sesuai kebijakan izin RBAC.
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-purple-300">Ganti Akun/Role Uji:</span>
-                <select
-                  value={adminUser.id}
-                  onChange={e => handleSwitchAdmin(e.target.value)}
-                  className="bg-purple-900/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg border border-purple-700 focus:outline-none cursor-pointer"
-                >
-                  {allAdminAccounts.map(acc => (
-                    <option key={acc.id} value={acc.id} className="bg-slate-900 text-white">
-                      {acc.name} ({acc.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
+        <button
+          id="btn-admin-logout"
+          type="button"
+          onClick={onLogout}
+          className="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-rose-950/50 hover:bg-rose-900/60 text-rose-200 border border-rose-900/70 transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Logout Admin</span>
+        </button>
+      </div>
+    </div>
+  );
 
-      {/* Notification Toast */}
-      {formNotification && (
-        <div className="fixed top-24 right-6 z-50 p-4 bg-emerald-800 border border-emerald-500 text-white rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top duration-300">
-          <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-          <p className="text-sm font-bold">{formNotification}</p>
+  return (
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 flex font-sans antialiased selection:bg-sky-500/25 selection:text-sky-200">
+      {/* Desktop Fixed Vertical Sidebar (256px) */}
+      <aside className="hidden lg:block w-64 shrink-0 border-r border-slate-800/90 sticky top-0 h-screen">
+        {renderSidebarContent()}
+      </aside>
+
+      {/* Mobile Drawer Sidebar */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div
+            className="fixed inset-0 bg-slate-950/80"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <aside className="relative z-10 w-64 max-w-[82vw] h-full border-r border-slate-800">
+            {renderSidebarContent()}
+          </aside>
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MAIN ADMIN CONTENT BODY                                  */}
-      {/* ======================================================== */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* ========================================== */}
-        {/* TAB 1: OVERVIEW & DASHBOARD STATS          */}
-        {/* ========================================== */}
-        {activeTab === 'overview' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Welcome Banner */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-emerald-900/60 via-slate-800/80 to-slate-900 border border-emerald-500/20 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div>
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Sesi Admin Terotentikasi</span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  Selamat Datang, {adminUser.name}
-                </h1>
-                <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-                  Kelola kamus leksikon Sulawesi Tenggara (Bahasa Tolaki, Moronene, Muna, Buton/Wolio), pantau usulan kosakata masyarakat, dan verifikasi entri resmi.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={handleOpenAddModal}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 text-sm cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Tambah Kosakata Resmi</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('moderation')}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-2 text-sm cursor-pointer tabular-nums"
-                >
-                  <CheckSquare className="w-4 h-4 text-amber-400" />
-                  <span>Antrean Moderasi ({pendingContributions.length})</span>
-                </button>
-              </div>
+      {/* Right Workspace Column */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Compact Top Contextual Header Bar (Follows SaaS Top Bar Contract) */}
+        <header className="sticky top-0 z-30 h-14 bg-slate-950/95 border-b border-slate-800/90 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          {/* Left: Mobile Trigger + Breadcrumb Trail */}
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white cursor-pointer"
+              aria-label="Buka navigasi konsol"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
+              <span className="text-slate-500 font-mono hidden sm:inline whitespace-nowrap">
+                Konsol Admin
+              </span>
+              <span className="text-slate-700 hidden sm:inline" aria-hidden="true">/</span>
+              <span className="font-semibold text-white truncate">
+                {ADMIN_TAB_TITLES[activeTab]}
+              </span>
             </div>
+          </div>
+
+          {/* Right: Secret Link Copy + New Entry Action */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleCopySecretUrl}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+              title="Salin Link Rahasia Akses Admin"
+            >
+              {copiedSecretUrl ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-sky-400" />
+              )}
+              <span className="hidden sm:inline">
+                {copiedSecretUrl ? 'Link Rahasia Disalin' : 'Link Rahasia'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={canManageWords ? handleOpenAddModal : undefined}
+              disabled={!canManageWords}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                canManageWords
+                  ? 'bg-sky-600 hover:bg-sky-500 text-white cursor-pointer'
+                  : 'bg-slate-900 text-slate-500 border border-slate-800 cursor-not-allowed'
+              }`}
+            >
+              {canManageWords ? <Plus className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+              <span>Entri Baru</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Notification Toast */}
+        {formNotification && (
+          <div className="fixed top-16 right-6 z-50 px-4 py-3 bg-slate-900 border border-sky-500/60 text-white rounded-xl shadow-xl flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+            <p className="text-xs font-semibold">{formNotification}</p>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* MAIN CONSOLE WORKSPACE BODY                              */}
+        {/* ======================================================== */}
+        <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* ========================================== */}
+          {/* TAB 1: OVERVIEW & DASHBOARD STATS          */}
+          {/* ========================================== */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Compact Operational Console Header */}
+              <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-sky-400 mb-1">
+                    ROLE ADMIN · DASHBOARD PENGELOLAAN
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    Selamat Datang, {adminUser.name}
+                  </h1>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+                    Kelola database kosakata Bahasa Tolaki, Moronene, Muna, dan Buton, serta tinjau usulan kosakata yang dikirimkan oleh User.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('moderation')}
+                    className="px-3.5 py-2 bg-slate-950 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl border border-slate-800 transition-colors flex items-center gap-2 text-xs cursor-pointer tabular-nums whitespace-nowrap"
+                  >
+                    <CheckSquare className="w-4 h-4 text-amber-400" />
+                    <span>Usulan User ({pendingContributions.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('words')}
+                    className="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition-colors flex items-center gap-2 text-xs cursor-pointer whitespace-nowrap"
+                  >
+                    <Database className="w-4 h-4" />
+                    <span>Kelola Kosakata</span>
+                  </button>
+                </div>
+              </div>
 
             {/* KPI Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 tabular-nums">
@@ -708,14 +755,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 <div className="mt-4">
                   <div className="text-3xl font-black text-white">{allWords.length}</div>
                   <div className="text-xs text-slate-400 mt-1">
-                    Tayang di Portal Pengguna
+                    Tayang di Portal User
                   </div>
                 </div>
               </div>
 
               <div className="p-5 rounded-2xl bg-slate-800/70 border border-slate-700/80 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Menunggu Moderasi</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Usulan Kata User</span>
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
                     <CheckSquare className="w-5 h-5" />
                   </div>
@@ -723,7 +770,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 <div className="mt-4">
                   <div className="text-3xl font-black text-white">{pendingContributions.length}</div>
                   <div className="text-xs text-amber-400 font-bold mt-1">
-                    Usulan dari Role Pengguna
+                    Menunggu Persetujuan Admin
                   </div>
                 </div>
               </div>
@@ -743,16 +790,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
               <div className="p-5 rounded-2xl bg-slate-800/70 border border-slate-700/80 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Otoritas Aktif</span>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Peran Aktif</span>
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                 </div>
                 <div className="mt-4">
-                  <div className="text-lg font-black text-emerald-400 truncate">
-                    {adminUser.role}
+                  <div className="text-2xl font-black text-sky-400 truncate">
+                    Admin
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">RBAC Terproteksi</div>
+                  <div className="text-xs text-slate-400 mt-1">Akses Pengelolaan Penuh</div>
                 </div>
               </div>
             </div>
@@ -1085,17 +1132,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         )}
 
         {/* ========================================== */}
-        {/* TAB 3: MODERASI KOMUNITAS                  */}
+        {/* TAB 3: USULAN KATA DARI USER               */}
         {/* ========================================== */}
         {activeTab === 'moderation' && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-white">
-                  Moderasi Usulan Kosakata dari Role Pengguna
+                  Usulan Kosakata dari User
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400">
-                  Verifikasi usulan kosakata warga sebelum tayang resmi di Portal Pengguna Publik
+                  Setujui atau tolak usulan kata dari User sebelum ditampilkan di kamus utama
                 </p>
               </div>
 
@@ -1135,7 +1182,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </h3>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
                   {moderationSubFilter === 'pending'
-                    ? 'Seluruh usulan kosakata dari Portal Pengguna sudah ditinjau oleh kurator.'
+                    ? 'Seluruh usulan kosakata dari Portal User sudah ditinjau oleh Admin.'
                     : 'Usulan yang Anda setujui akan tercatat di sini dan langsung aktif di kamus publik.'}
                 </p>
               </div>
@@ -1522,6 +1569,30 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </div>
             )}
 
+            {/* Secret Admin Link Info Box */}
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                  <Key className="w-4 h-4" />
+                  <span>Link Rahasia Akses Admin (Tersembunyi dari User)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopySecretUrl}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  {copiedSecretUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSecretUrl ? 'Tersalin' : 'Salin URL'}</span>
+                </button>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-300 break-all">
+                {getSecretAdminUrl()}
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Simpan URL di atas secara pribadi. Pengunjung yang mengetik rute umum seperti <code className="text-slate-200 font-mono">/admin</code> atau membuka beranda utama akan otomatis diarahkan ke tampilan Kamus User biasa. Anda juga dapat mengganti kode unik URL melalui variabel <code className="text-slate-200 font-mono">VITE_ADMIN_SECRET_PATH</code> saat deployment.
+              </p>
+            </div>
+
             <form onSubmit={handleSaveSettings} className="p-6 rounded-3xl bg-slate-800/70 border border-slate-700 space-y-5">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
@@ -1595,13 +1666,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         )}
 
         {/* ========================================== */}
-        {/* TAB 7: MANAJEMEN PENGGUNA & RBAC           */}
+        {/* TAB 7: MANAJEMEN AKUN ADMIN                */}
         {/* ========================================== */}
         {activeTab === 'users' && (
           <div className="animate-in fade-in duration-200">
             <AdminUsersTab
               currentAdmin={adminUser}
-              onSwitchActiveAdmin={handleSwitchAdmin}
               onNotification={msg => {
                 setFormNotification(msg);
                 setTimeout(() => setFormNotification(null), 3500);
@@ -1638,7 +1708,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             />
           </div>
         )}
-      </main>
+        </main>
+
+        {/* Minimal Console Footer inside Right Workspace Column */}
+        <footer className="py-4 px-6 border-t border-slate-800/80 text-xs text-slate-500 bg-slate-950/70 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono">
+          <span>Leksika Console · Sistem Back-Office Kurator Bahasa Daerah Sultra</span>
+          <span>Sesi: {adminUser.role}</span>
+        </footer>
+      </div>
 
       {/* ======================================================== */}
       {/* WORD ADD/EDIT MODAL                                      */}
@@ -1825,13 +1902,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </div>
         </div>
       )}
-
-      {/* Admin Footer */}
-      <footer className="py-4 border-t border-slate-800 text-center text-xs text-slate-500 bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4">
-          Leksika Nusantara Admin Console • Akses Terbatas Khusus Administrator Database
-        </div>
-      </footer>
     </div>
   );
 };

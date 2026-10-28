@@ -14,8 +14,6 @@ import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { AdminDashboardView } from './components/AdminDashboardView';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { UserLoginPage } from './components/UserLoginPage';
-import { RouteLinksModal } from './components/RouteLinksModal';
-import { RolePortalGateway } from './components/RolePortalGateway';
 
 import { WordEntry, Language, UserProfile, AppTab, AdminUser, PageRoute } from './types';
 import { LANGUAGES_DATA } from './data/languagesData';
@@ -46,104 +44,76 @@ import {
 import {
   isStrictUserPortal,
   isStrictAdminPortal,
-  isUnifiedPortalMode,
-  shouldShowRoleLinksTrigger,
+  isSecretAdminPath,
+  isSecretAdminLoginPath,
+  getSecretAdminSlug,
 } from './utils/portalConfig';
 
 /**
- * Menentukan rute awal berdasarkan mode isolasi portal (Build User, Build Admin, atau Unified)
+ * Menentukan rute awal dengan proteksi Link Rahasia Admin:
+ * - Rute publik (`/`, `/user`) langsung merender Kamus User tanpa menu/gerbang Admin.
+ * - Rute tebakan umum (`/admin`, `/admin/login`, `/portal`, `?role=admin`) diblokir & disamarkan menjadi Kamus User (`/`).
+ * - Konsol Admin HANYA dapat dibuka melalui path rahasia (`/kunci-admin-9x7k4m2p`).
  */
 function resolveInitialRoute(): PageRoute {
   if (typeof window === 'undefined') return 'user';
 
-  // 1. Jika build khusus Role Pengguna (`npm run build:user` / `VITE_PORTAL_MODE=user`)
-  // Kunci mutlak ke Portal Pengguna, blokir semua akses ke /admin atau /portal
+  const pathname = window.location.pathname;
+  const lowerPath = pathname.toLowerCase();
+  const search = new URLSearchParams(window.location.search);
+
+  // 1. Jika build dikunci khusus User (`VITE_PORTAL_MODE=user`) -> blokir semua akses Admin termasuk link rahasia
   if (isStrictUserPortal()) {
-    const path = window.location.pathname.toLowerCase();
-    const search = new URLSearchParams(window.location.search);
-    if (path.includes('/user/login') || search.get('page') === 'user-login') {
+    if (lowerPath.includes('/user/login') || lowerPath === '/login' || search.get('page') === 'user-login') {
       return 'user-login';
     }
     return 'user';
   }
 
-  // 2. Jika build khusus Role Admin (`npm run build:admin` / `VITE_PORTAL_MODE=admin` / `admin.*`)
-  // Kunci mutlak ke Portal Administrator, blokir semua akses ke /user atau /portal
+  // 2. Jika build khusus Admin (`VITE_PORTAL_MODE=admin` atau subdomain admin khusus)
   if (isStrictAdminPortal()) {
     return getAdminSession() ? 'admin' : 'admin-login';
   }
 
-  // 3. Mode Pratinjau Terpadu (`unified` — lingkungan preview / single domain)
-  const path = window.location.pathname.toLowerCase();
-  const hash = window.location.hash.toLowerCase();
-  const search = new URLSearchParams(window.location.search);
-  const pageParam = search.get('page') || search.get('view') || search.get('route');
-  const roleParam = search.get('role');
-
-  if (
-    roleParam === 'user-login' ||
-    path.includes('/user/login') ||
-    hash.includes('user/login') ||
-    pageParam === 'user-login'
-  ) {
-    return 'user-login';
-  }
-
-  if (
-    roleParam === 'user' ||
-    path.startsWith('/user') ||
-    hash.includes('#/user') ||
-    pageParam === 'user'
-  ) {
-    return 'user';
-  }
-
-  if (
-    path.includes('/admin/login') ||
-    hash.includes('admin/login') ||
-    pageParam === 'admin-login'
-  ) {
-    return 'admin-login';
-  }
-
-  if (
-    roleParam === 'admin' ||
-    roleParam === 'superadmin' ||
-    roleParam === 'editor' ||
-    roleParam === 'moderator' ||
-    roleParam === 'viewer' ||
-    path.startsWith('/admin') ||
-    hash.includes('admin') ||
-    pageParam === 'admin'
-  ) {
-    // Wajib autentikasi sesi admin: tidak pernah auto-login tanpa kredensial
+  // 3. Cek apakah diakses menggunakan Link Rahasia Admin yang presisi
+  if (isSecretAdminPath(pathname)) {
+    if (isSecretAdminLoginPath(pathname)) {
+      return 'admin-login';
+    }
     return getAdminSession() ? 'admin' : 'admin-login';
   }
 
-  if (path.startsWith('/portal') || pageParam === 'portal') {
-    return 'portal';
+  // 4. Halaman Login User
+  if (lowerPath === '/user/login' || lowerPath === '/login' || search.get('page') === 'user-login') {
+    return 'user-login';
   }
 
-  // Pada mode unified di root `/`, tampilkan Gerbang Pemilih Portal (Role Pengguna vs Role Admin)
-  return 'portal';
+  // 5. Semua path lain (termasuk `/`, `/user`, maupun tebakan seperti `/admin`, `/portal`, `/dashboard`)
+  // otomatis disamarkan ke beranda Kamus User agar User tidak mengetahui keberadaan rute Admin.
+  if (lowerPath !== '/' && lowerPath !== '/user') {
+    try {
+      window.history.replaceState({ route: 'user' }, '', '/');
+    } catch {
+      // Ignore history restriction in sandboxed iframe
+    }
+  }
+
+  return 'user';
 }
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<PageRoute>(resolveInitialRoute);
 
-  // Sesi Role Admin (Terpisah penuh dari Sesi Role Pengguna)
+  // Sesi Role Admin (Terpisah penuh dari Sesi Role User)
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => getAdminSession());
 
-  // Sesi & Profil Role Pengguna (Terpisah penuh dari Sesi Role Admin)
+  // Sesi & Profil Role User (Terpisah penuh dari Sesi Role Admin)
   const [userProfile, setUserProfile] = useState<UserProfile>(loadUserProfile());
 
-  // Utilitas Tautan Dev (hanya aktif dengan ?show_links=1)
-  const [isRouteLinksModalOpen, setIsRouteLinksModalOpen] = useState(false);
-
-  // Notifikasi singkat perpindahan sesi
+  // Notifikasi singkat
   const [statusToast, setStatusToast] = useState<string | null>(null);
 
-  // Tab aktif di dalam Portal Pengguna
+  // Tab aktif di dalam Kamus User
   const [activeTab, setActiveTab] = useState<AppTab>('dictionary');
 
   // Pasangan Bahasa (Default: Indonesia -> Tolaki)
@@ -157,17 +127,12 @@ export default function App() {
   // Daftar kata usulan komunitas & penambahan admin
   const [contributedWords, setContributedWords] = useState<WordEntry[]>(loadContributedWords());
 
-  // Kamus Publik Terverifikasi (Hanya memuat entri yang sudah berstatus 'approved')
+  // Kamus Publik Terverifikasi (Hanya memuat entri berstatus 'approved')
   const mergedDictionary = useMemo(() => {
     return getMergedDictionary(contributedWords);
   }, [contributedWords]);
 
-  const pendingModerationCount = useMemo(
-    () => contributedWords.filter(w => w.moderationStatus === 'pending').length,
-    [contributedWords]
-  );
-
-  // Modals di Portal Pengguna
+  // Modals di Kamus User
   const [selectedWordForDetail, setSelectedWordForDetail] = useState<WordEntry | null>(null);
   const [languageModalType, setLanguageModalType] = useState<'source' | 'target' | null>(null);
   const [aiPromptWord, setAiPromptWord] = useState<WordEntry | null>(null);
@@ -200,13 +165,13 @@ export default function App() {
     return langWords.find(w => w.isWordOfTheDay) || langWords[0] || mergedDictionary[0];
   }, [mergedDictionary, targetLang]);
 
-  // Simpan perubahan profil pengguna ke localStorage khusus pengguna
+  // Simpan perubahan profil user ke localStorage
   useEffect(() => {
     saveUserProfile(userProfile);
   }, [userProfile]);
 
   // ==========================================
-  // HANDLER KHUSUS PORTAL PENGGUNA (ROLE PENGGUNA)
+  // HANDLER KHUSUS USER
   // ==========================================
   const handleSwapLanguages = () => {
     const temp = sourceLang;
@@ -276,7 +241,6 @@ export default function App() {
     setUserProfile(updated);
   };
 
-  // Pengguna mengajukan usulan kata -> Masuk antrean 'pending' (tidak langsung ke kamus utama)
   const handleSubmitUserProposal = (
     wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>,
     contributorName: string
@@ -292,7 +256,7 @@ export default function App() {
   const handleLearnerAuthSuccess = (authenticatedProfile: UserProfile) => {
     setUserProfile(authenticatedProfile);
     navigateTo('user');
-    showToast(`Masuk sebagai Pengguna: ${authenticatedProfile.name}`);
+    showToast(`Selamat datang, ${authenticatedProfile.name}`);
   };
 
   const handleLearnerLogout = () => {
@@ -302,7 +266,7 @@ export default function App() {
   };
 
   // ==========================================
-  // HANDLER KHUSUS PORTAL ADMIN (ROLE ADMIN)
+  // HANDLER KHUSUS ADMIN (HANYA VIA LINK RAHASIA)
   // ==========================================
   const handleAdminAddOfficialWord = (
     wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>,
@@ -340,37 +304,38 @@ export default function App() {
   const handleAdminLoginSuccess = (admin: AdminUser) => {
     setAdminUser(admin);
     navigateTo('admin');
-    showToast(`Otorisasi Admin aktif: ${admin.name} (${admin.role})`);
+    showToast(`Otorisasi Admin aktif: ${admin.name}`);
   };
 
   const handleAdminLogout = () => {
     logoutAdmin();
     setAdminUser(null);
     navigateTo('admin-login');
-    showToast('Sesi Administrator telah diakhiri.');
+    showToast('Sesi Admin telah diakhiri.');
   };
 
   // ==========================================
-  // PENJAGA RUTE & NAVIGASI TERISOLASI
+  // PENJAGA RUTE & ISOLASI LINK RAHASIA
   // ==========================================
   const navigateTo = (requestedRoute: PageRoute) => {
     let targetRoute: PageRoute = requestedRoute;
 
-    // Penjaga ketat untuk Build Khusus Pengguna
     if (isStrictUserPortal()) {
       if (targetRoute !== 'user' && targetRoute !== 'user-login') {
         targetRoute = 'user';
       }
     }
 
-    // Penjaga ketat untuk Build Khusus Admin
     if (isStrictAdminPortal()) {
       if (targetRoute !== 'admin' && targetRoute !== 'admin-login') {
         targetRoute = adminUser ? 'admin' : 'admin-login';
       }
     }
 
-    // Proteksi rute dashboard admin: wajib punya sesi admin
+    if (targetRoute === 'portal') {
+      targetRoute = 'user';
+    }
+
     if (targetRoute === 'admin' && !getAdminSession() && !adminUser) {
       targetRoute = 'admin-login';
     }
@@ -378,12 +343,17 @@ export default function App() {
     setCurrentRoute(targetRoute);
 
     if (typeof window !== 'undefined') {
+      const secretSlug = getSecretAdminSlug();
       let newPath = '/';
-      if (targetRoute === 'portal') newPath = '/portal';
-      else if (targetRoute === 'admin') newPath = '/admin';
-      else if (targetRoute === 'admin-login') newPath = '/admin/login';
-      else if (targetRoute === 'user-login') newPath = '/user/login';
-      else if (targetRoute === 'user') newPath = isStrictUserPortal() ? '/' : '/user';
+      if (targetRoute === 'admin') {
+        newPath = isStrictAdminPortal() ? '/' : `/${secretSlug}`;
+      } else if (targetRoute === 'admin-login') {
+        newPath = isStrictAdminPortal() ? '/login' : `/${secretSlug}/login`;
+      } else if (targetRoute === 'user-login') {
+        newPath = '/user/login';
+      } else {
+        newPath = '/';
+      }
 
       try {
         window.history.pushState({ route: targetRoute }, '', newPath);
@@ -399,22 +369,10 @@ export default function App() {
       setCurrentRoute(resolveInitialRoute());
     };
     window.addEventListener('popstate', handlePopState);
-    window.addEventListener('hashchange', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener('hashchange', handlePopState);
     };
   }, []);
-
-  const handleSelectRoleFromModal = (roleTarget: string) => {
-    if (roleTarget === 'user') {
-      navigateTo('user');
-    } else if (roleTarget === 'user-login') {
-      navigateTo('user-login');
-    } else {
-      navigateTo(adminUser ? 'admin' : 'admin-login');
-    }
-  };
 
   const renderToast = () =>
     statusToast ? (
@@ -433,25 +391,7 @@ export default function App() {
     ) : null;
 
   // -------------------------------------------------------------
-  // GERBANG PEMILIH PORTAL (Hanya tampil di Mode Unified / Pratinjau)
-  // -------------------------------------------------------------
-  if (currentRoute === 'portal' && isUnifiedPortalMode()) {
-    return (
-      <>
-        <RolePortalGateway
-          userProfile={userProfile}
-          adminUser={adminUser}
-          totalWordsCount={mergedDictionary.length}
-          pendingModerationCount={pendingModerationCount}
-          onNavigate={navigateTo}
-        />
-        {renderToast()}
-      </>
-    );
-  }
-
-  // -------------------------------------------------------------
-  // PORTAL ROLE ADMIN — HALAMAN LOGIN ADMIN (/admin/login)
+  // ROLE ADMIN — LOGIN RAHASIA (Hanya tampil pada Link Rahasia Admin)
   // -------------------------------------------------------------
   if (
     !isStrictUserPortal() &&
@@ -459,28 +399,14 @@ export default function App() {
   ) {
     return (
       <>
-        <AdminLoginPage
-          onLoginSuccess={handleAdminLoginSuccess}
-          onNavigateToPortalGateway={
-            isUnifiedPortalMode() ? () => navigateTo('portal') : undefined
-          }
-          onOpenLinksModal={() => setIsRouteLinksModalOpen(true)}
-        />
-        {shouldShowRoleLinksTrigger() && (
-          <RouteLinksModal
-            isOpen={isRouteLinksModalOpen}
-            onClose={() => setIsRouteLinksModalOpen(false)}
-            onNavigate={navigateTo}
-            onSelectRole={handleSelectRoleFromModal}
-          />
-        )}
+        <AdminLoginPage onLoginSuccess={handleAdminLoginSuccess} />
         {renderToast()}
       </>
     );
   }
 
   // -------------------------------------------------------------
-  // PORTAL ROLE ADMIN — DASHBOARD KURATOR & ADMIN (/admin)
+  // ROLE ADMIN — DASHBOARD PENGELOLAAN (Hanya setelah Login di Link Rahasia)
   // -------------------------------------------------------------
   if (!isStrictUserPortal() && currentRoute === 'admin' && adminUser) {
     return (
@@ -488,11 +414,6 @@ export default function App() {
         <AdminDashboardView
           adminUser={adminUser}
           onLogout={handleAdminLogout}
-          onNavigateToPortalGateway={
-            isUnifiedPortalMode() ? () => navigateTo('portal') : undefined
-          }
-          onOpenLinksModal={() => setIsRouteLinksModalOpen(true)}
-          onSwitchAdminUser={setAdminUser}
           allWords={mergedDictionary}
           contributedWords={contributedWords}
           onAddWord={handleAdminAddOfficialWord}
@@ -500,21 +421,13 @@ export default function App() {
           onDeleteWord={handleAdminDeleteWord}
           onWordsUpdated={setContributedWords}
         />
-        {shouldShowRoleLinksTrigger() && (
-          <RouteLinksModal
-            isOpen={isRouteLinksModalOpen}
-            onClose={() => setIsRouteLinksModalOpen(false)}
-            onNavigate={navigateTo}
-            onSelectRole={handleSelectRoleFromModal}
-          />
-        )}
         {renderToast()}
       </>
     );
   }
 
   // -------------------------------------------------------------
-  // PORTAL ROLE PENGGUNA — HALAMAN LOGIN / DAFTAR AKUN PENGGUNA (/user/login)
+  // ROLE USER — HALAMAN LOGIN / DAFTAR PEMBELAJAR (/user/login)
   // -------------------------------------------------------------
   if (!isStrictAdminPortal() && currentRoute === 'user-login') {
     return (
@@ -530,19 +443,17 @@ export default function App() {
   }
 
   // -------------------------------------------------------------
-  // PORTAL ROLE PENGGUNA — RUANG BELAJAR & KAMUS PUBLIK (/user)
-  // (100% Bebas dari Banner Admin, Tombol Admin, & Hak Akses Admin)
+  // ROLE USER — BERANDA KAMUS PUBLIK (`/` & `/user`)
+  // (100% Murni Tanpa Menu Admin, Tanpa Link Admin, Tanpa Pemilih Role)
   // -------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8F6F1] text-stone-900 font-sans flex flex-col antialiased selection:bg-[#14532D]/15 selection:text-[#14532D]">
-      {/* Pure User Role Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userProfile={userProfile}
       />
 
-      {/* Hero Spotlight Section (Only on Dictionary & Learn Tabs) */}
       {(activeTab === 'dictionary' || activeTab === 'learn') && (
         <HeroSection
           wordOfTheDay={wordOfTheDay}
@@ -555,7 +466,6 @@ export default function App() {
         />
       )}
 
-      {/* Main User Workspace Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
         {activeTab === 'dictionary' && (
           <DictionaryView
@@ -641,7 +551,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Word Detail Modal */}
       {selectedWordForDetail && (
         <WordDetailModal
           word={selectedWordForDetail}
@@ -653,7 +562,6 @@ export default function App() {
         />
       )}
 
-      {/* Language Selector Modal */}
       {languageModalType && (
         <LanguageSelectorModal
           type={languageModalType}
@@ -663,52 +571,30 @@ export default function App() {
         />
       )}
 
-      {/* Dev Route Links Modal (Only with ?show_links=1) */}
-      {shouldShowRoleLinksTrigger() && (
-        <RouteLinksModal
-          isOpen={isRouteLinksModalOpen}
-          onClose={() => setIsRouteLinksModalOpen(false)}
-          onNavigate={navigateTo}
-          onSelectRole={handleSelectRoleFromModal}
-        />
-      )}
-
       {renderToast()}
 
-      {/* Editorial Institutional Footer (Pure User Context; Quiet Portal Switcher Only in Unified Preview) */}
+      {/* Pure Public Dictionary Footer — Zero Mention of Admin or Roles */}
       <footer className="bg-[#EFECE4]/75 text-stone-600 py-10 border-t border-stone-200/90 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-1.5 max-w-xl">
             <p className="font-serif text-base font-bold text-stone-900 tracking-tight">
-              Leksika Nusantara — Portal Pengguna &amp; Pembelajar
+              Leksika Nusantara — Kamus Bahasa Daerah Sulawesi Tenggara
             </p>
             <p className="text-stone-600 leading-relaxed">
-              Dokumentasi leksikon, pelafalan fonetis, dan pembelajaran interaktif rumpun bahasa Tolaki · Moronene · Muna · Buton.
+              Dokumentasi leksikon, pelafalan fonetis, dan ruang belajar interaktif rumpun bahasa Tolaki · Moronene · Muna · Buton.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-500">
-            <span>Role: Pengguna Publik</span>
+            <span>Arsip Leksikon Publik</span>
             <span aria-hidden="true">·</span>
             <button
               type="button"
               onClick={() => navigateTo('user-login')}
               className="text-[#14532D] hover:text-[#166534] font-semibold transition-colors cursor-pointer whitespace-nowrap"
             >
-              {userProfile.isAuthenticated ? 'Akun Pembelajar' : 'Masuk / Daftar Pengguna'}
+              {userProfile.isAuthenticated ? 'Akun Pembelajar Saya' : 'Masuk / Daftar Pembelajar'}
             </button>
-            {isUnifiedPortalMode() && (
-              <>
-                <span aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  onClick={() => navigateTo('portal')}
-                  className="text-stone-700 hover:text-stone-950 font-semibold transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  Ganti Portal Role
-                </button>
-              </>
-            )}
           </div>
         </div>
       </footer>

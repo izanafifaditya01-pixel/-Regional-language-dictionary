@@ -130,7 +130,7 @@ export interface AIChatMessage {
   suggestedWords?: { word: string; translation: string; lang: string }[];
 }
 
-export type AdminRole = 'Super Administrator' | 'Linguist Editor' | 'Moderator' | 'Viewer';
+export type AdminRole = 'Admin';
 
 export type PermissionKey =
   | 'can_view_analytics'
@@ -141,16 +141,8 @@ export type PermissionKey =
   | 'can_export_backup'
   | 'can_import_restore'
   | 'can_manage_users'
-  | 'can_edit_permissions'
   | 'can_view_audit_logs'
   | 'can_system_settings';
-
-export interface RolePermissionDefinition {
-  name: string;
-  description: string;
-  badgeColor: string;
-  defaultPermissions: PermissionKey[];
-}
 
 export interface AuditLogEntry {
   id: string;
@@ -160,7 +152,7 @@ export interface AuditLogEntry {
   userRole: AdminRole;
   action: string;
   target: string;
-  category: 'words' | 'moderation' | 'users' | 'roles' | 'backup' | 'system';
+  category: 'words' | 'moderation' | 'users' | 'backup' | 'system';
   ipAddress?: string;
 }
 
@@ -174,7 +166,6 @@ export interface AdminUser {
   status: 'active' | 'suspended';
   lastLogin?: string;
   createdAt?: string;
-  customPermissions?: PermissionKey[];
 }
 
 export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'users' | 'audit' | 'backup' | 'supabase' | 'settings';

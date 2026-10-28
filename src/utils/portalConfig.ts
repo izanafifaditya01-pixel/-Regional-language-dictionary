@@ -1,19 +1,81 @@
 /**
- * Konfigurasi Pemisahan Peran & Portal (Role & Portal Isolation)
- * Memisahkan secara tegas:
- * 1. Portal Pengguna (Role: Pengguna / Pembelajar)
- * 2. Portal Administrator (Role: Super Admin, Linguist Editor, Moderator, Viewer)
+ * Konfigurasi Isolasi Role & Proteksi Link Rahasia Admin
  *
- * Mendukung 3 skenario operasi:
- * - Build Khusus Pengguna (`npm run build:user` / `VITE_PORTAL_MODE=user`) -> 100% Terkunci di Portal Pengguna
- * - Build Khusus Admin (`npm run build:admin` / `VITE_PORTAL_MODE=admin` / subdomain `admin.*`) -> 100% Terkunci di Portal Admin
- * - Mode Pratinjau Terpadu (`unified`) -> Gerbang Pemilih Portal (`/portal`) memisahkan sesi, tampilan, dan izin kedua role.
+ * Sistem hanya memiliki 2 Role:
+ * 1. User (Publik) -> Diakses melalui `/` (beranda utama), `/user`, dan `/user/login`.
+ *    Seluruh rute tebakan seperti `/admin`, `/admin/login`, `/dashboard`, `/portal` diblokir
+ *    dan otomatis dialihkan ke beranda Kamus User sehingga keberadaan menu Admin 100% tersembunyi.
+ * 2. Admin (Rahasia) -> HANYA dapat diakses melalui path rahasia kriptografis (`/kunci-admin-9x7k4m2p`)
+ *    atau nilai kustom pada variabel environment `VITE_ADMIN_SECRET_PATH`.
  */
 
 export type PortalMode = 'user' | 'admin' | 'unified';
 
+export const PUBLIC_SHARED_BASE_URL =
+  'https://ais-pre-yrs2prwtidjguyjuozixql-383910279934.asia-southeast1.run.app';
+
+export const DEFAULT_SECRET_ADMIN_SLUG = 'kunci-admin-9x7k4m2p';
+
+const SESSION_PORTAL_LOCK_KEY = 'leksika_portal_lock_v2';
+
 /**
- * Mengecek apakah build saat ini adalah build khusus Pengguna murni (`VITE_PORTAL_MODE=user` atau `--mode user`)
+ * Mengambil slug path rahasia Admin (dari VITE_ADMIN_SECRET_PATH atau default acak)
+ */
+export function getSecretAdminSlug(): string {
+  const rawEnv = (import.meta as any).env?.VITE_ADMIN_SECRET_PATH;
+  if (typeof rawEnv === 'string' && rawEnv.trim().length >= 6) {
+    const cleaned = rawEnv.trim().replace(/^\/+|\/+$/g, '').toLowerCase();
+    // Cegah penggunaan kata 'admin' biasa agar tetap rahasia
+    if (cleaned && cleaned !== 'admin' && cleaned !== 'login') {
+      return cleaned;
+    }
+  }
+  return DEFAULT_SECRET_ADMIN_SLUG;
+}
+
+/**
+ * Mengecek apakah pathname URL saat ini cocok secara presisi dengan path rahasia Admin
+ */
+export function isSecretAdminPath(pathname: string): boolean {
+  const cleanPath = pathname.replace(/\/+$/, '').toLowerCase();
+  const secretBase = `/${getSecretAdminSlug()}`;
+  return cleanPath === secretBase || cleanPath === `${secretBase}/login`;
+}
+
+/**
+ * Mengecek apakah pathname adalah halaman login dari path rahasia Admin
+ */
+export function isSecretAdminLoginPath(pathname: string): boolean {
+  const cleanPath = pathname.replace(/\/+$/, '').toLowerCase();
+  const secretBase = `/${getSecretAdminSlug()}`;
+  return cleanPath === `${secretBase}/login`;
+}
+
+function syncPortalLockFromQuery(): 'user-only' | 'admin-only' | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const search = new URLSearchParams(window.location.search);
+    const portalParam = search.get('portal');
+    if (portalParam === 'user-only') {
+      window.sessionStorage.setItem(SESSION_PORTAL_LOCK_KEY, 'user-only');
+      return 'user-only';
+    }
+    if (portalParam === 'admin-only' && isSecretAdminPath(window.location.pathname)) {
+      window.sessionStorage.setItem(SESSION_PORTAL_LOCK_KEY, 'admin-only');
+      return 'admin-only';
+    }
+    const existing = window.sessionStorage.getItem(SESSION_PORTAL_LOCK_KEY);
+    if (existing === 'user-only' || existing === 'admin-only') {
+      return existing;
+    }
+  } catch {
+    // Ignore storage access errors in restricted frames
+  }
+  return null;
+}
+
+/**
+ * Mengecek apakah build saat ini adalah build khusus Pengguna murni (`VITE_PORTAL_MODE=user`)
  */
 export function isUserBuild(): boolean {
   const envMode = (import.meta as any).env?.VITE_PORTAL_MODE || (import.meta as any).env?.MODE;
@@ -21,7 +83,7 @@ export function isUserBuild(): boolean {
 }
 
 /**
- * Mengecek apakah build saat ini adalah build khusus Admin murni (`VITE_PORTAL_MODE=admin` atau `--mode admin`)
+ * Mengecek apakah build saat ini adalah build khusus Admin murni (`VITE_PORTAL_MODE=admin`)
  */
 export function isAdminBuild(): boolean {
   const envMode = (import.meta as any).env?.VITE_PORTAL_MODE || (import.meta as any).env?.MODE;
@@ -42,81 +104,67 @@ export function isAdminSubdomain(): boolean {
 }
 
 /**
- * Mengecek apakah aplikasi dikunci sepenuhnya pada Portal Pengguna saja (tidak boleh mengakses /admin atau /portal)
+ * Mengecek apakah aplikasi dikunci sepenuhnya pada Portal Pengguna saja
  */
 export function isStrictUserPortal(): boolean {
   if (isUserBuild()) return true;
-  if (typeof window !== 'undefined') {
-    const search = new URLSearchParams(window.location.search);
-    if (search.get('portal') === 'user-only') return true;
-  }
-  return false;
+  return syncPortalLockFromQuery() === 'user-only';
 }
 
 /**
- * Mengecek apakah aplikasi dikunci sepenuhnya pada Portal Admin saja (tidak boleh mengakses /user atau /portal)
+ * Mengecek apakah aplikasi dikunci sepenuhnya pada Portal Admin saja
  */
 export function isStrictAdminPortal(): boolean {
   if (isUserBuild()) return false;
   if (isAdminBuild() || isAdminSubdomain()) return true;
-  if (typeof window !== 'undefined') {
-    const search = new URLSearchParams(window.location.search);
-    if (search.get('portal') === 'admin-only') return true;
-  }
-  return false;
+  return syncPortalLockFromQuery() === 'admin-only';
 }
 
-/**
- * Mengecek apakah aplikasi berjalan dalam mode Unified (misalnya lingkungan pratinjau AI Studio / single domain)
- * di mana pengguna dapat memilih masuk sebagai Role Pengguna atau Role Admin melalui Gerbang Portal,
- * namun saat berada di dalam masing-masing portal, UI dan hak aksesnya tetap terpisah 100%.
- */
 export function isUnifiedPortalMode(): boolean {
   return !isStrictUserPortal() && !isStrictAdminPortal();
 }
 
-/**
- * Backward-compatible helper: true jika dikunci ke portal admin (build admin / subdomain admin).
- */
 export function isCurrentAdminPortal(): boolean {
   return isStrictAdminPortal();
 }
 
 /**
- * Tombol Admin TIDAK PERNAH ditampilkan di dalam Navbar Pengguna agar Role Pengguna tetap murni.
+ * Tombol Admin TIDAK PERNAH ditampilkan di dalam Navbar Pengguna.
  */
 export function shouldShowAdminInNavbar(_isAdminLoggedIn?: boolean): boolean {
   return false;
 }
 
 /**
- * Memeriksa apakah modal utilitas Tautan Role (dev/debug) diaktifkan via query ?show_links=1 atau ?dev=1.
+ * Dinonaktifkan sepenuhnya agar daftar tautan Admin tidak pernah bisa dibuka oleh User.
  */
 export function shouldShowRoleLinksTrigger(): boolean {
-  if (typeof window === 'undefined') return false;
-  if (isStrictUserPortal() || isStrictAdminPortal()) return false;
-
-  const search = new URLSearchParams(window.location.search);
-  return search.get('show_links') === '1' || search.get('dev') === '1';
+  return false;
 }
 
 /**
- * Memeriksa apakah akordeon kredensial uji coba RBAC di halaman Login Admin ditampilkan.
- * Otomatis mati pada build produksi khusus Admin (`VITE_SHOW_DEMO_CREDENTIALS=false`),
- * dan aktif pada mode pratinjau/pengujian kecuali dimatikan eksplisit.
+ * Dinonaktifkan agar kredensial Admin tidak pernah ditampilkan di layar login.
  */
 export function isDemoCredentialsEnabled(): boolean {
-  if (typeof window === 'undefined') return false;
+  return false;
+}
 
-  const search = new URLSearchParams(window.location.search);
-  if (search.get('demo') === '1' || search.get('test') === '1') {
-    return true;
+/**
+ * Menghasilkan base URL aktif
+ */
+export function getActiveBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location.origin) {
+    const origin = window.location.origin;
+    if (!origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+      return origin;
+    }
   }
+  return PUBLIC_SHARED_BASE_URL;
+}
 
-  const envShowDemo = (import.meta as any).env?.VITE_SHOW_DEMO_CREDENTIALS;
-  if (envShowDemo === 'false' || isAdminBuild()) {
-    return false;
-  }
-
-  return true;
+/**
+ * Menghasilkan URL lengkap Link Rahasia Admin
+ */
+export function getSecretAdminUrl(): string {
+  return `${getActiveBaseUrl()}/${getSecretAdminSlug()}`;
 }
