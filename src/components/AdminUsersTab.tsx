@@ -162,7 +162,6 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({
           role: formRole,
           status: formStatus,
           passwordHash: formPassword.trim(),
-          avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
         });
         onNotification(`Akun baru ${formName} (${formRole}) berhasil dibuat!`);
       }
@@ -403,11 +402,9 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({
                           {/* Name & Avatar */}
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
-                              <img
-                                src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
-                                alt={user.name}
-                                className="w-9 h-9 rounded-full object-cover border border-slate-700 shrink-0"
-                              />
+                              <div className="w-9 h-9 rounded-full bg-emerald-900/60 border border-emerald-700/60 text-emerald-200 font-bold text-xs flex items-center justify-center shrink-0">
+                                {user.name.slice(0, 2).toUpperCase()}
+                              </div>
                               <div>
                                 <div className="font-bold text-white flex items-center gap-1.5">
                                   <span>{user.name}</span>

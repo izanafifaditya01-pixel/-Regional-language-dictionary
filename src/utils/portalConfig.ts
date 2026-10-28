@@ -1,14 +1,19 @@
 /**
- * Konfigurasi Pemisahan Portal (Portal Isolation)
- * Memisahkan Portal Pengguna (Public/User) dan Portal Administrator (Admin)
- * baik saat dideploy dengan Subdomain Cloudflare (admin.domain.com vs domain.com)
- * maupun melalui Environment Variable dan URL Routing.
+ * Konfigurasi Pemisahan Peran & Portal (Role & Portal Isolation)
+ * Memisahkan secara tegas:
+ * 1. Portal Pengguna (Role: Pengguna / Pembelajar)
+ * 2. Portal Administrator (Role: Super Admin, Linguist Editor, Moderator, Viewer)
+ *
+ * Mendukung 3 skenario operasi:
+ * - Build Khusus Pengguna (`npm run build:user` / `VITE_PORTAL_MODE=user`) -> 100% Terkunci di Portal Pengguna
+ * - Build Khusus Admin (`npm run build:admin` / `VITE_PORTAL_MODE=admin` / subdomain `admin.*`) -> 100% Terkunci di Portal Admin
+ * - Mode Pratinjau Terpadu (`unified`) -> Gerbang Pemilih Portal (`/portal`) memisahkan sesi, tampilan, dan izin kedua role.
  */
 
 export type PortalMode = 'user' | 'admin' | 'unified';
 
 /**
- * Mengecek apakah build/mode saat ini adalah build khusus User (VITE_PORTAL_MODE=user atau mode=user)
+ * Mengecek apakah build saat ini adalah build khusus Pengguna murni (`VITE_PORTAL_MODE=user` atau `--mode user`)
  */
 export function isUserBuild(): boolean {
   const envMode = (import.meta as any).env?.VITE_PORTAL_MODE || (import.meta as any).env?.MODE;
@@ -16,7 +21,7 @@ export function isUserBuild(): boolean {
 }
 
 /**
- * Mengecek apakah build/mode saat ini adalah build khusus Admin (VITE_PORTAL_MODE=admin atau mode=admin)
+ * Mengecek apakah build saat ini adalah build khusus Admin murni (`VITE_PORTAL_MODE=admin` atau `--mode admin`)
  */
 export function isAdminBuild(): boolean {
   const envMode = (import.meta as any).env?.VITE_PORTAL_MODE || (import.meta as any).env?.MODE;
@@ -24,114 +29,81 @@ export function isAdminBuild(): boolean {
 }
 
 /**
- * Mendeteksi apakah aplikasi saat ini berjalan dalam konteks Portal Admin.
- * Aktif jika:
- * 1. Build mode adalah 'admin' (isAdminBuild())
- * 2. Subdomain berawalan 'admin.' (contoh: admin.leksika.id atau admin.domain.com di Cloudflare)
- * 3. Environment variable VITE_PORTAL_MODE === 'admin'
- * 4. URL Query parameter ?portal=admin atau ?role=admin/superadmin/editor/moderator
- * 5. URL path diawali /admin
+ * Mengecek apakah diakses dari subdomain khusus admin (misal: admin.leksika.id di Cloudflare)
  */
-export function isCurrentAdminPortal(): boolean {
+export function isAdminSubdomain(): boolean {
   if (typeof window === 'undefined') return false;
-
-  // Jika ini adalah build khusus User murni, isolasi penuh: portal admin selalu false
-  if (isUserBuild()) {
-    return false;
-  }
-
-  // Jika ini adalah build khusus Admin murni
-  if (isAdminBuild()) {
-    return true;
-  }
-
   const hostname = window.location.hostname.toLowerCase();
-  const search = new URLSearchParams(window.location.search);
-  const path = window.location.pathname.toLowerCase();
-  const hash = window.location.hash.toLowerCase();
-
-  // 1. Deteksi Subdomain Cloudflare (misal: admin.namadomain.com)
-  if (hostname.startsWith('admin.') || hostname.includes('-admin.') || hostname.includes('.admin.')) {
-    return true;
-  }
-
-  // 2. Deteksi URL parameter khusus admin
-  const portalParam = search.get('portal') || search.get('mode');
-  if (portalParam === 'admin') return true;
-
-  const roleParam = search.get('role');
-  if (roleParam && ['admin', 'superadmin', 'editor', 'moderator', 'linguis', 'viewer'].includes(roleParam.toLowerCase())) {
-    return true;
-  }
-
-  // 3. Deteksi URL Path / Hash
-  if (path.startsWith('/admin') || hash.includes('/admin')) {
-    return true;
-  }
-
-  return false;
+  return (
+    hostname.startsWith('admin.') ||
+    hostname.includes('-admin.') ||
+    hostname.includes('.admin.')
+  );
 }
 
 /**
- * Mendeteksi apakah sedang berada di Portal Pengguna Murni (Strict User Portal).
- * Jika true, semua tombol Admin, Tautan Role, dan petunjuk login admin disembunyikan total.
+ * Mengecek apakah aplikasi dikunci sepenuhnya pada Portal Pengguna saja (tidak boleh mengakses /admin atau /portal)
  */
 export function isStrictUserPortal(): boolean {
-  if (typeof window === 'undefined') return true;
-
-  // Jika env eksplisit menentukan mode user
-  const envMode = (import.meta as any).env?.VITE_PORTAL_MODE;
-  if (envMode === 'user') return true;
-
-  // Jika bukan portal admin, secara default adalah portal user
-  return !isCurrentAdminPortal();
-}
-
-/**
- * Memeriksa apakah tombol Admin di Navbar harus disembunyikan.
- * Secara default pada portal publik, tombol Admin disembunyikan
- * kecuali pengguna sedang login sebagai admin atau parameter eksplisit ?show_admin=1 ada.
- */
-export function shouldShowAdminInNavbar(isAdminLoggedIn: boolean): boolean {
-  if (typeof window === 'undefined') return false;
-
-  // Jika admin sudah login di browser ini, tampilkan tombol kembali ke Dashboard Admin
-  if (isAdminLoggedIn) return true;
-
-  const search = new URLSearchParams(window.location.search);
-  if (search.get('show_admin') === '1' || search.get('dev') === '1') {
-    return true;
+  if (isUserBuild()) return true;
+  if (typeof window !== 'undefined') {
+    const search = new URLSearchParams(window.location.search);
+    if (search.get('portal') === 'user-only') return true;
   }
-
-  // Jika di subdomain admin, tampilkan
-  if (isCurrentAdminPortal()) {
-    return true;
-  }
-
-  // Di portal publik umum, SEMBUNYIKAN tombol admin agar pengunjung tidak melihatnya
   return false;
 }
 
 /**
- * Memeriksa apakah modal "Tautan Role" (yang berisi bocoran role & kredensial) boleh ditampilkan.
- * Hanya boleh tampil jika parameter dev/debug aktif atau di localhost development.
+ * Mengecek apakah aplikasi dikunci sepenuhnya pada Portal Admin saja (tidak boleh mengakses /user atau /portal)
+ */
+export function isStrictAdminPortal(): boolean {
+  if (isUserBuild()) return false;
+  if (isAdminBuild() || isAdminSubdomain()) return true;
+  if (typeof window !== 'undefined') {
+    const search = new URLSearchParams(window.location.search);
+    if (search.get('portal') === 'admin-only') return true;
+  }
+  return false;
+}
+
+/**
+ * Mengecek apakah aplikasi berjalan dalam mode Unified (misalnya lingkungan pratinjau AI Studio / single domain)
+ * di mana pengguna dapat memilih masuk sebagai Role Pengguna atau Role Admin melalui Gerbang Portal,
+ * namun saat berada di dalam masing-masing portal, UI dan hak aksesnya tetap terpisah 100%.
+ */
+export function isUnifiedPortalMode(): boolean {
+  return !isStrictUserPortal() && !isStrictAdminPortal();
+}
+
+/**
+ * Backward-compatible helper: true jika dikunci ke portal admin (build admin / subdomain admin).
+ */
+export function isCurrentAdminPortal(): boolean {
+  return isStrictAdminPortal();
+}
+
+/**
+ * Tombol Admin TIDAK PERNAH ditampilkan di dalam Navbar Pengguna agar Role Pengguna tetap murni.
+ */
+export function shouldShowAdminInNavbar(_isAdminLoggedIn?: boolean): boolean {
+  return false;
+}
+
+/**
+ * Memeriksa apakah modal utilitas Tautan Role (dev/debug) diaktifkan via query ?show_links=1 atau ?dev=1.
  */
 export function shouldShowRoleLinksTrigger(): boolean {
   if (typeof window === 'undefined') return false;
+  if (isStrictUserPortal() || isStrictAdminPortal()) return false;
 
   const search = new URLSearchParams(window.location.search);
-  // Hanya tampil jika ada query ?show_links=1 atau ?dev=1
-  if (search.get('show_links') === '1' || search.get('dev') === '1') {
-    return true;
-  }
-
-  // Default: Sembunyikan demi keamanan produksi
-  return false;
+  return search.get('show_links') === '1' || search.get('dev') === '1';
 }
 
 /**
- * Memeriksa apakah kredensial demo (1-klik isi) boleh ditampilkan di halaman login Admin.
- * Secara default di halaman admin produksi, ini disembunyikan atau di-collapse agar tidak membocorkan sandi.
+ * Memeriksa apakah akordeon kredensial uji coba RBAC di halaman Login Admin ditampilkan.
+ * Otomatis mati pada build produksi khusus Admin (`VITE_SHOW_DEMO_CREDENTIALS=false`),
+ * dan aktif pada mode pratinjau/pengujian kecuali dimatikan eksplisit.
  */
 export function isDemoCredentialsEnabled(): boolean {
   if (typeof window === 'undefined') return false;
@@ -142,8 +114,9 @@ export function isDemoCredentialsEnabled(): boolean {
   }
 
   const envShowDemo = (import.meta as any).env?.VITE_SHOW_DEMO_CREDENTIALS;
-  if (envShowDemo === 'false') return false;
+  if (envShowDemo === 'false' || isAdminBuild()) {
+    return false;
+  }
 
-  // Izinkan jika dipanggil di sandbox preview
   return true;
 }

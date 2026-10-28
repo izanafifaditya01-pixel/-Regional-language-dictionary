@@ -1,48 +1,39 @@
 import React, { useState } from 'react';
-import { 
-  PlusCircle, 
-  BookPlus, 
-  Sparkles, 
-  Volume2, 
-  Trash2, 
-  Edit3, 
-  CheckCircle2, 
-  Download, 
-  Upload, 
-  Search, 
-  Filter, 
-  BookOpen, 
-  Award,
-  Layers,
-  ArrowRight,
+import {
+  PlusCircle,
+  BookPlus,
+  Volume2,
+  CheckCircle2,
+  Search,
+  Filter,
+  BookOpen,
+  Clock,
   Info,
-  RotateCcw
 } from 'lucide-react';
-import { WordEntry, Language, UserProfile } from '../types';
+import { WordEntry, UserProfile } from '../types';
 import { LANGUAGES_DATA, CATEGORIES_DATA } from '../data/languagesData';
 import { speakWord } from '../utils/audioSpeech';
 import { playSuccessSound, playTileClickSound, playErrorSound } from '../utils/soundEffects';
 
 interface WordContributionViewProps {
   contributedWords: WordEntry[];
-  onAddWord: (wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>, contributorName: string) => void;
-  onUpdateWord: (wordId: string, updatedFields: Partial<WordEntry>) => void;
-  onDeleteWord: (wordId: string) => void;
+  onSubmitProposal: (
+    wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>,
+    contributorName: string
+  ) => void;
   onSelectWordDetail: (word: WordEntry) => void;
   userProfile: UserProfile;
 }
 
 export const WordContributionView: React.FC<WordContributionViewProps> = ({
   contributedWords,
-  onAddWord,
-  onUpdateWord,
-  onDeleteWord,
+  onSubmitProposal,
   onSelectWordDetail,
-  userProfile
+  userProfile,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'form' | 'list' | 'backup'>('form');
+  const [activeSubTab, setActiveSubTab] = useState<'form' | 'list'>('form');
 
-  // Form State
+  // Form State (Proposal Submission Only — No Admin CRUD)
   const [targetLangId, setTargetLangId] = useState<string>('tk');
   const [wordIndonesian, setWordIndonesian] = useState<string>('');
   const [translationRegional, setTranslationRegional] = useState<string>('');
@@ -51,21 +42,29 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
   const [exampleSentence, setExampleSentence] = useState<string>('');
   const [exampleTranslation, setExampleTranslation] = useState<string>('');
   const [culturalContext, setCulturalContext] = useState<string>('');
-  const [contributorName, setContributorName] = useState<string>(userProfile.name || 'Pengguna Leksika');
+  const [contributorName, setContributorName] = useState<string>(
+    userProfile.name || 'Kontributor Komunitas'
+  );
 
-  // Edit Mode State
-  const [editingWordId, setEditingWordId] = useState<string | null>(null);
-
-  // Filter & Search State for List
+  // Filter & Search State for Status List
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedLangFilter, setSelectedLangFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
 
-  // Success Notification State
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  // Notification State
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
-  // Available Regional Sultra Languages (excluding 'ind')
   const regionalLanguages = LANGUAGES_DATA.filter(l => l.id !== 'ind');
-  const currentTargetLangObj = LANGUAGES_DATA.find(l => l.id === targetLangId) || regionalLanguages[0];
+  const currentTargetLangObj =
+    LANGUAGES_DATA.find(l => l.id === targetLangId) || regionalLanguages[0];
+
+  const pendingCount = contributedWords.filter(w => w.moderationStatus === 'pending').length;
+  const approvedCount = contributedWords.filter(
+    w => w.isUserContributed && w.moderationStatus !== 'pending' && w.moderationStatus !== 'rejected'
+  ).length;
 
   const resetForm = () => {
     setWordIndonesian('');
@@ -75,22 +74,6 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
     setExampleSentence('');
     setExampleTranslation('');
     setCulturalContext('');
-    setEditingWordId(null);
-  };
-
-  const handleStartEdit = (word: WordEntry) => {
-    setEditingWordId(word.id);
-    setTargetLangId(word.targetLangId);
-    setWordIndonesian(word.word);
-    setTranslationRegional(word.translation);
-    setPhoneticGuide(word.phonetic || '');
-    setCategory(word.category || 'Salam');
-    setExampleSentence(word.exampleSentence || '');
-    setExampleTranslation(word.exampleTranslation || '');
-    setCulturalContext(word.culturalContext || '');
-    setContributorName(word.contributorName || userProfile.name);
-    setActiveSubTab('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -100,150 +83,120 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
       playErrorSound();
       setNotification({
         message: 'Mohon lengkapi Kata Bahasa Indonesia dan Terjemahan Daerah.',
-        type: 'error'
+        type: 'error',
       });
       setTimeout(() => setNotification(null), 4000);
       return;
     }
 
-    // Auto-generate phonetic guide if empty
-    const generatedPhonetic = phoneticGuide.trim() || translationRegional.toLowerCase().replace(/\s+/g, '-');
+    const generatedPhonetic =
+      phoneticGuide.trim() || translationRegional.toLowerCase().replace(/\s+/g, '-');
 
-    if (editingWordId) {
-      // Update existing word
-      onUpdateWord(editingWordId, {
+    onSubmitProposal(
+      {
+        sourceLangId: 'ind',
         targetLangId,
         word: wordIndonesian.trim(),
         translation: translationRegional.trim(),
         phonetic: generatedPhonetic,
         category,
-        exampleSentence: exampleSentence.trim() || `${translationRegional.trim()} meambo i wonua.`,
-        exampleTranslation: exampleTranslation.trim() || `${wordIndonesian.trim()} sangat baik.`,
+        exampleSentence:
+          exampleSentence.trim() || `${translationRegional.trim()} meambo i wonua.`,
+        exampleTranslation:
+          exampleTranslation.trim() || `${wordIndonesian.trim()} sangat baik.`,
         culturalContext: culturalContext.trim(),
-        contributorName: contributorName.trim()
-      });
+        moderationStatus: 'pending',
+      },
+      contributorName.trim()
+    );
 
-      playSuccessSound();
-      setNotification({
-        message: `Kosakata "${translationRegional}" berhasil diperbarui!`,
-        type: 'success'
-      });
-      resetForm();
-      setActiveSubTab('list');
-    } else {
-      // Add new word
-      onAddWord(
-        {
-          sourceLangId: 'ind',
-          targetLangId,
-          word: wordIndonesian.trim(),
-          translation: translationRegional.trim(),
-          phonetic: generatedPhonetic,
-          category,
-          exampleSentence: exampleSentence.trim() || `${translationRegional.trim()} meambo i wonua.`,
-          exampleTranslation: exampleTranslation.trim() || `${wordIndonesian.trim()} sangat baik.`,
-          culturalContext: culturalContext.trim()
-        },
-        contributorName.trim()
-      );
-
-      playSuccessSound();
-      setNotification({
-        message: `Kosakata "${translationRegional}" berhasil ditambahkan! Anda mendapatkan +30 XP Kontributor.`,
-        type: 'success'
-      });
-      resetForm();
-    }
-
-    setTimeout(() => setNotification(null), 5000);
+    playSuccessSound();
+    setNotification({
+      message: `Usulan kosakata "${translationRegional}" berhasil dikirim ke antrean moderasi kurator (+30 XP). Kata akan tampil di kamus utama setelah disetujui Administrator.`,
+      type: 'success',
+    });
+    resetForm();
+    setTimeout(() => setNotification(null), 6000);
   };
 
-  const handleDelete = (wordId: string, wordName: string) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus kosakata "${wordName}" dari kamus?`)) {
-      onDeleteWord(wordId);
-      playTileClickSound();
-      setNotification({
-        message: `Kosakata "${wordName}" telah dihapus.`,
-        type: 'success'
-      });
-      setTimeout(() => setNotification(null), 4000);
-    }
-  };
+  const communityWordsOnly = contributedWords.filter(
+    w => w.isUserContributed && w.moderationStatus !== 'rejected'
+  );
 
-  // Filtered contributed words for the list tab
-  const filteredWords = contributedWords.filter(w => {
+  const filteredWords = communityWordsOnly.filter(w => {
     const matchesLang = selectedLangFilter === 'all' || w.targetLangId === selectedLangFilter;
+    const isPending = w.moderationStatus === 'pending';
+    if (statusFilter === 'pending' && !isPending) return false;
+    if (statusFilter === 'approved' && isPending) return false;
+
     const q = searchQuery.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       !q ||
       w.word.toLowerCase().includes(q) ||
       w.translation.toLowerCase().includes(q) ||
       (w.category && w.category.toLowerCase().includes(q)) ||
-      (w.culturalContext && w.culturalContext.toLowerCase().includes(q));
+      (w.contributorName && w.contributorName.toLowerCase().includes(q));
     return matchesLang && matchesSearch;
   });
 
-  // Export JSON handler
-  const handleExportJson = () => {
-    playTileClickSound();
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(contributedWords, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `kamus-sultra-kontribusi-${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
   return (
     <div className="w-full space-y-6">
-      
       {/* Top Editorial Banner */}
       <div className="bg-white rounded-2xl border border-stone-200/90 p-6 sm:p-8 space-y-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14532D]">
-          Arsip Partisipatif · Pelestarian Bahasa Daerah Sulawesi Tenggara
+          Role Pengguna · Pengajuan Kosakata Komunitas
         </p>
 
         <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
-          Kontribusi Leksikon Komunitas Sultra
+          Usulkan Kosakata Bahasa Daerah Sultra
         </h1>
         <p className="text-stone-600 text-xs sm:text-sm max-w-3xl leading-relaxed">
-          Perkaya dokumentasi kata <strong>Bahasa Tolaki</strong>, <strong>Bahasa Moronene</strong>, <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Setiap entri yang Anda daftarkan langsung terintegrasi ke dalam kamus, pencarian, kuis, dan modul pelafalan.
+          Ajukan kosakata baru untuk <strong>Bahasa Tolaki</strong>, <strong>Bahasa Moronene</strong>,{' '}
+          <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Demi menjaga keakuratan linguistik, setiap usulan pengguna masuk ke{' '}
+          <strong>Antrean Moderasi Kurator</strong> sebelum dipublikasikan ke kamus resmi.
         </p>
 
-        <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-stone-500 tabular-nums">
-          <span className="text-amber-800">+30 XP per Entri Baru</span>
+        <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-stone-500 tabular-nums">
+          <span className="text-[#14532D] font-semibold">+30 XP per Pengajuan</span>
           <span aria-hidden="true">·</span>
-          <span>{contributedWords.length} Entri Komunitas Tercatat</span>
+          <span>{approvedCount} Usulan Disetujui Kurator</span>
           <span aria-hidden="true">·</span>
-          <span>4 Rumpun Bahasa Sultra</span>
+          <span>{pendingCount} Menunggu Verifikasi Admin</span>
         </div>
       </div>
 
       {/* Notification Toast */}
       {notification && (
-        <div className={`p-4 rounded-xl flex items-center justify-between transition-all ${
-          notification.type === 'success' 
-            ? 'bg-emerald-50 text-emerald-950 border border-emerald-200' 
-            : 'bg-rose-50 text-rose-950 border border-rose-200'
-        }`}>
+        <div
+          className={`p-4 rounded-xl flex items-center justify-between transition-all ${
+            notification.type === 'success'
+              ? 'bg-emerald-50 text-emerald-950 border border-emerald-200'
+              : 'bg-rose-50 text-rose-950 border border-rose-200'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <CheckCircle2 className={`w-5 h-5 ${notification.type === 'success' ? 'text-[#14532D]' : 'text-rose-600'}`} />
-            <span className="text-sm font-medium">{notification.message}</span>
+            <CheckCircle2
+              className={`w-5 h-5 shrink-0 ${
+                notification.type === 'success' ? 'text-[#14532D]' : 'text-rose-600'
+              }`}
+            />
+            <span className="text-xs sm:text-sm font-medium">{notification.message}</span>
           </div>
-          <button 
+          <button
+            type="button"
             onClick={() => setNotification(null)}
-            className="text-xs font-semibold underline opacity-75 hover:opacity-100 cursor-pointer whitespace-nowrap"
+            className="text-xs font-semibold underline opacity-75 hover:opacity-100 cursor-pointer whitespace-nowrap ml-3"
           >
             Tutup
           </button>
         </div>
       )}
 
-      {/* Navigation Sub-Tabs */}
+      {/* Segmented Navigation Sub-Tabs (User Proposal Scope Only) */}
       <div className="flex items-center gap-2 border-b border-stone-200/90 pb-4 overflow-x-auto">
         <button
           id="btn-subtab-form"
+          type="button"
           onClick={() => {
             playTileClickSound();
             setActiveSubTab('form');
@@ -255,11 +208,12 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
           }`}
         >
           <PlusCircle className="w-4 h-4" />
-          <span>{editingWordId ? 'Sunting Entri' : 'Tambah Entri Baru'}</span>
+          <span>Formulir Usulan Kata</span>
         </button>
 
         <button
           id="btn-subtab-list"
+          type="button"
           onClick={() => {
             playTileClickSound();
             setActiveSubTab('list');
@@ -271,60 +225,29 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>Daftar Kontribusi ({contributedWords.length})</span>
-        </button>
-
-        <button
-          id="btn-subtab-backup"
-          onClick={() => {
-            playTileClickSound();
-            setActiveSubTab('backup');
-          }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-            activeSubTab === 'backup'
-              ? 'pill-active'
-              : 'bg-white text-stone-700 hover:bg-[#EFECE4] border border-stone-200/90'
-          }`}
-        >
-          <Download className="w-4 h-4" />
-          <span>Ekspor & Cadangan JSON</span>
+          <span>Status Usulan Komunitas ({communityWordsOnly.length})</span>
         </button>
       </div>
 
-      {/* ========================================================================= */}
-      {/* TAB 1: FORMULIR TAMBAH / EDIT KATA */}
-      {/* ========================================================================= */}
+      {/* TAB 1: FORMULIR PENGAJUAN USULAN PENGGUNA */}
       {activeSubTab === 'form' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Main Form (8 Cols) */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-              <div>
-                <h2 className="text-xl font-black text-slate-800">
-                  {editingWordId ? 'Perbarui Kosakata Daerah' : 'Formulir Penambahan Kosakata Baru'}
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500">
-                  Isi data terjemahan, pelafalan, dan contoh kalimat di bawah ini.
-                </p>
-              </div>
-              {editingWordId && (
-                <button
-                  onClick={resetForm}
-                  className="flex items-center gap-1 text-xs text-amber-700 hover:text-amber-800 font-bold bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Batal Edit</span>
-                </button>
-              )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Form (7 Cols) */}
+          <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-8 border border-stone-200/90">
+            <div className="mb-6 pb-4 border-b border-stone-100">
+              <h2 className="font-serif text-xl font-bold text-stone-900">
+                Formulir Pengajuan Kosakata Baru
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-500 mt-1">
+                Usulan Anda akan diperiksa oleh Moderator atau Editor Bahasa di Portal Administrator sebelum masuk kamus publik.
+              </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
-              {/* 1. Pilih Bahasa Sasaran Daerah */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* 1. Pilih Bahasa Daerah */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                  Bahasa Daerah Sasaran (Sulawesi Tenggara) <span className="text-rose-500">*</span>
+                <label className="block text-xs font-semibold text-stone-700 mb-2">
+                  Bahasa Daerah Sasaran <span className="text-rose-600">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {regionalLanguages.map(lang => (
@@ -335,15 +258,18 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
                         playTileClickSound();
                         setTargetLangId(lang.id);
                       }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                         targetLangId === lang.id
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold ring-2 ring-emerald-500/20'
-                          : 'border-slate-200 hover:border-slate-300 bg-slate-50/70 text-slate-700'
+                          ? 'border-[#14532D] bg-[#14532D]/8 text-[#14532D]'
+                          : 'border-stone-200/90 hover:bg-[#F8F6F1] bg-white text-stone-700'
                       }`}
                     >
-                      <span className="text-2xl mb-1">{lang.flagEmoji}</span>
-                      <span className="text-xs font-bold leading-tight">{lang.name.replace('Bahasa ', '')}</span>
-                      <span className="text-[10px] text-slate-500 truncate w-full">{lang.nativeName.split(' ')[0]}</span>
+                      <span className="text-xs font-bold block whitespace-nowrap">
+                        {lang.name.replace('Bahasa ', '')}
+                      </span>
+                      <span className="text-[11px] text-stone-500 truncate block mt-0.5">
+                        {lang.nativeName.split(' ')[0]}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -352,30 +278,30 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
               {/* 2. Kata Bahasa Indonesia & Terjemahan Daerah */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Kata Bahasa Indonesia <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Kata Bahasa Indonesia <span className="text-rose-600">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={wordIndonesian}
                     onChange={e => setWordIndonesian(e.target.value)}
-                    placeholder="Contoh: Makan, Selamat Pagi, Indah"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm font-medium text-slate-800 placeholder-slate-400 outline-hidden transition-all"
+                    placeholder="Contoh: Musyawarah, Panen"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm text-stone-900 placeholder-stone-400 outline-hidden transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Terjemahan {currentTargetLangObj.name} <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Padanan {currentTargetLangObj.name} <span className="text-rose-600">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={translationRegional}
                     onChange={e => setTranslationRegional(e.target.value)}
-                    placeholder={`Contoh dalam ${currentTargetLangObj.name}`}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm font-bold text-emerald-900 placeholder-slate-400 outline-hidden transition-all"
+                    placeholder={`Kata dalam ${currentTargetLangObj.name}`}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm font-semibold text-[#14532D] placeholder-stone-400 outline-hidden transition-colors"
                   />
                 </div>
               </div>
@@ -383,27 +309,26 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
               {/* 3. Panduan Fonetik & Kategori */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Panduan Fonetik / Cara Baca (Opsional)
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Panduan Fonetik / Lafal (Opsional)
                   </label>
                   <input
                     type="text"
                     value={phoneticGuide}
                     onChange={e => setPhoneticGuide(e.target.value)}
-                    placeholder="Contoh: mo-nga-a, ku-maa"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm text-slate-800 placeholder-slate-400 outline-hidden transition-all"
+                    placeholder="Contoh: ka-lo-sa-ra"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm font-mono text-stone-800 placeholder-stone-400 outline-hidden transition-colors"
                   />
-                  <span className="text-[11px] text-slate-400 mt-1 block">Otomatis diisi jika dikosongkan.</span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Kategori Kosakata
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Kategori Leksikon
                   </label>
                   <select
                     value={category}
                     onChange={e => setCategory(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm font-medium text-slate-800 outline-hidden transition-all bg-white cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm text-stone-800 outline-hidden transition-colors cursor-pointer"
                   >
                     {CATEGORIES_DATA.map(cat => (
                       <option key={cat.id} value={cat.id}>
@@ -414,404 +339,325 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
                 </div>
               </div>
 
-              {/* 4. Contoh Kalimat Daerah & Terjemahan */}
-              <div className="space-y-4 pt-2 border-t border-slate-100">
+              {/* 4. Contoh Kalimat */}
+              <div className="space-y-4 pt-2 border-t border-stone-100">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Contoh Kalimat dalam {currentTargetLangObj.name}
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Contoh Kalimat Daerah
                   </label>
                   <input
                     type="text"
                     value={exampleSentence}
                     onChange={e => setExampleSentence(e.target.value)}
-                    placeholder={`Contoh kalimat dalam ${currentTargetLangObj.name}...`}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm text-slate-800 placeholder-slate-400 outline-hidden transition-all"
+                    placeholder={`Contoh penggunaan dalam ${currentTargetLangObj.name}...`}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm text-stone-900 placeholder-stone-400 outline-hidden transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Arti Contoh Kalimat (Bahasa Indonesia)
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Terjemahan Contoh Kalimat (Indonesia)
                   </label>
                   <input
                     type="text"
                     value={exampleTranslation}
                     onChange={e => setExampleTranslation(e.target.value)}
-                    placeholder="Arti kalimat di atas dalam Bahasa Indonesia..."
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm text-slate-800 placeholder-slate-400 outline-hidden transition-all"
+                    placeholder="Arti kalimat dalam Bahasa Indonesia..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm text-stone-900 placeholder-stone-400 outline-hidden transition-colors"
                   />
                 </div>
               </div>
 
-              {/* 5. Catatan Budaya / Filosofi & Nama Kontributor */}
-              <div className="space-y-4 pt-2 border-t border-slate-100">
+              {/* 5. Konteks Budaya & Nama Pengusul */}
+              <div className="space-y-4 pt-2 border-t border-stone-100">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Catatan Budaya, Dialek atau Filosofi Daerah (Opsional)
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Catatan Budaya / Konteks Pemakaian (Opsional)
                   </label>
                   <textarea
                     rows={2}
                     value={culturalContext}
                     onChange={e => setCulturalContext(e.target.value)}
-                    placeholder="Contoh: Digunakan dalam tradisi adat Kalosara, atau ungkapan khas suku di pedesaan..."
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm text-slate-800 placeholder-slate-400 outline-hidden transition-all"
+                    placeholder="Jelaskan dialek wilayah atau konteks adat penggunaan kata ini..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm text-stone-900 placeholder-stone-400 outline-hidden transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-                    Nama Kontributor / Penyusun
+                  <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    Nama Pengusul
                   </label>
                   <input
                     type="text"
                     value={contributorName}
                     onChange={e => setContributorName(e.target.value)}
                     placeholder="Nama Anda atau Komunitas"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm text-slate-800 placeholder-slate-400 outline-hidden transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-sm text-stone-900 placeholder-stone-400 outline-hidden transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center gap-3 pt-4">
+              <div className="pt-2">
                 <button
                   type="submit"
                   id="btn-submit-word"
-                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white py-3.5 px-6 rounded-2xl font-bold shadow-md shadow-emerald-700/20 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 bg-[#14532D] hover:bg-[#166534] text-white py-3 px-6 rounded-xl text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap"
                 >
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>{editingWordId ? 'Simpan Perubahan' : 'Tambahkan ke Kamus (+30 XP)'}</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Kirim Usulan ke Moderasi Kurator (+30 XP)</span>
                 </button>
-                {editingWordId && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="px-5 py-3.5 rounded-2xl border border-slate-200 hover:bg-slate-100 font-bold text-slate-600 text-sm cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                )}
               </div>
-
             </form>
           </div>
 
-          {/* Live Card Preview (5 Cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            <div className="sticky top-24">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Pratinjau Kartu Kamus Real-Time</span>
+          {/* Live Card Preview & Workflow Explanation (5 Cols) */}
+          <div className="lg:col-span-5 space-y-5">
+            <div className="bg-white rounded-2xl border border-stone-200/90 p-6 space-y-4">
+              <div className="flex items-center justify-between text-xs text-stone-500">
+                <span className="uppercase tracking-wider font-semibold text-stone-600">
+                  Pratinjau Usulan Entri
                 </span>
-                <span className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  Live Preview
+                <span className="text-amber-700 font-medium">
+                  Status Awal: Menunggu Moderasi
                 </span>
               </div>
 
-              {/* Simulated Dictionary Card */}
-              <div className="bg-white rounded-3xl border-2 border-emerald-500/30 p-6 shadow-lg shadow-emerald-900/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 transform translate-x-3 -translate-y-3 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl" />
-
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
-                      <span>{currentTargetLangObj.flagEmoji}</span>
-                      <span>{currentTargetLangObj.name}</span>
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                      {category}
-                    </span>
-                  </div>
-
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white px-2 py-0.5 rounded-md">
-                    Komunitas
-                  </span>
-                </div>
-
-                <div className="mb-4">
-                  <div className="text-xs text-slate-400 font-medium mb-0.5">Bahasa Indonesia:</div>
-                  <h3 className="text-lg font-bold text-slate-800">
-                    {wordIndonesian || 'Makan / Kata Baru'}
-                  </h3>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs text-emerald-800/70 font-semibold mb-0.5">
-                        Terjemahan Daerah:
-                      </div>
-                      <div className="text-2xl font-black text-emerald-950">
-                        {translationRegional || 'Monga\'a'}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (translationRegional) {
-                          speakWord(translationRegional, targetLangId);
-                        }
-                      }}
-                      className="w-10 h-10 rounded-xl bg-white text-emerald-700 hover:bg-emerald-100 flex items-center justify-center shadow-xs border border-emerald-200 transition-colors cursor-pointer"
-                      title="Dengarkan Suara Pelafalan"
-                    >
-                      <Volume2 className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div className="mt-2 text-xs font-mono text-emerald-700 bg-white/70 px-2.5 py-1 rounded-lg inline-block">
-                    /{phoneticGuide || translationRegional.toLowerCase().replace(/\s+/g, '-') || 'mo-nga-a'}/
-                  </div>
-                </div>
-
-                {/* Example sentence preview */}
-                <div className="space-y-2 text-xs text-slate-600 mb-4 pt-3 border-t border-slate-100">
+              <div className="pt-3 border-t border-stone-100 space-y-3">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="font-bold text-slate-700">Contoh: </span>
-                    <span className="italic text-slate-800 font-medium">
-                      "{exampleSentence || `${translationRegional || 'Monga\'a'} meambo ronga motaha.`}"
+                    <p className="text-xs text-stone-500">
+                      {currentTargetLangObj.name} · {category}
+                    </p>
+                    <h3 className="font-serif text-2xl font-bold text-stone-900 mt-0.5">
+                      {translationRegional || "Monga'a"}
+                    </h3>
+                    <p className="font-mono text-xs text-[#14532D] mt-0.5">
+                      /{phoneticGuide || translationRegional.toLowerCase().replace(/\s+/g, '-') || 'mo-nga-a'}/
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (translationRegional) {
+                        speakWord(translationRegional, targetLangId);
+                      }
+                    }}
+                    className="w-10 h-10 rounded-xl bg-[#F8F6F1] hover:bg-[#14532D] text-stone-700 hover:text-white flex items-center justify-center border border-stone-200 transition-colors cursor-pointer"
+                    title="Uji Suara Pelafalan"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="pt-3 border-t border-stone-100 text-xs space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Padanan Indonesia</span>
+                    <span className="font-semibold text-stone-900">
+                      {wordIndonesian || 'Makan / Kosakata Baru'}
                     </span>
                   </div>
-                  <div className="text-slate-500">
-                    <span className="font-bold text-slate-600">Arti: </span>
-                    "{exampleTranslation || `${wordIndonesian || 'Makan'} sangat nikmat bersama.`}"
-                  </div>
+                  <p className="font-serif italic text-stone-700 pt-1">
+                    &ldquo;{exampleSentence || `${translationRegional || "Monga'a"} meambo i wonua.`}&rdquo;
+                  </p>
+                  <p className="text-stone-500">
+                    — {exampleTranslation || `${wordIndonesian || 'Makan'} sangat baik.`}
+                  </p>
                 </div>
 
-                {/* Cultural Context Preview */}
-                {culturalContext && (
-                  <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-900 mb-4">
-                    <span className="font-bold block mb-1">📖 Catatan Budaya / Filosofi:</span>
-                    <p className="text-amber-800 leading-relaxed">{culturalContext}</p>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-100">
-                  <span>Kontributor: <strong>{contributorName || 'Pengguna Leksika'}</strong></span>
-                  <span className="text-emerald-600 font-semibold">Tersimpan di Kamus</span>
+                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
+                  <span>Pengusul: {contributorName || 'Pengguna'}</span>
+                  <span>Diverifikasi oleh Role Admin</span>
                 </div>
               </div>
-
-              {/* Tips Box */}
-              <div className="mt-4 p-4 rounded-2xl bg-slate-100 border border-slate-200 text-xs text-slate-600 flex items-start gap-3">
-                <Info className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-slate-800 block mb-1">Tips Kontribusi Sultra:</strong>
-                  Semua kosakata yang Anda masukkan langsung aktif pada fitur <strong>Kamus</strong>, <strong>Penerjemah Cepat</strong>, <strong>Kuis Interaktif</strong>, dan <strong>Flashcard Belajar</strong>.
-                </div>
-              </div>
-
             </div>
 
+            <div className="p-5 rounded-2xl bg-[#EFECE4]/75 border border-stone-200/90 text-xs text-stone-700 flex items-start gap-3">
+              <Info className="w-4 h-4 text-[#14532D] shrink-0 mt-0.5" />
+              <div className="space-y-1 leading-relaxed">
+                <strong className="text-stone-900 block">Alur Pemisahan Wewenang Pengguna &amp; Admin</strong>
+                <p>
+                  Sebagai <strong>Pengguna</strong>, Anda dapat mengusulkan kosakata baru. Wewenang penyuntingan kamus master, persetujuan publikasi, serta penghapusan entri dikelola secara terpisah oleh <strong>Moderator &amp; Kurator</strong> di Portal Administrator.
+                </p>
+              </div>
+            </div>
           </div>
-
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 2: DAFTAR KATA KONTRIBUSI PENGGUNA */}
-      {/* ========================================================================= */}
+      {/* TAB 2: DAFTAR STATUS USULAN KOMUNITAS (READ-ONLY FOR USERS) */}
       {activeSubTab === 'list' && (
         <div className="space-y-6">
-          
-          {/* Filter & Search Bar */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-            
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/90 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="relative w-full lg:w-72">
+              <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Cari kata kontribusi..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 text-sm text-slate-800 outline-hidden"
+                placeholder="Cari usulan kata atau pengusul..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#F8F6F1] border border-stone-200/90 focus:border-[#14532D] focus:bg-white text-xs sm:text-sm text-stone-900 outline-hidden"
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-              <span className="text-xs font-bold text-slate-500 flex items-center gap-1 shrink-0">
-                <Filter className="w-3.5 h-3.5" />
-                <span>Bahasa:</span>
-              </span>
-              <button
-                onClick={() => setSelectedLangFilter('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                  selectedLangFilter === 'all'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Semua ({contributedWords.length})
-              </button>
-              {regionalLanguages.map(lang => {
-                const count = contributedWords.filter(w => w.targetLangId === lang.id).length;
-                return (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1 p-1 bg-[#EFECE4] rounded-xl text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
+                    statusFilter === 'all' ? 'bg-white text-stone-900 shadow-2xs font-semibold' : 'text-stone-600'
+                  }`}
+                >
+                  Semua ({communityWordsOnly.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('pending')}
+                  className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
+                    statusFilter === 'pending' ? 'bg-white text-amber-800 shadow-2xs font-semibold' : 'text-stone-600'
+                  }`}
+                >
+                  Menunggu ({pendingCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('approved')}
+                  className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
+                    statusFilter === 'approved' ? 'bg-white text-[#14532D] shadow-2xs font-semibold' : 'text-stone-600'
+                  }`}
+                >
+                  Terverifikasi ({approvedCount})
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto">
+                <Filter className="w-3.5 h-3.5 text-stone-400 shrink-0 ml-1" />
+                <button
+                  type="button"
+                  onClick={() => setSelectedLangFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                    selectedLangFilter === 'all'
+                      ? 'bg-[#14532D] text-white'
+                      : 'bg-[#F8F6F1] text-stone-600 hover:bg-[#EFECE4]'
+                  }`}
+                >
+                  Semua Bahasa
+                </button>
+                {regionalLanguages.map(lang => (
                   <button
                     key={lang.id}
+                    type="button"
                     onClick={() => setSelectedLangFilter(lang.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                       selectedLangFilter === lang.id
-                        ? 'bg-emerald-700 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-[#14532D] text-white'
+                        : 'bg-[#F8F6F1] text-stone-600 hover:bg-[#EFECE4]'
                     }`}
                   >
-                    <span>{lang.flagEmoji}</span>
-                    <span>{lang.name.replace('Bahasa ', '')}</span>
-                    <span className="text-[10px] opacity-75">({count})</span>
+                    {lang.name.replace('Bahasa ', '')}
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-
           </div>
 
-          {/* Word List Cards */}
           {filteredWords.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm max-w-md mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-4">
-                <BookPlus className="w-8 h-8" />
+            <div className="bg-white rounded-2xl p-12 text-center border border-stone-200/90 max-w-md mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-[#EFECE4] text-[#14532D] flex items-center justify-center mx-auto mb-4">
+                <BookPlus className="w-7 h-7" />
               </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">Belum Ada Kata yang Cocok</h3>
-              <p className="text-xs text-slate-500 mb-6">
-                Belum ada kata kontribusi untuk kriteria pencarian ini. Tambahkan kosakata pertama Anda sekarang!
+              <h3 className="font-serif text-lg font-bold text-stone-900 mb-1">
+                Belum Ada Usulan pada Filter Ini
+              </h3>
+              <p className="text-xs text-stone-500 mb-5">
+                Jadilah kontributor kosakata bahasa daerah Sulawesi Tenggara berikutnya.
               </p>
               <button
+                type="button"
                 onClick={() => setActiveSubTab('form')}
-                className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-2xl text-sm font-bold shadow-md cursor-pointer transition-all"
+                className="inline-flex items-center gap-2 bg-[#14532D] hover:bg-[#166534] text-white px-5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Tambah Kata Sekarang</span>
+                <span>Ajukan Usulan Baru</span>
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
               {filteredWords.map(word => {
-                const langObj = LANGUAGES_DATA.find(l => l.id === word.targetLangId) || regionalLanguages[0];
+                const langObj =
+                  LANGUAGES_DATA.find(l => l.id === word.targetLangId) || regionalLanguages[0];
+                const isPending = word.moderationStatus === 'pending';
+
                 return (
-                  <div
+                  <article
                     key={word.id}
-                    className="bg-white rounded-3xl border border-slate-200 hover:border-emerald-500/40 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                    onClick={() => {
+                      if (!isPending) onSelectWordDetail(word);
+                    }}
+                    className={`bg-white rounded-2xl border border-stone-200/90 p-5 flex flex-col justify-between space-y-4 transition-colors ${
+                      !isPending ? 'hover:border-[#14532D]/50 cursor-pointer' : ''
+                    }`}
                   >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            {langObj.flagEmoji} {langObj.name.replace('Bahasa ', '')}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            {word.category}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
-                          ✨ Komunitas
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
+                        <span>
+                          {langObj.name.replace('Bahasa ', '')} · {word.category}
                         </span>
+                        {isPending ? (
+                          <span className="inline-flex items-center gap-1 text-amber-700 font-semibold whitespace-nowrap">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Menunggu Kurasi</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[#14532D] font-semibold whitespace-nowrap">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Disetujui</span>
+                          </span>
+                        )}
                       </div>
 
-                      <div className="mb-3">
-                        <span className="text-xs text-slate-400 font-medium">Indonesia:</span>
-                        <h4 className="text-base font-bold text-slate-800">{word.word}</h4>
-                      </div>
-
-                      <div className="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-100 mb-3 flex items-center justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-xl font-black text-emerald-950">{word.translation}</div>
-                          <div className="text-[11px] font-mono text-emerald-700">/{word.phonetic}/</div>
+                          <h4 className="font-serif text-xl font-bold text-stone-900">
+                            {word.translation}
+                          </h4>
+                          <p className="font-mono text-xs text-stone-500">/{word.phonetic}/</p>
+                          <p className="text-xs text-stone-700 mt-1">
+                            Arti: <strong>{word.word}</strong>
+                          </p>
                         </div>
                         <button
-                          onClick={() => speakWord(word.translation, word.targetLangId)}
-                          className="w-9 h-9 rounded-xl bg-white text-emerald-700 hover:bg-emerald-100 flex items-center justify-center border border-emerald-200 transition-colors cursor-pointer shadow-2xs"
-                          title="Dengarkan Suara"
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            speakWord(word.translation, word.targetLangId);
+                          }}
+                          className="w-9 h-9 rounded-xl bg-[#F8F6F1] hover:bg-[#14532D] text-stone-700 hover:text-white flex items-center justify-center border border-stone-200 transition-colors cursor-pointer shrink-0"
+                          title="Dengarkan Pelafalan"
                         >
                           <Volume2 className="w-4 h-4" />
                         </button>
                       </div>
 
                       {word.exampleSentence && (
-                        <div className="text-xs text-slate-600 mb-3 space-y-1">
-                          <div className="italic font-medium text-slate-700">"{word.exampleSentence}"</div>
-                          <div className="text-slate-500 text-[11px]">Arti: "{word.exampleTranslation}"</div>
-                        </div>
-                      )}
-
-                      {word.culturalContext && (
-                        <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/50 text-[11px] text-amber-900 mb-3 line-clamp-2">
-                          <strong>Konteks: </strong> {word.culturalContext}
-                        </div>
+                        <p className="font-serif italic text-xs text-stone-600 pt-2 border-t border-stone-100">
+                          &ldquo;{word.exampleSentence}&rdquo;
+                        </p>
                       )}
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-slate-400">
-                        Oleh: <strong>{word.contributorName || 'Pengguna'}</strong>
-                      </span>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleStartEdit(word)}
-                          className="p-2 rounded-xl text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
-                          title="Edit Kosakata"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(word.id, word.translation)}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="Hapus Kosakata"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400 tabular-nums">
+                      <span className="truncate">Oleh: {word.contributorName || 'Kontributor'}</span>
+                      <span className="font-mono shrink-0">{word.createdAt || ''}</span>
                     </div>
-
-                  </div>
+                  </article>
                 );
               })}
             </div>
           )}
-
         </div>
       )}
-
-      {/* ========================================================================= */}
-      {/* TAB 3: CADANGKAN & BAGIKAN */}
-      {/* ========================================================================= */}
-      {activeSubTab === 'backup' && (
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-          <div className="text-center pb-6 border-b border-slate-100">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-4">
-              <Download className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-black text-slate-800 mb-2">Cadangkan & Bagikan Data Kosakata</h3>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              Unduh seluruh perbendaharaan kata kontribusi Anda dalam format JSON untuk disimpan di perangkat, atau dibagikan ke rekan dan pelestari bahasa daerah lainnya.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div>
-              <div className="text-sm font-bold text-slate-800">Total Kata Kontribusi</div>
-              <div className="text-xs text-slate-500">{contributedWords.length} entri kosakata aktif</div>
-            </div>
-            <button
-              onClick={handleExportJson}
-              className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold shadow-md cursor-pointer transition-all"
-            >
-              <Download className="w-4 h-4" />
-              <span>Unduh JSON</span>
-            </button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-950 space-y-2">
-            <strong className="font-bold block">✨ Keunggulan Sistem Leksika Sultra:</strong>
-            <p className="leading-relaxed">
-              Semua kata yang tersimpan disimpan secara lokal di browser Anda. Mengunduh cadangan JSON memastikan data berharga ini tetap aman meskipun Anda membersihkan cache peramban.
-            </p>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

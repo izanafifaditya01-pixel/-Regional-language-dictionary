@@ -52,12 +52,12 @@ import {
 import { AdminUsersTab } from './AdminUsersTab';
 import { AdminAuditLogTab } from './AdminAuditLogTab';
 import { AdminSupabaseTab } from './AdminSupabaseTab';
-import { shouldShowRoleLinksTrigger } from '../utils/portalConfig';
+import { shouldShowRoleLinksTrigger, isStrictAdminPortal } from '../utils/portalConfig';
 
 interface AdminDashboardViewProps {
   adminUser: AdminUser;
   onLogout: () => void;
-  onSwitchToUserView: () => void;
+  onNavigateToPortalGateway?: () => void;
   allWords: WordEntry[];
   contributedWords: WordEntry[];
   onAddWord: (wordData: Omit<WordEntry, 'id' | 'createdAt' | 'isUserContributed'>, contributorName: string) => void;
@@ -71,7 +71,7 @@ interface AdminDashboardViewProps {
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   adminUser,
   onLogout,
-  onSwitchToUserView,
+  onNavigateToPortalGateway,
   allWords,
   contributedWords,
   onAddWord,
@@ -82,6 +82,21 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onWordsUpdated,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [moderationSubFilter, setModerationSubFilter] = useState<'pending' | 'approved'>('pending');
+  const strictAdminOnly = isStrictAdminPortal();
+
+  const pendingContributions = useMemo(
+    () => contributedWords.filter(w => w.moderationStatus === 'pending'),
+    [contributedWords]
+  );
+  const approvedContributions = useMemo(
+    () =>
+      contributedWords.filter(
+        w => w.isUserContributed && w.moderationStatus !== 'pending' && w.moderationStatus !== 'rejected'
+      ),
+    [contributedWords]
+  );
 
   // Search & Filters in Words Management
   const [searchQuery, setSearchQuery] = useState('');
@@ -221,7 +236,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const handleSaveWordForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formWord.trim() || !formTranslation.trim()) {
-      alert('Kata Bahasa Indonesia dan Terjemahan Daerah wajib diisi.');
+      setFormNotification('Kata Bahasa Indonesia dan Terjemahan Daerah wajib diisi.');
+      setTimeout(() => setFormNotification(null), 3500);
       return;
     }
 
@@ -428,16 +444,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </select>
               </div>
 
-              {/* User Profile Badge */}
+              {/* Admin Monogram Profile Badge */}
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs">
-                <img
-                  src={adminUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
-                  alt={adminUser.name}
-                  className="w-6 h-6 rounded-full object-cover border border-slate-600"
-                />
+                <div className="w-6 h-6 rounded-full bg-emerald-700 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                  {adminUser.name.slice(0, 2).toUpperCase()}
+                </div>
                 <div className="text-left hidden sm:block">
                   <div className="font-bold text-white text-[11px] leading-tight truncate max-w-[110px]">{adminUser.name}</div>
-                  <div className="text-[10px] text-purple-300 font-semibold">{adminUser.role}</div>
+                  <div className="text-[10px] text-emerald-300 font-semibold">{adminUser.role}</div>
                 </div>
               </div>
 
@@ -453,26 +467,27 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </button>
               )}
 
-              {/* Switch to Public User Mode */}
-              <button
-                id="btn-switch-user-mode"
-                onClick={onSwitchToUserView}
-                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-600 transition-all cursor-pointer shadow-xs"
-                title="Buka tampilan pengguna tanpa logout"
-              >
-                <Eye className="w-4 h-4" />
-                <span className="hidden md:inline">User View</span>
-              </button>
+              {/* Return to Portal Gateway (Only in Unified Preview — Absent in Strict Admin Build) */}
+              {!strictAdminOnly && onNavigateToPortalGateway && (
+                <button
+                  id="btn-switch-portal-gateway"
+                  onClick={onNavigateToPortalGateway}
+                  className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all cursor-pointer whitespace-nowrap"
+                  title="Kembali ke Gerbang Pemilih Portal"
+                >
+                  <span>Gerbang Portal</span>
+                </button>
+              )}
 
-              {/* Admin Profile & Logout Button */}
+              {/* Admin Logout Button */}
               <button
                 id="btn-admin-logout"
                 onClick={onLogout}
-                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-900/40 hover:bg-rose-900/60 text-rose-200 hover:text-rose-100 border border-rose-800/60 transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-900/40 hover:bg-rose-900/60 text-rose-200 hover:text-rose-100 border border-rose-800/60 transition-all cursor-pointer shadow-xs whitespace-nowrap"
                 title="Keluar dari sesi admin"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden md:inline">Logout</span>
+                <span className="hidden md:inline">Logout Admin</span>
               </button>
             </div>
 
@@ -508,19 +523,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
             <button
               onClick={() => setActiveTab('moderation')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer tabular-nums ${
                 activeTab === 'moderation'
                   ? 'bg-emerald-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
               <CheckSquare className="w-4 h-4" />
-              <span>Moderasi Komunitas</span>
-              {contributedWords.length > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] bg-amber-500 text-slate-950 font-black rounded-full">
-                  {contributedWords.length}
-                </span>
-              )}
+              <span>Moderasi Usulan ({pendingContributions.length})</span>
             </button>
 
             <button
@@ -678,42 +688,42 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </button>
                 <button
                   onClick={() => setActiveTab('moderation')}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-2 text-sm cursor-pointer"
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-2 text-sm cursor-pointer tabular-nums"
                 >
                   <CheckSquare className="w-4 h-4 text-amber-400" />
-                  <span>Review Usulan ({contributedWords.length})</span>
+                  <span>Antrean Moderasi ({pendingContributions.length})</span>
                 </button>
               </div>
             </div>
 
             {/* KPI Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 tabular-nums">
               <div className="p-5 rounded-2xl bg-slate-800/70 border border-slate-700/80 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Kosakata</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kamus Terverifikasi</span>
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                     <Database className="w-5 h-5" />
                   </div>
                 </div>
                 <div className="mt-4">
                   <div className="text-3xl font-black text-white">{allWords.length}</div>
-                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                    <span className="text-emerald-400 font-bold">100% Aktif</span> di mesin penerjemah
+                  <div className="text-xs text-slate-400 mt-1">
+                    Tayang di Portal Pengguna
                   </div>
                 </div>
               </div>
 
               <div className="p-5 rounded-2xl bg-slate-800/70 border border-slate-700/80 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Usulan Komunitas</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Menunggu Moderasi</span>
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
+                    <CheckSquare className="w-5 h-5" />
                   </div>
                 </div>
                 <div className="mt-4">
-                  <div className="text-3xl font-black text-white">{contributedWords.length}</div>
+                  <div className="text-3xl font-black text-white">{pendingContributions.length}</div>
                   <div className="text-xs text-amber-400 font-bold mt-1">
-                    Membutuhkan verifikasi admin
+                    Usulan dari Role Pengguna
                   </div>
                 </div>
               </div>
@@ -726,24 +736,23 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   </div>
                 </div>
                 <div className="mt-4">
-                  <div className="text-3xl font-black text-white">4 Dialek</div>
-                  <div className="text-xs text-slate-400 mt-1">Tolaki • Moronene • Muna • Buton</div>
+                  <div className="text-3xl font-black text-white">4 Rumpun</div>
+                  <div className="text-xs text-slate-400 mt-1">Tolaki · Moronene · Muna · Buton</div>
                 </div>
               </div>
 
               <div className="p-5 rounded-2xl bg-slate-800/70 border border-slate-700/80 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status Mesin AI</span>
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5" />
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Otoritas Aktif</span>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
                 </div>
                 <div className="mt-4">
-                  <div className="text-xl font-black text-emerald-400 flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Aktif & Tersinkron
+                  <div className="text-lg font-black text-emerald-400 truncate">
+                    {adminUser.role}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">Leksikon + Hybrid Fallback</div>
+                  <div className="text-xs text-slate-400 mt-1">RBAC Terproteksi</div>
                 </div>
               </div>
             </div>
@@ -1006,37 +1015,58 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-                              <button
-                                onClick={() => {
-                                  if (!canDeleteWords) {
-                                    setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin menghapus kosakata (can_delete_words).');
-                                    setTimeout(() => setFormNotification(null), 3000);
-                                    return;
-                                  }
-                                  if (confirm(`Hapus kosakata "${entry.word} - ${entry.translation}"?`)) {
-                                    onDeleteWord(entry.id);
-                                    addAuditLog({
-                                      userId: adminUser.id,
-                                      userName: adminUser.name,
-                                      userRole: adminUser.role,
-                                      action: 'Menghapus Kosakata',
-                                      target: `${entry.word} (${entry.targetLangId.toUpperCase()})`,
-                                      category: 'words',
-                                    });
-                                    setFormNotification(`Kosakata "${entry.word}" telah dihapus.`);
-                                    setTimeout(() => setFormNotification(null), 3000);
-                                  }
-                                }}
-                                disabled={!canDeleteWords}
-                                className={`p-1.5 rounded-lg transition-colors ${
-                                  canDeleteWords
-                                    ? 'text-rose-400 hover:text-rose-200 hover:bg-rose-900/40 cursor-pointer'
-                                    : 'text-slate-600 cursor-not-allowed opacity-40'
-                                }`}
-                                title={canDeleteWords ? 'Hapus Kosakata' : 'Akses Ditolak: Memerlukan izin can_delete_words'}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {confirmDeleteId === entry.id ? (
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onDeleteWord(entry.id);
+                                      addAuditLog({
+                                        userId: adminUser.id,
+                                        userName: adminUser.name,
+                                        userRole: adminUser.role,
+                                        action: 'Menghapus Kosakata',
+                                        target: `${entry.word} (${entry.targetLangId.toUpperCase()})`,
+                                        category: 'words',
+                                      });
+                                      setConfirmDeleteId(null);
+                                      setFormNotification(`Kosakata "${entry.word}" telah dihapus.`);
+                                      setTimeout(() => setFormNotification(null), 3000);
+                                    }}
+                                    className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold cursor-pointer"
+                                  >
+                                    Hapus
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold cursor-pointer"
+                                  >
+                                    Batal
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!canDeleteWords) {
+                                      setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin menghapus kosakata (can_delete_words).');
+                                      setTimeout(() => setFormNotification(null), 3000);
+                                      return;
+                                    }
+                                    setConfirmDeleteId(entry.id);
+                                  }}
+                                  disabled={!canDeleteWords}
+                                  className={`p-1.5 rounded-lg transition-colors ${
+                                    canDeleteWords
+                                      ? 'text-rose-400 hover:text-rose-200 hover:bg-rose-900/40 cursor-pointer'
+                                      : 'text-slate-600 cursor-not-allowed opacity-40'
+                                  }`}
+                                  title={canDeleteWords ? 'Hapus Kosakata' : 'Akses Ditolak: Memerlukan izin can_delete_words'}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1059,157 +1089,218 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         {/* ========================================== */}
         {activeTab === 'moderation' && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
-                Moderasi Usulan Kosakata Komunitas
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Tinjau, setujui, edit, atau tolak kosakata yang diajukan oleh pengguna masyarakat daerah Sultra
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-white">
+                  Moderasi Usulan Kosakata dari Role Pengguna
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400">
+                  Verifikasi usulan kosakata warga sebelum tayang resmi di Portal Pengguna Publik
+                </p>
+              </div>
+
+              <div className="inline-flex items-center gap-1 p-1 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold shrink-0 tabular-nums">
+                <button
+                  type="button"
+                  onClick={() => setModerationSubFilter('pending')}
+                  className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                    moderationSubFilter === 'pending'
+                      ? 'bg-amber-500 text-slate-950'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Menunggu Verifikasi ({pendingContributions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModerationSubFilter('approved')}
+                  className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                    moderationSubFilter === 'approved'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Telah Disetujui ({approvedContributions.length})
+                </button>
+              </div>
             </div>
 
-            {contributedWords.length === 0 ? (
+            {(moderationSubFilter === 'pending' ? pendingContributions : approvedContributions).length === 0 ? (
               <div className="p-12 text-center rounded-3xl bg-slate-800/40 border border-slate-700 space-y-3">
                 <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-                <h3 className="text-base font-bold text-white">Semua Usulan Sudah Ditinjau</h3>
+                <h3 className="text-base font-bold text-white">
+                  {moderationSubFilter === 'pending'
+                    ? 'Tidak Ada Antrean Usulan yang Menunggu'
+                    : 'Belum Ada Riwayat Usulan Terverifikasi'}
+                </h3>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  Belum ada kosakata baru yang diajukan dari fitur kontribusi pengguna.
+                  {moderationSubFilter === 'pending'
+                    ? 'Seluruh usulan kosakata dari Portal Pengguna sudah ditinjau oleh kurator.'
+                    : 'Usulan yang Anda setujui akan tercatat di sini dan langsung aktif di kamus publik.'}
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {contributedWords.map(word => (
-                  <div
-                    key={word.id}
-                    className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700 space-y-4 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          {getLanguageName(word.targetLangId)}
-                        </span>
-                        <div className="text-lg font-black text-white mt-1">
-                          {word.word}
+                {(moderationSubFilter === 'pending' ? pendingContributions : approvedContributions).map(word => {
+                  const isPending = word.moderationStatus === 'pending';
+                  return (
+                    <div
+                      key={word.id}
+                      className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700 space-y-4 shadow-sm flex flex-col justify-between"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <span className="text-[11px] font-bold text-amber-300">
+                              {getLanguageName(word.targetLangId)} · {word.category || 'Umum'}
+                            </span>
+                            <div className="text-lg font-black text-white mt-0.5">
+                              {word.word}
+                            </div>
+                            <div className="text-base font-bold text-emerald-400">
+                              {word.translation}
+                            </div>
+                          </div>
+
+                          <div className="text-right text-[11px] text-slate-400">
+                            <div>Pengusul: <span className="text-slate-200 font-bold">{word.contributorName || 'Warga Sultra'}</span></div>
+                            <div className="font-mono">{word.createdAt || ''}</div>
+                          </div>
                         </div>
-                        <div className="text-base font-bold text-emerald-400">
-                          {word.translation}
+
+                        <div className="text-xs text-slate-300 space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-700/60">
+                          <div><span className="text-slate-400">Fonetik:</span> <span className="font-mono text-emerald-300">/{word.phonetic || '-'}/</span></div>
+                          {word.exampleSentence && (
+                            <div className="pt-1 border-t border-slate-800">
+                              <p className="text-slate-200 italic mt-0.5">&ldquo;{word.exampleSentence}&rdquo;</p>
+                              <p className="text-slate-400 text-[11px] mt-0.5">Arti: {word.exampleTranslation}</p>
+                            </div>
+                          )}
+                          {word.culturalContext && (
+                            <div className="pt-1 border-t border-slate-800 text-[11px]">
+                              <span className="text-amber-400 font-bold">Konteks Budaya: </span>
+                              <span>{word.culturalContext}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="text-right text-[11px] text-slate-400">
-                        <div>Oleh: <span className="text-slate-200 font-bold">{word.contributorName || 'Warga Sultra'}</span></div>
-                        <div>{word.createdAt || 'Tanggal tidak tercatat'}</div>
+                      {/* Moderation Actions */}
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-700/60">
+                        {confirmDeleteId === word.id ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-rose-300 font-semibold">Tolak &amp; hapus usulan ini?</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onDeleteWord(word.id);
+                                addAuditLog({
+                                  userId: adminUser.id,
+                                  userName: adminUser.name,
+                                  userRole: adminUser.role,
+                                  action: 'Menolak Usulan Komunitas',
+                                  target: `${word.word} (${word.targetLangId.toUpperCase()})`,
+                                  category: 'moderation',
+                                });
+                                setConfirmDeleteId(null);
+                                setFormNotification(`Usulan "${word.word}" ditolak dan dihapus.`);
+                                setTimeout(() => setFormNotification(null), 3000);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer"
+                            >
+                              Ya, Tolak
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold cursor-pointer"
+                            >
+                              Batal
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!canModerate) {
+                                  setFormNotification('Akses ditolak: Memerlukan izin moderasi (can_moderate_contributions).');
+                                  setTimeout(() => setFormNotification(null), 3000);
+                                  return;
+                                }
+                                setConfirmDeleteId(word.id);
+                              }}
+                              disabled={!canModerate}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                                canModerate
+                                  ? 'bg-rose-900/30 hover:bg-rose-900/60 text-rose-300 cursor-pointer'
+                                  : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+                              }`}
+                            >
+                              Tolak Usulan
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!canManageWords) {
+                                  setFormNotification('Akses ditolak: Memerlukan izin sunting kosakata (can_manage_words).');
+                                  setTimeout(() => setFormNotification(null), 3000);
+                                  return;
+                                }
+                                handleOpenEditModal(word);
+                              }}
+                              disabled={!canManageWords}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                                canManageWords
+                                  ? 'bg-slate-700 hover:bg-slate-600 text-white cursor-pointer'
+                                  : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+                              }`}
+                            >
+                              Sunting Detail
+                            </button>
+
+                            {isPending && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!canModerate) {
+                                    setFormNotification('Akses ditolak: Memerlukan izin moderasi (can_moderate_contributions).');
+                                    setTimeout(() => setFormNotification(null), 3000);
+                                    return;
+                                  }
+                                  onUpdateWord(word.id, {
+                                    moderationStatus: 'approved',
+                                    updatedAt: new Date().toISOString().split('T')[0],
+                                  });
+                                  addAuditLog({
+                                    userId: adminUser.id,
+                                    userName: adminUser.name,
+                                    userRole: adminUser.role,
+                                    action: 'Menyetujui Usulan Komunitas',
+                                    target: `${word.word} (${word.targetLangId.toUpperCase()})`,
+                                    category: 'moderation',
+                                  });
+                                  setFormNotification(`Kosakata "${word.word}" disetujui & kini tayang di Kamus Pengguna!`);
+                                  setTimeout(() => setFormNotification(null), 3500);
+                                }}
+                                disabled={!canModerate}
+                                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs ${
+                                  canModerate
+                                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer'
+                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
+                                }`}
+                              >
+                                {canModerate ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
+                                <span>Setujui ke Kamus Publik</span>
+                              </button>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
-
-                    <div className="text-xs text-slate-300 space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-700/60">
-                      <div><span className="text-slate-400">Pelafalan Fonetis:</span> <span className="font-mono text-emerald-300">{word.phonetic || '-'}</span></div>
-                      <div><span className="text-slate-400">Kategori:</span> {word.category || 'Umum'}</div>
-                      {word.exampleSentence && (
-                        <div className="pt-1 border-t border-slate-800">
-                          <span className="text-slate-400">Contoh Kalimat:</span>
-                          <p className="text-slate-200 italic mt-0.5">"{word.exampleSentence}"</p>
-                          <p className="text-slate-400 text-[11px] mt-0.5">Arti: {word.exampleTranslation}</p>
-                        </div>
-                      )}
-                      {word.culturalContext && (
-                        <div className="pt-1 border-t border-slate-800 text-[11px]">
-                          <span className="text-amber-400 font-bold">Konteks Budaya: </span>
-                          <span>{word.culturalContext}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Moderation Actions */}
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-700/60">
-                      <button
-                        onClick={() => {
-                          if (!canModerate) {
-                            setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin moderasi usulan (can_moderate_contributions).');
-                            setTimeout(() => setFormNotification(null), 3000);
-                            return;
-                          }
-                          if (confirm(`Tolak dan hapus usulan kosakata "${word.word}"?`)) {
-                            onDeleteWord(word.id);
-                            addAuditLog({
-                              userId: adminUser.id,
-                              userName: adminUser.name,
-                              userRole: adminUser.role,
-                              action: 'Menolak Usulan Komunitas',
-                              target: `${word.word} (${word.targetLangId.toUpperCase()})`,
-                              category: 'moderation',
-                            });
-                            setFormNotification(`Usulan "${word.word}" berhasil dihapus.`);
-                            setTimeout(() => setFormNotification(null), 3000);
-                          }
-                        }}
-                        disabled={!canModerate}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                          canModerate
-                            ? 'bg-rose-900/30 hover:bg-rose-900/60 text-rose-300 cursor-pointer'
-                            : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
-                        }`}
-                        title={canModerate ? 'Tolak & Hapus' : 'Akses Ditolak: Memerlukan izin can_moderate_contributions'}
-                      >
-                        Tolak & Hapus
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (!canManageWords) {
-                            setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin edit kosakata.');
-                            setTimeout(() => setFormNotification(null), 3000);
-                            return;
-                          }
-                          handleOpenEditModal(word);
-                        }}
-                        disabled={!canManageWords}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                          canManageWords
-                            ? 'bg-slate-700 hover:bg-slate-600 text-white cursor-pointer'
-                            : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
-                        }`}
-                        title={canManageWords ? 'Edit Detail' : 'Akses Ditolak: Memerlukan izin can_manage_words'}
-                      >
-                        Edit Detail
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (!canModerate) {
-                            setFormNotification('Akses ditolak: Akun Anda tidak memiliki izin moderasi usulan (can_moderate_contributions).');
-                            setTimeout(() => setFormNotification(null), 3000);
-                            return;
-                          }
-                          onUpdateWord(word.id, {
-                            isUserContributed: false,
-                            updatedAt: new Date().toISOString().split('T')[0]
-                          });
-                          addAuditLog({
-                            userId: adminUser.id,
-                            userName: adminUser.name,
-                            userRole: adminUser.role,
-                            action: 'Menyetujui Usulan Komunitas',
-                            target: `${word.word} (${word.targetLangId.toUpperCase()})`,
-                            category: 'moderation',
-                          });
-                          setFormNotification(`Kosakata "${word.word}" resmi disetujui & dipublikasikan!`);
-                          setTimeout(() => setFormNotification(null), 3500);
-                        }}
-                        disabled={!canModerate}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs ${
-                          canModerate
-                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer'
-                            : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
-                        }`}
-                        title={canModerate ? 'Setujui & Publikasikan' : 'Akses Ditolak: Memerlukan izin can_moderate_contributions'}
-                      >
-                        {canModerate ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
-                        <span>Setujui Resmi</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

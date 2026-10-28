@@ -1,57 +1,244 @@
 import { UserProfile, UserHistoryItem } from '../types';
 
-const STORAGE_KEY = 'leksika_nusantara_user_profile_v1';
+const PROFILE_STORAGE_KEY = 'leksika_nusantara_user_profile_v2';
+const REGISTERED_USERS_KEY = 'leksika_registered_learner_accounts_v1';
 
-export const INITIAL_USER_PROFILE: UserProfile = {
-  name: 'Penjelajah Nusantara',
-  email: 'pengguna@nusantara.id',
-  xp: 150,
+export interface RegisteredLearnerAccount {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  profile: UserProfile;
+  createdAt: string;
+}
+
+export const GUEST_USER_PROFILE: UserProfile = {
+  name: 'Pembelajar Tamu',
+  email: 'Mode Tamu (Belum Masuk Akun)',
+  role: 'pengguna',
+  isAuthenticated: false,
+  xp: 120,
   level: 1,
-  streak: 3,
+  streak: 1,
   lastLoginDate: new Date().toISOString().split('T')[0],
-  bookmarks: ['bug-1', 'jav-1', 'sun-2', 'ban-2'],
+  bookmarks: ['contrib-tk-1', 'contrib-mun-1', 'contrib-btn-1'],
   history: [
     {
-      id: 'hist-1',
-      wordId: 'bug-1',
-      word: 'Makan',
-      translation: 'Manre',
+      id: 'hist-tk-1',
+      wordId: 'contrib-tk-1',
+      word: 'Saling Menyayangi',
+      translation: 'Mombeore-orei',
       sourceLangId: 'ind',
-      targetLangId: 'bug',
-      searchedAt: '2026-07-28 10:30'
+      targetLangId: 'tk',
+      searchedAt: '09:30'
     },
     {
-      id: 'hist-2',
-      wordId: 'jav-2',
-      word: 'Selamat Pagi',
-      translation: 'Sugeng Enjang',
+      id: 'hist-btn-1',
+      wordId: 'contrib-btn-1',
+      word: 'Pintu Gerbang Benteng',
+      translation: 'Lawa',
       sourceLangId: 'ind',
-      targetLangId: 'jav',
-      searchedAt: '2026-07-28 11:15'
+      targetLangId: 'btn',
+      searchedAt: '10:15'
     }
   ],
   badges: ['badge-1'],
-  unlockedLanguages: ['bug', 'jav', 'sun', 'ban'],
-  completedQuizzesCount: 2,
-  wordsMasteredCount: 8
+  unlockedLanguages: ['tk', 'mor', 'mun', 'btn'],
+  completedQuizzesCount: 1,
+  wordsMasteredCount: 5
 };
+
+const DEFAULT_LEARNER_ACCOUNTS: RegisteredLearnerAccount[] = [
+  {
+    id: 'usr-001',
+    name: 'Wa Ode Siti Rahmawati',
+    email: 'pengguna@leksika.id',
+    passwordHash: 'pengguna123',
+    createdAt: '2026-08-01T08:00:00.000Z',
+    profile: {
+      name: 'Wa Ode Siti Rahmawati',
+      email: 'pengguna@leksika.id',
+      role: 'pengguna',
+      isAuthenticated: true,
+      xp: 340,
+      level: 2,
+      streak: 5,
+      lastLoginDate: new Date().toISOString().split('T')[0],
+      bookmarks: ['contrib-tk-1', 'contrib-mun-1', 'contrib-btn-1'],
+      history: [
+        {
+          id: 'hist-mun-1',
+          wordId: 'contrib-mun-1',
+          word: 'Kain Tenun Muna',
+          translation: 'Kamooru / Tenun Wuna',
+          sourceLangId: 'ind',
+          targetLangId: 'mun',
+          searchedAt: '08:45'
+        }
+      ],
+      badges: ['badge-1'],
+      unlockedLanguages: ['tk', 'mor', 'mun', 'btn'],
+      completedQuizzesCount: 4,
+      wordsMasteredCount: 14
+    }
+  }
+];
+
+export function getRegisteredLearners(): RegisteredLearnerAccount[] {
+  try {
+    const raw = localStorage.getItem(REGISTERED_USERS_KEY);
+    if (!raw) {
+      localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(DEFAULT_LEARNER_ACCOUNTS));
+      return DEFAULT_LEARNER_ACCOUNTS;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_LEARNER_ACCOUNTS;
+  } catch {
+    return DEFAULT_LEARNER_ACCOUNTS;
+  }
+}
+
+function saveRegisteredLearners(accounts: RegisteredLearnerAccount[]): void {
+  try {
+    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(accounts));
+  } catch (e) {
+    console.error('Failed to save learner accounts:', e);
+  }
+}
 
 export function loadUserProfile(): UserProfile {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return INITIAL_USER_PROFILE;
-    return JSON.parse(raw);
-  } catch (e) {
-    return INITIAL_USER_PROFILE;
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) return GUEST_USER_PROFILE;
+    const parsed = JSON.parse(raw);
+    return {
+      ...GUEST_USER_PROFILE,
+      ...parsed,
+      role: 'pengguna'
+    };
+  } catch {
+    return GUEST_USER_PROFILE;
   }
 }
 
 export function saveUserProfile(profile: UserProfile): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    const normalized: UserProfile = {
+      ...profile,
+      role: 'pengguna'
+    };
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(normalized));
+
+    // Sync back to registered account if logged in
+    if (normalized.isAuthenticated && normalized.email) {
+      const accounts = getRegisteredLearners();
+      const idx = accounts.findIndex(a => a.email.toLowerCase() === normalized.email.toLowerCase());
+      if (idx !== -1) {
+        accounts[idx] = {
+          ...accounts[idx],
+          name: normalized.name,
+          profile: normalized
+        };
+        saveRegisteredLearners(accounts);
+      }
+    }
   } catch (e) {
     console.error('Failed to save profile:', e);
   }
+}
+
+export function authenticateLearner(
+  email: string,
+  password: string
+): { success: boolean; message: string; profile?: UserProfile } {
+  const cleanEmail = email.trim().toLowerCase();
+  const accounts = getRegisteredLearners();
+  const found = accounts.find(a => a.email.toLowerCase() === cleanEmail);
+
+  if (!found || found.passwordHash !== password) {
+    return {
+      success: false,
+      message: 'Email atau kata sandi akun pengguna tidak sesuai.'
+    };
+  }
+
+  const activeProfile: UserProfile = {
+    ...found.profile,
+    name: found.name,
+    email: found.email,
+    role: 'pengguna',
+    isAuthenticated: true,
+    lastLoginDate: new Date().toISOString().split('T')[0]
+  };
+
+  saveUserProfile(activeProfile);
+  return {
+    success: true,
+    message: `Selamat datang kembali, ${activeProfile.name}.`,
+    profile: activeProfile
+  };
+}
+
+export function registerLearner(
+  name: string,
+  email: string,
+  password: string,
+  currentGuestProfile?: UserProfile
+): { success: boolean; message: string; profile?: UserProfile } {
+  const cleanName = name.trim();
+  const cleanEmail = email.trim().toLowerCase();
+
+  if (!cleanName || !cleanEmail || password.length < 6) {
+    return {
+      success: false,
+      message: 'Lengkapi nama, email valid, dan kata sandi minimal 6 karakter.'
+    };
+  }
+
+  const accounts = getRegisteredLearners();
+  if (accounts.some(a => a.email.toLowerCase() === cleanEmail)) {
+    return {
+      success: false,
+      message: 'Email tersebut sudah terdaftar pada akun pengguna lain. Silakan masuk.'
+    };
+  }
+
+  const base = currentGuestProfile || GUEST_USER_PROFILE;
+  const newProfile: UserProfile = {
+    ...base,
+    name: cleanName,
+    email: cleanEmail,
+    role: 'pengguna',
+    isAuthenticated: true,
+    lastLoginDate: new Date().toISOString().split('T')[0]
+  };
+
+  const newAccount: RegisteredLearnerAccount = {
+    id: `usr-${Date.now().toString(36)}`,
+    name: cleanName,
+    email: cleanEmail,
+    passwordHash: password,
+    profile: newProfile,
+    createdAt: new Date().toISOString()
+  };
+
+  saveRegisteredLearners([...accounts, newAccount]);
+  saveUserProfile(newProfile);
+
+  return {
+    success: true,
+    message: `Akun pembelajar ${cleanName} berhasil dibuat.`,
+    profile: newProfile
+  };
+}
+
+export function logoutLearner(): UserProfile {
+  const guestCopy: UserProfile = {
+    ...GUEST_USER_PROFILE,
+    lastLoginDate: new Date().toISOString().split('T')[0]
+  };
+  saveUserProfile(guestCopy);
+  return guestCopy;
 }
 
 export function addXpToProfile(
@@ -59,7 +246,6 @@ export function addXpToProfile(
   xpAmount: number
 ): { updatedProfile: UserProfile; leveledUp: boolean; newLevel: number } {
   const newXp = profile.xp + xpAmount;
-  // Calculate level: Level 1 = 0-100 XP, Level 2 = 101-300, Level 3 = 301-600, Level 4 = 601-1000, etc.
   let newLevel = 1;
   if (newXp >= 1000) newLevel = 4;
   else if (newXp >= 600) newLevel = 3;
@@ -74,7 +260,6 @@ export function addXpToProfile(
   };
 
   saveUserProfile(updatedProfile);
-
   return { updatedProfile, leveledUp, newLevel };
 }
 
@@ -103,7 +288,6 @@ export function addHistoryToProfile(
     searchedAt: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
   };
 
-  // Keep latest 25 search history items, unique by wordId
   const filtered = profile.history.filter(h => h.wordId !== item.wordId);
   const updatedHistory = [newHistoryItem, ...filtered].slice(0, 25);
 
@@ -160,4 +344,3 @@ export function claimDailyQuestInProfile(profile: UserProfile, questId: string):
   saveUserProfile(updatedProfile);
   return updatedProfile;
 }
-

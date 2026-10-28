@@ -1,29 +1,43 @@
 import React, { useState } from 'react';
-import { User, Award, Flame, Bookmark, History, Trophy, Trash2, Volume2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import {
+  User,
+  Award,
+  Flame,
+  Bookmark,
+  History,
+  Trash2,
+  Volume2,
+  CheckCircle2,
+  LogIn,
+  LogOut
+} from 'lucide-react';
 import { UserProfile, WordEntry, Language } from '../types';
 import { BADGE_DATABASE } from '../data/badgeDatabase';
-import { DICTIONARY_DATABASE } from '../data/dictionaryDatabase';
 import { speakWord } from '../utils/audioSpeech';
 
 interface UserProfileViewProps {
   userProfile: UserProfile;
   targetLang: Language;
+  allWords: WordEntry[];
   onSelectWordDetail: (word: WordEntry) => void;
   onClearHistory: () => void;
+  onNavigateToLogin: () => void;
+  onLogoutLearner: () => void;
 }
 
 export const UserProfileView: React.FC<UserProfileViewProps> = ({
   userProfile,
   targetLang,
+  allWords,
   onSelectWordDetail,
-  onClearHistory
+  onClearHistory,
+  onNavigateToLogin,
+  onLogoutLearner,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'bookmarks' | 'badges' | 'history'>('bookmarks');
 
-  // Find bookmarked words
-  const bookmarkedWords = DICTIONARY_DATABASE.filter(w => userProfile.bookmarks.includes(w.id));
+  const bookmarkedWords = allWords.filter(w => userProfile.bookmarks.includes(w.id));
 
-  // XP Progress calculation
   const nextLevelXp = userProfile.level === 1 ? 250 : userProfile.level === 2 ? 600 : 1000;
   const currentLevelMinXp = userProfile.level === 1 ? 0 : userProfile.level === 2 ? 250 : 600;
   const xpProgress = Math.min(
@@ -33,36 +47,67 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   return (
     <div className="space-y-6">
-      
       {/* Profile Header Card */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/90 space-y-6">
-        <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-          <div className="w-18 h-18 rounded-2xl bg-[#14532D] text-white flex items-center justify-center font-serif font-bold text-2xl shrink-0">
-            <User className="w-8 h-8" />
-          </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left flex-1">
+            <div className="w-16 h-16 rounded-2xl bg-[#14532D] text-white flex items-center justify-center font-serif font-bold text-2xl shrink-0">
+              <User className="w-8 h-8" />
+            </div>
 
-          <div className="space-y-1.5 flex-1 w-full">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14532D] tabular-nums">
-              Pembelajar Bahasa · Level {userProfile.level}
-            </p>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
-              {userProfile.name}
-            </h2>
-            <p className="text-xs text-stone-500">{userProfile.email}</p>
-
-            {/* Level XP Progress Bar */}
-            <div className="pt-2 max-w-md mx-auto sm:mx-0">
-              <div className="flex justify-between text-xs text-stone-600 font-semibold mb-1.5 tabular-nums">
-                <span>Progres Level {userProfile.level}</span>
-                <span className="font-mono">{userProfile.xp} / {nextLevelXp} XP</span>
+            <div className="space-y-1.5 flex-1 w-full">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs text-stone-500 tabular-nums">
+                <span className="font-semibold text-[#14532D] uppercase tracking-wider">
+                  Role: Pengguna Pembelajar
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>Level {userProfile.level}</span>
+                <span aria-hidden="true">·</span>
+                <span>{userProfile.isAuthenticated ? 'Akun Terdaftar' : 'Sesi Tamu'}</span>
               </div>
-              <div className="w-full h-2.5 bg-[#EFECE4] rounded-full overflow-hidden border border-stone-200/80">
-                <div
-                  className="h-full bg-[#14532D] rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(5, xpProgress)}%` }}
-                />
+
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+                {userProfile.name}
+              </h2>
+              <p className="text-xs text-stone-500">{userProfile.email}</p>
+
+              {/* Level XP Progress Bar */}
+              <div className="pt-2 max-w-md mx-auto sm:mx-0">
+                <div className="flex justify-between text-xs text-stone-600 font-semibold mb-1.5 tabular-nums">
+                  <span>Progres Level {userProfile.level}</span>
+                  <span className="font-mono">{userProfile.xp} / {nextLevelXp} XP</span>
+                </div>
+                <div className="w-full h-2.5 bg-[#EFECE4] rounded-full overflow-hidden border border-stone-200/80">
+                  <div
+                    className="h-full bg-[#14532D] rounded-full transition-all duration-500"
+                    style={{ width: `${Math.max(5, xpProgress)}%` }}
+                  />
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Independent User Session Action */}
+          <div className="flex items-center justify-center md:justify-end shrink-0">
+            {userProfile.isAuthenticated ? (
+              <button
+                type="button"
+                onClick={onLogoutLearner}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-700 hover:text-rose-800 border border-stone-200 hover:border-rose-200 text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Keluar Akun Pengguna</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onNavigateToLogin}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#14532D] hover:bg-[#166534] text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Masuk / Daftar Akun Pengguna</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -82,7 +127,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
           <div className="p-3.5 bg-[#F8F6F1] rounded-xl border border-stone-200/80">
             <Bookmark className="w-4 h-4 text-[#14532D] mx-auto mb-1" />
-            <span className="font-serif text-lg font-bold block text-stone-900 tabular-nums">{userProfile.bookmarks.length} Kata</span>
+            <span className="font-serif text-lg font-bold block text-stone-900 tabular-nums">{bookmarkedWords.length} Kata</span>
             <span className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Koleksi Tersimpan</span>
           </div>
         </div>
@@ -91,6 +136,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
       {/* Sub Tabs: Favorit, Badge, Riwayat */}
       <div className="bg-white p-1.5 rounded-2xl border border-stone-200/90 flex items-center gap-1.5 overflow-x-auto">
         <button
+          type="button"
           onClick={() => setActiveSubTab('bookmarks')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap tabular-nums ${
             activeSubTab === 'bookmarks'
@@ -103,6 +149,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveSubTab('badges')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${
             activeSubTab === 'badges'
@@ -115,6 +162,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveSubTab('history')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${
             activeSubTab === 'history'
@@ -149,6 +197,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
 
                   <button
+                    type="button"
                     onClick={e => {
                       e.stopPropagation();
                       speakWord(word.translation, targetLang.code);
@@ -208,6 +257,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             <h4 className="font-serif font-bold text-stone-900 text-base">Riwayat Pencarian Terakhir</h4>
             {userProfile.history.length > 0 && (
               <button
+                type="button"
                 onClick={onClearHistory}
                 className="text-xs text-rose-700 hover:underline flex items-center gap-1 font-semibold cursor-pointer whitespace-nowrap"
               >
@@ -238,7 +288,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
           )}
         </div>
       )}
-
     </div>
   );
 };

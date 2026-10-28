@@ -41,6 +41,7 @@ export interface WordEntry {
   isPopular?: boolean;
   isWordOfTheDay?: boolean;
   isUserContributed?: boolean;
+  moderationStatus?: 'pending' | 'approved' | 'rejected';
   contributorName?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -83,6 +84,8 @@ export interface UserHistoryItem {
 export interface UserProfile {
   name: string;
   email: string;
+  role?: 'pengguna';
+  isAuthenticated?: boolean;
   xp: number;
   level: number;
   streak: number;
@@ -176,4 +179,4 @@ export interface AdminUser {
 
 export type AdminTab = 'overview' | 'words' | 'moderation' | 'languages' | 'users' | 'audit' | 'backup' | 'supabase' | 'settings';
 export type AppViewMode = 'user' | 'admin';
-export type PageRoute = 'user' | 'user-login' | 'admin' | 'admin-login';
+export type PageRoute = 'portal' | 'user' | 'user-login' | 'admin' | 'admin-login';
