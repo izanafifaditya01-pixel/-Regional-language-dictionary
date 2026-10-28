@@ -114,37 +114,37 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
     <div className="space-y-6">
       
       {/* Quiz Banner Header */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-3 relative overflow-hidden">
-        <div className="absolute -right-8 -top-8 w-36 h-36 bg-green-50 rounded-full opacity-60 pointer-events-none" />
-        <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-800 text-xs font-bold">
-            <BrainCircuit className="w-4 h-4 text-green-700" />
-            <span>Kuis Bahasa Daerah Interaktif</span>
-          </div>
-          <span className="text-xs text-green-800 font-bold bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
-            Bonus XP & Lencana
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/90 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14532D]">
+            Evaluasi Kosakata · Kuis Interaktif
+          </span>
+          <span className="font-semibold text-amber-800">
+             +25 XP per Jawaban Tepat
           </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Arena Kuis Leksika Nusantara</h2>
-        <p className="text-xs sm:text-sm text-slate-600 max-w-xl font-medium">
-          Uji pemahaman kosakata, susun huruf kata daerah, dan isi kata yang kosong untuk menaikkan level & meraih badge prestasi.
+        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+          Evaluasi Penguasaan Bahasa Daerah
+        </h2>
+        <p className="text-xs sm:text-sm text-stone-600 max-w-xl leading-relaxed">
+          Uji pemahaman kosakata, susun huruf kata daerah, dan lengkapi konteks kalimat untuk menaikkan level serta membuka lencana capaian.
         </p>
 
         {/* Controls: Difficulty & Language Scope & Shuffle */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stone-100">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-slate-700 mr-1">Tingkat Kesulitan:</span>
+            <span className="text-xs font-semibold text-stone-600 mr-1">Tingkat:</span>
             {(['easy', 'medium', 'hard'] as const).map(level => (
               <button
                 key={level}
                 onClick={() => {
                   setDifficulty(level);
                 }}
-                className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                   difficulty === level
-                    ? 'pill-active shadow-xs'
-                    : 'pill-inactive border border-slate-200 hover:bg-slate-200/80'
+                    ? 'pill-active'
+                    : 'pill-inactive hover:bg-stone-200/80'
                 }`}
               >
                 {level === 'easy' ? 'Mudah' : level === 'medium' ? 'Sedang' : 'Sulit'}
@@ -156,23 +156,23 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
             <select
               value={selectedLanguageScope}
               onChange={e => setSelectedLanguageScope(e.target.value)}
-              className="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none cursor-pointer"
+              className="px-3 py-1.5 bg-[#F8F6F1] border border-stone-200/90 rounded-lg text-xs font-semibold text-stone-800 outline-none cursor-pointer"
             >
-              <option value="all">🌏 Semua Bahasa Nusantara</option>
+              <option value="all">Semua Bahasa Nusantara</option>
               {LANGUAGES_DATA.filter(l => l.id !== 'ind').map(lang => (
                 <option key={lang.id} value={lang.id}>
-                  {lang.flagEmoji} {lang.name}
+                  {lang.name}
                 </option>
               ))}
             </select>
 
             <button
               onClick={handleRestartQuiz}
-              className="px-3 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 text-green-800 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="px-3 py-1.5 bg-[#EFECE4] hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
               title="Acak pertanyaan kuis baru"
             >
-              <Shuffle className="w-3.5 h-3.5" />
-              <span>Acak Soal Baru</span>
+              <Shuffle className="w-3.5 h-3.5 text-[#14532D]" />
+              <span>Acak Soal</span>
             </button>
           </div>
         </div>
@@ -180,24 +180,22 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
 
       {/* Quiz Card View */}
       {!quizFinished && currentQ ? (
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-md space-y-6">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/90 space-y-6">
           
           {/* Question Header & Progress Bar */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between border-b border-stone-100 pb-4 text-xs">
+            <span className="font-semibold text-stone-500 uppercase tracking-wider tabular-nums">
               Pertanyaan {currentQuestionIdx + 1} dari {questions.length}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200">
-                Skor: {score}
-              </span>
-            </div>
+            <span className="font-mono font-bold text-[#14532D] tabular-nums">
+              Skor: {score}
+            </span>
           </div>
 
           {/* Question Text & Audio Voice Button */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-start justify-between gap-3">
-              <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 leading-snug">
                 {currentQ.question}
               </h3>
               <button
@@ -207,16 +205,16 @@ export const QuizView: React.FC<QuizViewProps> = ({ targetLang, onAddXp }) => {
                     setIsPlayingAudio(false);
                   }, targetLang.name);
                 }}
-                className={`p-2.5 rounded-2xl shrink-0 ${
-                  isPlayingAudio ? 'bg-amber-400 text-slate-950 animate-bounce' : 'bg-green-700 text-white hover:bg-green-800'
-                } transition-all shadow-xs cursor-pointer`}
-                title="Dengarkan Pelafalan Voice AI"
+                className={`p-2.5 rounded-xl shrink-0 ${
+                  isPlayingAudio ? 'bg-amber-500 text-stone-950' : 'bg-[#14532D] text-white hover:bg-[#166534]'
+                } transition-colors cursor-pointer`}
+                title="Dengarkan Pelafalan Audio"
               >
                 <Volume2 className="w-5 h-5" />
               </button>
             </div>
             {currentQ.contextSentence && (
-              <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 italic font-medium">
+              <p className="text-sm text-stone-700 bg-[#F8F6F1] p-3.5 rounded-xl border border-stone-200/80 font-serif italic">
                 "{currentQ.contextSentence}"
               </p>
             )}

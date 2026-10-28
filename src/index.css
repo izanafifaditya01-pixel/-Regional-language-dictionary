@@ -1,28 +1,58 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: "Fraunces", Georgia, Cambria, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    background-color: #F8F6F1;
+    color: #1C1917;
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #14532D;
+    outline-offset: 2px;
+  }
+}
+
 @layer utilities {
   .glass {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: rgba(248, 246, 241, 0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(231, 229, 228, 0.9);
   }
 
   .pill-active {
-    background-color: #15803d;
-    color: #ffffff;
+    background-color: #14532D;
+    color: #FFFFFF;
   }
 
   .pill-inactive {
-    background-color: #f1f5f9;
-    color: #64748b;
+    background-color: #EFECE4;
+    color: #57534E;
   }
 
-  .stat-card {
-    transition: all 0.2s ease;
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar,
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

@@ -8,15 +8,42 @@
 export type PortalMode = 'user' | 'admin' | 'unified';
 
 /**
+ * Mengecek apakah build/mode saat ini adalah build khusus User (VITE_PORTAL_MODE=user atau mode=user)
+ */
+export function isUserBuild(): boolean {
+  const envMode = (import.meta as any).env?.VITE_PORTAL_MODE || (import.meta as any).env?.MODE;
+  return envMode === 'user';
+}
+
+/**
+ * Mengecek apakah build/mode saat ini adalah build khusus Admin (VITE_PORTAL_MODE=admin atau mode=admin)
+ */
+export function isAdminBuild(): boolean {
+  const envMode = (import.meta as any).env?.VITE_PORTAL_MODE || (import.meta as any).env?.MODE;
+  return envMode === 'admin';
+}
+
+/**
  * Mendeteksi apakah aplikasi saat ini berjalan dalam konteks Portal Admin.
  * Aktif jika:
- * 1. Subdomain berawalan 'admin.' (contoh: admin.leksika.id atau admin.domain.com di Cloudflare)
- * 2. Environment variable VITE_PORTAL_MODE === 'admin'
- * 3. URL Query parameter ?portal=admin atau ?role=admin/superadmin/editor/moderator
- * 4. URL path diawali /admin
+ * 1. Build mode adalah 'admin' (isAdminBuild())
+ * 2. Subdomain berawalan 'admin.' (contoh: admin.leksika.id atau admin.domain.com di Cloudflare)
+ * 3. Environment variable VITE_PORTAL_MODE === 'admin'
+ * 4. URL Query parameter ?portal=admin atau ?role=admin/superadmin/editor/moderator
+ * 5. URL path diawali /admin
  */
 export function isCurrentAdminPortal(): boolean {
   if (typeof window === 'undefined') return false;
+
+  // Jika ini adalah build khusus User murni, isolasi penuh: portal admin selalu false
+  if (isUserBuild()) {
+    return false;
+  }
+
+  // Jika ini adalah build khusus Admin murni
+  if (isAdminBuild()) {
+    return true;
+  }
 
   const hostname = window.location.hostname.toLowerCase();
   const search = new URLSearchParams(window.location.search);
@@ -28,13 +55,7 @@ export function isCurrentAdminPortal(): boolean {
     return true;
   }
 
-  // 2. Deteksi Environment Variable Build Vite
-  const envMode = (import.meta as any).env?.VITE_PORTAL_MODE;
-  if (envMode === 'admin') {
-    return true;
-  }
-
-  // 3. Deteksi URL parameter khusus admin
+  // 2. Deteksi URL parameter khusus admin
   const portalParam = search.get('portal') || search.get('mode');
   if (portalParam === 'admin') return true;
 
@@ -43,7 +64,7 @@ export function isCurrentAdminPortal(): boolean {
     return true;
   }
 
-  // 4. Deteksi URL Path / Hash
+  // 3. Deteksi URL Path / Hash
   if (path.startsWith('/admin') || hash.includes('/admin')) {
     return true;
   }

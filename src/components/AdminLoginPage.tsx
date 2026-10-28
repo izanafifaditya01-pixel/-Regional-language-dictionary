@@ -68,21 +68,20 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between p-4 sm:p-6 font-sans">
       {/* Top Bar */}
       <header className="max-w-5xl w-full mx-auto flex items-center justify-between py-2">
         {!isCurrentAdminPortal() ? (
           <button
             onClick={onNavigateToUser}
-            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 px-3.5 py-2 rounded-xl border border-slate-700 transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900 hover:bg-stone-800 px-3.5 py-2 rounded-xl border border-stone-800 transition-colors cursor-pointer whitespace-nowrap"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Ke Halaman Pengguna (Tanpa Login)</span>
+            <span>Kembali ke Beranda Publik</span>
           </button>
         ) : (
-          <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Portal Khusus Administrator</span>
+          <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold tracking-wide uppercase">
+            <span>Portal Kurator & Administrator</span>
           </div>
         )}
 
@@ -91,7 +90,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
             <button
               type="button"
               onClick={onOpenLinksModal}
-              className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-950/80 border border-amber-800/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-bold shadow-2xs"
+              className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-stone-900 hover:bg-stone-800 border border-stone-800 px-3 py-1.5 rounded-xl transition-colors cursor-pointer font-semibold whitespace-nowrap"
               title="Lihat & Salin Semua Link Akses Role Deployed"
             >
               <Link2 className="w-3.5 h-3.5" />
@@ -101,34 +100,31 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
 
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 hover:bg-emerald-950/80 border border-emerald-800/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 bg-stone-900 hover:bg-stone-800 border border-stone-800 px-3 py-1.5 rounded-xl transition-colors cursor-pointer whitespace-nowrap"
             title="Salin Tautan Khusus Halaman Admin"
           >
             {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="font-mono text-[11px]">{copiedLink ? 'Tersalin!' : 'Link: /admin'}</span>
+            <span className="font-mono text-[11px]">{copiedLink ? 'Tersalin' : '/admin'}</span>
           </button>
         </div>
       </header>
 
       {/* Main Login Card */}
       <main className="w-full max-w-md mx-auto my-auto py-8">
-        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="bg-stone-900 border border-stone-800 rounded-2xl shadow-2xl overflow-hidden">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 p-6 sm:p-8 text-white relative">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center mb-3 shadow-inner">
-              <ShieldCheck className="w-7 h-7 text-emerald-200" />
+          <div className="bg-[#14532D] p-6 sm:p-8 text-white border-b border-white/10">
+            <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center mb-3.5">
+              <ShieldCheck className="w-6 h-6 text-emerald-100" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-white/20 rounded-md">
-                Akses Terproteksi
-              </span>
-              <span className="text-xs text-emerald-200">• Port 3000</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-white mt-1">
-              Login Administrator
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
+              Akses Terproteksi · Kurator Bahasa
+            </p>
+            <h1 className="font-serif text-2xl font-bold tracking-tight text-white mt-1">
+              Portal Administrator
             </h1>
-            <p className="text-xs text-emerald-100/80 mt-1">
-              Halaman khusus pengelola kamus bahasa Sulawesi Tenggara (Tolaki, Moronene, Muna, Buton).
+            <p className="text-xs text-emerald-100/85 mt-1.5 leading-relaxed">
+              Ruang pengelolaan basis data kosakata Sulawesi Tenggara (Tolaki, Moronene, Muna, Buton).
             </p>
           </div>
 

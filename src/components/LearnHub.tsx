@@ -197,86 +197,78 @@ export const LearnHub: React.FC<LearnHubProps> = ({ targetLang, onAddXp, onSelec
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-3 relative overflow-hidden">
-        <div className="absolute -right-8 -top-8 w-44 h-44 bg-green-50 rounded-full opacity-70 pointer-events-none" />
-        
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-800 text-xs font-bold">
-            <BookOpen className="w-3.5 h-3.5 text-green-700" />
-            <span>Modul Pembelajaran Kosakata Nusantara</span>
-          </div>
-
-          {/* Mastered Counter Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-900">
-            <Trophy className="w-3.5 h-3.5 text-amber-600" />
-            <span>{masteredWords.length} Kosakata Dikuasai</span>
-          </div>
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/90 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14532D]">
+            Modul Pembelajaran Tematik · Leksika Nusantara
+          </span>
+          <span className="font-semibold text-amber-800 tabular-nums">
+            {masteredWords.length} Kosakata Dikuasai
+          </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
           Belajar Kosakata {targetLang.name}
         </h2>
-        <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium leading-relaxed">
-          Eksplorasi kosakata tematik lengkap mulai dari <strong>Bagian Tubuh & Anggota Badan</strong>, <strong>Keluarga</strong>, <strong>Makanan Khas</strong>, <strong>Hewan</strong>, <strong>Angka 1-10+</strong>, hingga ungkapan percakapan sehari-hari dengan pelafalan audio interaktif.
+        <p className="text-xs sm:text-sm text-stone-600 max-w-2xl leading-relaxed">
+          Eksplorasi kosakata tematik mulai dari <strong>Bagian Tubuh</strong>, <strong>Keluarga</strong>, <strong>Makanan Khas</strong>, <strong>Hewan</strong>, <strong>Angka</strong>, hingga ungkapan percakapan sehari-hari dengan pelafalan audio interaktif.
         </p>
 
-        {/* Quick Language Filter Pills */}
+        {/* Quick Language Filter Segmented Controls */}
         <div className="pt-2 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-            <Globe className="w-3.5 h-3.5 text-green-700" /> Fokus Bahasa:
+          <span className="text-xs font-semibold text-stone-500 flex items-center gap-1 mr-1">
+            <Globe className="w-3.5 h-3.5 text-[#14532D]" /> Fokus Bahasa:
           </span>
 
           <button
             onClick={() => { setLangFilterMode('selected'); setActiveLangId(targetLang.id); }}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
               langFilterMode === 'selected' && activeLangId === targetLang.id
-                ? 'bg-green-700 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'pill-active'
+                : 'pill-inactive hover:bg-stone-200/80'
             }`}
           >
-            {targetLang.name} ({targetLang.flagEmoji || '🏛️'})
+            {targetLang.name}
           </button>
 
-          {/* Popular Regional Fast Toggles */}
           {[
+            { id: 'tk', name: 'Tolaki' },
             { id: 'mun', name: 'Muna' },
             { id: 'mrn', name: 'Moronene' },
-            { id: 'bug', name: 'Bugis' },
-            { id: 'jav', name: 'Jawa' },
-            { id: 'sun', name: 'Sunda' },
-            { id: 'min', name: 'Minang' },
-            { id: 'btk', name: 'Batak' }
-          ].map(l => (
-            <button
-              key={l.id}
-              onClick={() => { setLangFilterMode('selected'); setActiveLangId(l.id); }}
-              className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
-                langFilterMode === 'selected' && activeLangId === l.id
-                  ? 'bg-green-700 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {l.name}
-            </button>
-          ))}
+            { id: 'btn', name: 'Buton' }
+          ]
+            .filter(l => l.id !== targetLang.id)
+            .map(l => (
+              <button
+                key={l.id}
+                onClick={() => { setLangFilterMode('selected'); setActiveLangId(l.id); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                  langFilterMode === 'selected' && activeLangId === l.id
+                    ? 'pill-active'
+                    : 'pill-inactive hover:bg-stone-200/80'
+                }`}
+              >
+                {l.name}
+              </button>
+            ))}
 
           <button
             onClick={() => setLangFilterMode('all')}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
               langFilterMode === 'all'
-                ? 'bg-green-800 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'pill-active'
+                : 'pill-inactive hover:bg-stone-200/80'
             }`}
           >
-            Semua Nusantara
+            Semua Rumpun
           </button>
         </div>
       </div>
 
-      {/* 10 Thematic Category Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Thematic Category Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
         {CATEGORIES_DATA.map(cat => {
-          let count = DICTIONARY_DATABASE.filter(
+          const count = DICTIONARY_DATABASE.filter(
             w => w.category === cat.id || w.category.includes(cat.id)
           ).length;
 
@@ -286,41 +278,32 @@ export const LearnHub: React.FC<LearnHubProps> = ({ targetLang, onAddXp, onSelec
             <div
               key={cat.id}
               onClick={() => handleStartCategoryStudy(cat, 'flashcard')}
-              className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs hover:shadow-md hover:border-green-300 transition-all cursor-pointer group flex flex-col justify-between"
+              className="bg-white p-6 rounded-2xl border border-stone-200/90 hover:border-[#14532D]/50 transition-all cursor-pointer group flex flex-col justify-between"
               id={`category-card-${cat.id}`}
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className={`p-3 rounded-2xl ${cat.color} font-bold text-sm shadow-xs`}>
+                  <span className="p-2.5 rounded-xl bg-[#EFECE4] text-[#14532D]">
                     <Layers className="w-5 h-5" />
                   </span>
                   
-                  <div className="flex items-center gap-1.5">
-                    {isSpecialCategory && (
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        Lengkap
-                      </span>
-                    )}
-                    <span className="text-xs font-bold text-green-800 bg-green-50 px-3 py-1 rounded-full border border-green-200">
-                      {count} Kosakata
-                    </span>
-                  </div>
+                  <span className="text-xs font-semibold text-stone-500 tabular-nums">
+                    {isSpecialCategory ? `Kurasi Utama · ${count} Entri` : `${count} Entri`}
+                  </span>
                 </div>
 
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base group-hover:text-green-700 transition-colors flex items-center gap-2">
-                    <span>{cat.name}</span>
+                  <h3 className="font-serif font-bold text-stone-900 text-lg group-hover:text-[#14532D] transition-colors">
+                    {cat.name}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed font-medium">
+                  <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
                     {cat.description}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-green-700 group-hover:text-green-800">
-                <span className="flex items-center gap-1">
-                  <span>Mulai Belajar</span>
-                </span>
+              <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-[#14532D]">
+                <span>Mulai Modul</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
@@ -330,23 +313,22 @@ export const LearnHub: React.FC<LearnHubProps> = ({ targetLang, onAddXp, onSelec
 
       {/* Interactive Study Modal (Flashcard, List, Quiz) */}
       {selectedCategory && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative p-5 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-stone-200/90 overflow-hidden relative p-5 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
             
             {/* Modal Header & Navigation */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 pb-4">
               <div className="flex items-center gap-3">
-                <span className={`p-2.5 rounded-2xl ${selectedCategory.color}`}>
+                <span className="p-2.5 rounded-xl bg-[#EFECE4] text-[#14532D]">
                   <BookOpen className="w-5 h-5" />
                 </span>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-green-700 uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-xs text-stone-500 font-semibold">
+                    <span className="text-[#14532D] uppercase tracking-wider text-[11px]">
                       Kategori Tematik
                     </span>
-                    <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-semibold">
-                      {categoryWords.length} kata
-                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span className="tabular-nums">{categoryWords.length} kata</span>
                   </div>
                   <h3 className="text-lg sm:text-xl font-black text-slate-900">{selectedCategory.name}</h3>
                 </div>

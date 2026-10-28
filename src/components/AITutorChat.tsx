@@ -13,7 +13,7 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
     {
       id: 'msg-1',
       sender: 'bot',
-      text: `Halo! Saya Tutor Leksika AI 🌿. Saya siap membantu Anda mempelajari tata bahasa, kosakata, etiket kesantunan, serta terjemahan kalimat untuk Bahasa ${selectedLanguage.name} maupun bahasa daerah lainnya di Indonesia. Ada yang ingin Anda tanyakan?`,
+      text: `Selamat datang di ruang konsultasi bahasa Leksika Nusantara. Saya siap membantu Anda mempelajari tata bahasa, kosakata, tingkatan kesantunan adat, serta terjemahan kalimat untuk Bahasa ${selectedLanguage.name} maupun rumpun bahasa Sulawesi Tenggara lainnya. Silakan ajukan pertanyaan Anda.`,
       timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -87,44 +87,44 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden flex flex-col h-[75vh]">
+    <div className="bg-white rounded-2xl border border-stone-200/90 overflow-hidden flex flex-col h-[75vh]">
       
       {/* Chat Header */}
-      <div className="bg-white p-4 sm:p-5 border-b border-slate-200 text-slate-800 flex items-center justify-between">
+      <div className="bg-white p-4 sm:p-5 border-b border-stone-200/90 text-stone-900 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-green-700 text-white flex items-center justify-center font-bold shadow-xs">
-            <Sparkles className="w-5 h-5 text-amber-300" />
+          <div className="w-10 h-10 rounded-xl bg-[#14532D] text-white flex items-center justify-center shrink-0">
+            <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-slate-900">Tutor Leksika AI</h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Pakar Bahasa Daerah • Bahasa {selectedLanguage.name.replace('Bahasa ', '')}
+            <h3 className="font-serif font-bold text-lg text-stone-900 leading-tight">Tutor Bahasa Daerah</h3>
+            <p className="text-xs text-stone-500">
+              Pendamping Linguistik · Fokus {selectedLanguage.name}
             </p>
           </div>
         </div>
 
-        <span className="px-3 py-1 bg-green-50 rounded-full text-xs font-bold text-green-800 border border-green-200">
-          Gemini AI
+        <span className="text-xs font-semibold text-stone-500 hidden sm:inline">
+          Tata Bahasa · Adat · Pelafalan
         </span>
       </div>
 
       {/* Suggested Quick Prompts */}
-      <div className="p-3 bg-slate-50 border-b border-slate-200/80 overflow-x-auto flex items-center gap-2 scrollbar-none shrink-0">
-        <span className="text-xs font-bold text-slate-500 flex items-center gap-1 shrink-0">
-          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-          Saran Pertanyaan:
+      <div className="p-3 bg-[#EFECE4]/60 border-b border-stone-200/80 overflow-x-auto flex items-center gap-2 scrollbar-none shrink-0">
+        <span className="text-xs font-semibold text-stone-600 flex items-center gap-1 shrink-0 whitespace-nowrap">
+          <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+          Topik Diskusi:
         </span>
 
         {[
           `Bagaimana cara menyapa orang tua secara sopan dalam Bahasa ${selectedLanguage.name}?`,
-          `Terjemahkan 'Saya suka makan masakan khas Indonesia' ke ${selectedLanguage.name}`,
-          `Berikan 3 kata paling populer beserta contoh kalimatnya`
+          `Terjemahkan 'Mari kita menjaga persaudaraan kampung' ke ${selectedLanguage.name}`,
+          `Berikan 3 kosakata sehari-hari beserta contoh kalimatnya`
         ].map((prompt, idx) => (
           <button
             key={idx}
             onClick={() => handleSendMessage(prompt)}
             disabled={loading}
-            className="px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 text-slate-700 text-xs font-medium rounded-xl shrink-0 transition-colors cursor-pointer"
+            className="px-3 py-1.5 bg-white border border-stone-200/90 hover:border-[#14532D]/50 text-stone-700 text-xs font-medium rounded-lg shrink-0 transition-colors cursor-pointer whitespace-nowrap"
           >
             {prompt}
           </button>
@@ -132,15 +132,15 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 bg-slate-50/50">
+      <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 bg-[#F8F6F1]/70">
         {messages.map(msg => (
           <div
             key={msg.id}
             className={`flex items-start gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}
           >
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
-                msg.sender === 'user' ? 'bg-emerald-700 text-white' : 'bg-amber-400 text-slate-950 shadow-xs'
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                msg.sender === 'user' ? 'bg-[#14532D] text-white' : 'bg-[#EFECE4] text-[#14532D] border border-stone-200'
               }`}
             >
               {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -149,18 +149,18 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
             <div
               className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl text-xs sm:text-sm leading-relaxed space-y-2 ${
                 msg.sender === 'user'
-                  ? 'bg-emerald-700 text-white rounded-tr-none font-medium'
-                  : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none shadow-xs'
+                  ? 'bg-[#14532D] text-white rounded-tr-none'
+                  : 'bg-white text-stone-800 border border-stone-200/90 rounded-tl-none'
               }`}
             >
               <div className="whitespace-pre-wrap">{msg.text}</div>
 
-              <div className="flex items-center justify-between text-[10px] opacity-70 pt-1 border-t border-black/10">
-                <span>{msg.timestamp}</span>
+              <div className="flex items-center justify-between text-[10px] opacity-75 pt-1.5 border-t border-current/10">
+                <span className="font-mono tabular-nums">{msg.timestamp}</span>
                 {msg.sender === 'bot' && (
                   <button
                     onClick={() => handleSpeakResponse(msg.text)}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-600 transition-colors"
+                    className="p-1 hover:bg-stone-100 rounded text-stone-600 transition-colors cursor-pointer"
                     title="Bacakan Jawaban"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
@@ -173,12 +173,12 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
 
         {loading && (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center text-xs font-bold">
-              <Bot className="w-4 h-4 animate-spin" />
+            <div className="w-8 h-8 rounded-lg bg-[#EFECE4] text-[#14532D] border border-stone-200 flex items-center justify-center">
+              <Bot className="w-4 h-4" />
             </div>
-            <div className="p-3 bg-white border border-slate-200 rounded-2xl rounded-tl-none text-xs font-semibold text-slate-500 flex items-center gap-2 shadow-2xs">
-              <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
-              <span>Tutor Leksika AI sedang menyusun penjelasan...</span>
+            <div className="p-3 bg-white border border-stone-200/90 rounded-2xl rounded-tl-none text-xs font-medium text-stone-600 flex items-center gap-2">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#14532D]" />
+              <span>Menyusun penjelasan linguistik...</span>
             </div>
           </div>
         )}
@@ -187,7 +187,7 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
       </div>
 
       {/* Input Area */}
-      <div className="p-3 sm:p-4 bg-white border-t border-slate-200 shrink-0">
+      <div className="p-3 sm:p-4 bg-white border-t border-stone-200/90 shrink-0">
         <form
           onSubmit={e => {
             e.preventDefault();
@@ -199,13 +199,13 @@ export const AITutorChat: React.FC<AITutorChatProps> = ({ selectedLanguage, init
             type="text"
             value={inputMessage}
             onChange={e => setInputMessage(e.target.value)}
-            placeholder={`Tanyakan apa saja seputar Bahasa ${selectedLanguage.name} atau kebudayaan lokal...`}
-            className="flex-1 px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 font-medium"
+            placeholder={`Tanyakan kosakata, tata bahasa, atau adat tutur ${selectedLanguage.name}...`}
+            className="flex-1 px-4 py-2.5 bg-[#F8F6F1] border border-stone-200/90 rounded-xl text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#14532D]"
           />
           <button
             type="submit"
             disabled={!inputMessage.trim() || loading}
-            className="p-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-md disabled:opacity-50 transition-all cursor-pointer"
+            className="p-2.5 bg-[#14532D] hover:bg-[#166534] text-white rounded-xl disabled:opacity-50 transition-colors cursor-pointer"
             title="Kirim Pesan"
           >
             <Send className="w-5 h-5" />

@@ -240,30 +240,27 @@ export const GamesHub: React.FC<GamesHubProps> = ({
         <div className="space-y-6">
           
           {/* Header Banner */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4 relative overflow-hidden">
-            <div className="absolute -right-10 -top-10 w-48 h-48 bg-amber-50 rounded-full opacity-60 pointer-events-none" />
-            
-            <div className="flex flex-wrap items-center justify-between gap-3 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
-                <Gamepad2 className="w-3.5 h-3.5 text-amber-600" />
-                <span>Arena Permainan Edukasi Nusantara</span>
-              </div>
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/90 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14532D]">
+                Arena Permainan Edukasi · Leksika Nusantara
+              </span>
 
               {/* Sound & Spin Wheel Quick Buttons */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleToggleSound}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EFECE4] hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer whitespace-nowrap"
                   title="Aktifkan / Matikan Efek Suara"
                 >
                   {soundOn ? (
                     <>
-                      <Volume2 className="w-3.5 h-3.5 text-green-700" />
-                      <span>Suara: Nyala</span>
+                      <Volume2 className="w-3.5 h-3.5 text-[#14532D]" />
+                      <span>Suara: Aktif</span>
                     </>
                   ) : (
                     <>
-                      <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                      <VolumeX className="w-3.5 h-3.5 text-stone-400" />
                       <span>Suara: Bisu</span>
                     </>
                   )}
@@ -271,78 +268,78 @@ export const GamesHub: React.FC<GamesHubProps> = ({
 
                 <button
                   onClick={() => setShowWheelModal(true)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black transition-all shadow-xs cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                     canSpinWheel
-                      ? 'bg-amber-400 hover:bg-amber-500 text-slate-950 animate-pulse'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[#14532D] hover:bg-[#166534] text-white'
+                      : 'bg-[#EFECE4] text-stone-600 hover:bg-stone-200'
                   }`}
                 >
                   <RotateCw className="w-3.5 h-3.5" />
-                  <span>{canSpinWheel ? '🎁 Putar Roda Harian!' : 'Roda Hadiah'}</span>
+                  <span>{canSpinWheel ? 'Putar Roda Harian' : 'Roda Hadiah'}</span>
                 </button>
               </div>
             </div>
 
-            <div className="relative z-10 space-y-1">
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-                Arena Permainan & Kuis Interaktif
+            <div className="space-y-1.5">
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+                Permainan Kosakata & Tantangan Interaktif
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium leading-relaxed">
-                Belajar bahasa daerah kini jauh lebih seru! Mainkan <strong>Sambung Kata Kilat</strong>, teka-teki <strong>Susun Kata</strong>, <strong>Memory Card Match</strong>, <strong>Katla 5 Huruf</strong>, hingga tantangan <strong>Tebak Suara</strong> untuk mengumpulkan XP dan menaikkan level profil Anda.
+              <p className="text-xs sm:text-sm text-stone-600 max-w-2xl leading-relaxed">
+                Asah daya ingat linguistik melalui <strong>Sambung Kata Kilat</strong>, teka-teki <strong>Susun Kata</strong>, <strong>Memory Card Match</strong>, <strong>Katla 5 Huruf</strong>, hingga <strong>Tebak Suara</strong> untuk mengumpulkan poin pengalaman.
               </p>
             </div>
           </div>
 
           {/* Daily Quests / Misi Harian Section */}
-          <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-stone-200/90 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-green-700" />
-                <h3 className="font-black text-slate-900 text-base sm:text-lg">
+                <Calendar className="w-4 h-4 text-[#14532D]" />
+                <h3 className="font-serif font-bold text-stone-900 text-base sm:text-lg">
                   Misi Harian & Tantangan XP
                 </h3>
               </div>
-              <span className="text-xs font-bold text-slate-500">
-                Reset Setiap Hari
+              <span className="text-xs font-medium text-stone-500">
+                Diperbarui Setiap Hari
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
               {dailyQuests.map(quest => (
                 <div
                   key={quest.id}
-                  className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex flex-col justify-between space-y-3"
+                  className="p-4 rounded-xl border border-stone-200/80 bg-[#F8F6F1] flex flex-col justify-between space-y-3"
                 >
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-slate-900">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-stone-900">
                         {quest.title}
                       </span>
-                      <span className="text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-mono font-semibold text-amber-800 tabular-nums shrink-0">
                         +{quest.xpReward} XP
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    <p className="text-xs text-stone-600 leading-relaxed">
                       {quest.description}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200/60">
+                  <div className="pt-2.5 border-t border-stone-200/70">
                     {quest.isClaimed ? (
-                      <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                      <span className="text-xs font-semibold text-[#14532D] flex items-center gap-1">
                         <CheckCircle2 className="w-4 h-4" /> Sudah Diklaim
                       </span>
                     ) : quest.progress >= quest.target ? (
                       <button
                         onClick={() => handleClaimQuest(quest.id, quest.xpReward)}
-                        className="w-full py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-xl text-xs font-black shadow-xs transition-all animate-bounce cursor-pointer flex items-center justify-center gap-1"
+                        className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 whitespace-nowrap"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>Klaim +{quest.xpReward} XP!</span>
+                        <span>Klaim +{quest.xpReward} XP</span>
                       </button>
                     ) : (
-                      <span className="text-[11px] font-semibold text-slate-400">
-                        Belum Selesai (Mainkan game untuk membuka)
+                      <span className="text-[11px] font-medium text-stone-500">
+                        Belum selesai · Mainkan gim terkait
                       </span>
                     )}
                   </div>
@@ -352,7 +349,7 @@ export const GamesHub: React.FC<GamesHubProps> = ({
           </div>
 
           {/* Games Catalog Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
             {gameCatalog.map(game => {
               const IconComp = game.icon;
 
@@ -360,36 +357,32 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                 <div
                   key={game.id}
                   onClick={() => setActiveGame(game.id)}
-                  className="bg-white rounded-3xl border border-slate-200 hover:border-green-300 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between overflow-hidden p-6 space-y-4"
+                  className="bg-white rounded-2xl border border-stone-200/90 hover:border-[#14532D]/50 transition-all cursor-pointer group flex flex-col justify-between p-6 space-y-4"
                   id={`game-card-${game.id}`}
                 >
                   <div className="space-y-4">
                     
-                    {/* Game Header: Icon & Badge */}
-                    <div className="flex items-center justify-between">
-                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${game.gradient} text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
-                        <IconComp className="w-7 h-7" />
+                    {/* Game Header: Icon & Unboxed Metadata */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-[#EFECE4] text-[#14532D] group-hover:bg-[#14532D] group-hover:text-white flex items-center justify-center transition-colors shrink-0">
+                        <IconComp className="w-6 h-6" />
                       </div>
 
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${game.badgeColor}`}>
-                          {game.badge}
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-500">
-                          {game.xpPotential}
-                        </span>
+                      <div className="text-right text-[11px] font-medium text-stone-500 tabular-nums">
+                        <span className="block font-semibold text-stone-700">{game.badge}</span>
+                        <span className="font-mono text-[#14532D]">{game.xpPotential}</span>
                       </div>
                     </div>
 
                     {/* Titles */}
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 group-hover:text-green-700 transition-colors">
+                      <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-[#14532D] transition-colors">
                         {game.title}
                       </h3>
-                      <p className="text-xs font-mono text-green-800 font-semibold">
+                      <p className="text-xs font-mono text-stone-500 mt-0.5">
                         {game.subtitle}
                       </p>
-                      <p className="text-xs text-slate-600 mt-2 leading-relaxed font-medium">
+                      <p className="text-xs text-stone-600 mt-2 leading-relaxed">
                         {game.description}
                       </p>
                     </div>
@@ -397,17 +390,17 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                   </div>
 
                   {/* Footer & High Score */}
-                  <div className="pt-4 border-t border-slate-100 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-500">
-                        Rekor Anda: <strong className="text-slate-900">{game.highScore > 0 ? game.highScore : '-'}</strong>
+                  <div className="pt-4 border-t border-stone-100 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span className="tabular-nums">
+                        Rekor: <strong className="text-stone-900 font-mono">{game.highScore > 0 ? game.highScore : '—'}</strong>
                       </span>
-                      <span className="text-[11px] font-semibold text-slate-400">
+                      <span>
                         {game.difficulty}
                       </span>
                     </div>
 
-                    <div className="w-full py-2.5 bg-slate-100 group-hover:bg-green-700 text-slate-700 group-hover:text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-colors">
+                    <div className="w-full py-2.5 bg-[#EFECE4] group-hover:bg-[#14532D] text-stone-800 group-hover:text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap">
                       <span>Mainkan Sekarang</span>
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>

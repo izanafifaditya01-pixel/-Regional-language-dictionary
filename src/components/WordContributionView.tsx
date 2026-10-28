@@ -196,57 +196,44 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <div className="w-full space-y-6">
       
-      {/* Top Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 text-white p-6 sm:p-8 mb-8 shadow-xl border border-emerald-700/40">
-        <div className="absolute -right-12 -top-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-1/4 -bottom-12 w-48 h-48 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
+      {/* Top Editorial Banner */}
+      <div className="bg-white rounded-2xl border border-stone-200/90 p-6 sm:p-8 space-y-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14532D]">
+          Arsip Partisipatif · Pelestarian Bahasa Daerah Sulawesi Tenggara
+        </p>
 
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4">
-            <BookPlus className="w-3.5 h-3.5" />
-            <span>Kamus Komunitas & Pelestarian Bahasa Sultra</span>
-          </div>
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+          Kontribusi Leksikon Komunitas Sultra
+        </h1>
+        <p className="text-stone-600 text-xs sm:text-sm max-w-3xl leading-relaxed">
+          Perkaya dokumentasi kata <strong>Bahasa Tolaki</strong>, <strong>Bahasa Moronene</strong>, <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Setiap entri yang Anda daftarkan langsung terintegrasi ke dalam kamus, pencarian, kuis, dan modul pelafalan.
+        </p>
 
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-3">
-            Pengembangan Kosakata Daerah Sultra
-          </h1>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
-            Bantu memperkaya perbendaharaan kata <strong>Bahasa Tolaki</strong>, <strong>Bahasa Moronene</strong>, <strong>Bahasa Muna</strong>, dan <strong>Bahasa Buton</strong>. Setiap kata yang Anda tambahkan langsung aktif di seluruh fitur kamus, pencarian, kuis, dan audio!
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10">
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="font-semibold text-slate-100">+{30} XP per Kata Baru</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10">
-              <Layers className="w-4 h-4 text-emerald-300" />
-              <span className="font-semibold text-slate-100">{contributedWords.length} Kata Dikontribusikan</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10">
-              <Award className="w-4 h-4 text-blue-300" />
-              <span className="font-semibold text-slate-100">4 Rumpun Bahasa Sultra</span>
-            </div>
-          </div>
+        <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-stone-500 tabular-nums">
+          <span className="text-amber-800">+30 XP per Entri Baru</span>
+          <span aria-hidden="true">·</span>
+          <span>{contributedWords.length} Entri Komunitas Tercatat</span>
+          <span aria-hidden="true">·</span>
+          <span>4 Rumpun Bahasa Sultra</span>
         </div>
       </div>
 
       {/* Notification Toast */}
       {notification && (
-        <div className={`p-4 rounded-2xl mb-6 flex items-center justify-between shadow-md transition-all animate-fade-in ${
+        <div className={`p-4 rounded-xl flex items-center justify-between transition-all ${
           notification.type === 'success' 
-            ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' 
-            : 'bg-rose-50 text-rose-900 border border-rose-200'
+            ? 'bg-emerald-50 text-emerald-950 border border-emerald-200' 
+            : 'bg-rose-50 text-rose-950 border border-rose-200'
         }`}>
           <div className="flex items-center gap-3">
-            <CheckCircle2 className={`w-5 h-5 ${notification.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`} />
-            <span className="text-sm font-semibold">{notification.message}</span>
+            <CheckCircle2 className={`w-5 h-5 ${notification.type === 'success' ? 'text-[#14532D]' : 'text-rose-600'}`} />
+            <span className="text-sm font-medium">{notification.message}</span>
           </div>
           <button 
             onClick={() => setNotification(null)}
-            className="text-xs font-bold underline opacity-70 hover:opacity-100 cursor-pointer"
+            className="text-xs font-semibold underline opacity-75 hover:opacity-100 cursor-pointer whitespace-nowrap"
           >
             Tutup
           </button>
@@ -254,21 +241,21 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
       )}
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-4 mb-8 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-stone-200/90 pb-4 overflow-x-auto">
         <button
           id="btn-subtab-form"
           onClick={() => {
             playTileClickSound();
             setActiveSubTab('form');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${
             activeSubTab === 'form'
-              ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
-              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              ? 'pill-active'
+              : 'bg-white text-stone-700 hover:bg-[#EFECE4] border border-stone-200/90'
           }`}
         >
           <PlusCircle className="w-4 h-4" />
-          <span>{editingWordId ? 'Edit Kosakata' : 'Tambah Kata Baru'}</span>
+          <span>{editingWordId ? 'Sunting Entri' : 'Tambah Entri Baru'}</span>
         </button>
 
         <button
@@ -277,14 +264,14 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
             playTileClickSound();
             setActiveSubTab('list');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap tabular-nums ${
             activeSubTab === 'list'
-              ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
-              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              ? 'pill-active'
+              : 'bg-white text-stone-700 hover:bg-[#EFECE4] border border-stone-200/90'
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>Daftar Kata Kontribusi ({contributedWords.length})</span>
+          <span>Daftar Kontribusi ({contributedWords.length})</span>
         </button>
 
         <button
@@ -293,14 +280,14 @@ export const WordContributionView: React.FC<WordContributionViewProps> = ({
             playTileClickSound();
             setActiveSubTab('backup');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${
             activeSubTab === 'backup'
-              ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
-              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              ? 'pill-active'
+              : 'bg-white text-stone-700 hover:bg-[#EFECE4] border border-stone-200/90'
           }`}
         >
           <Download className="w-4 h-4" />
-          <span>Cadangkan & Bagikan</span>
+          <span>Ekspor & Cadangan JSON</span>
         </button>
       </div>
 

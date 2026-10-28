@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { X, Volume2, Bookmark, BookmarkCheck, Sparkles, BookOpen, Share2, Check, ArrowRight, Lightbulb } from 'lucide-react';
+import {
+  X,
+  Volume2,
+  Bookmark,
+  BookmarkCheck,
+  Share2,
+  Check,
+  MessageSquareText,
+} from 'lucide-react';
 import { WordEntry, Language } from '../types';
 import { speakWord } from '../utils/audioSpeech';
 
@@ -18,7 +26,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   isBookmarked,
   onClose,
   onToggleBookmark,
-  onAskAiAboutWord
+  onAskAiAboutWord,
 }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -27,179 +35,196 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
 
   const handlePlayAudio = () => {
     setIsPlayingAudio(true);
-    speakWord(word.translation, targetLang.code, () => {
-      setIsPlayingAudio(false);
-    }, targetLang.name);
+    speakWord(
+      word.translation,
+      targetLang.code,
+      () => {
+        setIsPlayingAudio(false);
+      },
+      targetLang.name
+    );
   };
 
   const handleShare = () => {
-    const text = `${word.translation} (${word.phonetic}) = ${word.word} [Bahasa ${targetLang.name}] - Leksika Nusantara`;
+    const text = `${word.translation} (/${word.phonetic || '-'}/) = ${word.word} [${targetLang.name}] — Leksika Nusantara`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div 
-        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200"
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-stone-950/55 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="bg-white w-full max-w-xl rounded-2xl border border-stone-200 shadow-xl overflow-hidden relative"
         id="word-detail-modal"
       >
-        {/* Header Ribbon */}
-        <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 p-6 text-white relative">
+        {/* Curatorial Header */}
+        <div className="bg-[#F8F6F1] p-6 sm:p-8 border-b border-stone-200/90 relative">
           <button
+            type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors cursor-pointer"
+            className="absolute top-5 right-5 p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 rounded-lg transition-colors cursor-pointer"
             title="Tutup"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-3 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider">
-              {word.category}
-            </span>
-            <span className="text-xs text-emerald-200 font-semibold">
-              {targetLang.flagEmoji} {targetLang.name}
-            </span>
+          <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-stone-500 font-medium pr-10">
+            <span>{word.category}</span>
+            <span aria-hidden="true">·</span>
+            <span>{targetLang.name}</span>
           </div>
 
-          <div className="flex items-center justify-between gap-4 mt-2">
+          <div className="flex items-start justify-between gap-4 mt-3">
             <div>
-              <h2 className="text-3xl font-black tracking-tight text-white">{word.translation}</h2>
-              <p className="text-sm text-emerald-200 font-mono mt-0.5">
-                Cara Membaca: <span className="text-amber-300 font-bold">"{word.phonetic}"</span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-stone-900">
+                {word.translation}
+              </h2>
+              <p className="font-mono text-sm text-stone-600 mt-1">
+                /{word.phonetic || '-'}/
               </p>
             </div>
 
-            {/* Main Audio Pronunciation Button */}
             <button
+              type="button"
               onClick={handlePlayAudio}
-              className={`p-3.5 rounded-2xl ${
-                isPlayingAudio ? 'bg-amber-400 text-slate-950 animate-bounce' : 'bg-white/15 hover:bg-white/25 text-white'
-              } shadow-lg transition-all cursor-pointer`}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                isPlayingAudio
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-[#14532D] hover:bg-[#166534] text-white'
+              }`}
               title="Dengarkan Pelafalan"
             >
-              <Volume2 className="w-6 h-6" />
+              <Volume2 className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Modal Body Content */}
-        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-          
-          {/* Indonesian Translation */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-1">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Arti Bahasa Indonesia</span>
-            <p className="text-xl font-black text-emerald-900">{word.word}</p>
-          </div>
+        {/* Accession Metadata & Lexical Body */}
+        <div className="p-6 sm:p-8 space-y-6 max-h-[65vh] overflow-y-auto">
+          <dl className="divide-y divide-stone-200/80">
+            {/* Indonesian Definition */}
+            <div className="pb-5">
+              <dt className="text-xs uppercase tracking-wider text-stone-500 font-medium">
+                Padanan Bahasa Indonesia
+              </dt>
+              <dd className="font-serif text-2xl font-semibold text-stone-900 mt-1">
+                {word.word}
+              </dd>
+            </div>
 
-          {/* Example Sentence */}
-          {word.exampleSentence && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-emerald-600" />
-                Contoh Kalimat Penggunaan
-              </h4>
-              <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-1.5">
-                <p className="text-sm font-bold text-emerald-950 italic">"{word.exampleSentence}"</p>
-                <p className="text-xs text-slate-600 font-medium">&rarr; {word.exampleTranslation}</p>
+            {/* Example Sentence */}
+            {word.exampleSentence && (
+              <div className="py-5 space-y-1.5">
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-medium">
+                  Contoh Kalimat Tutur
+                </dt>
+                <dd className="space-y-1 pt-1">
+                  <p className="font-serif italic text-base text-stone-900 leading-relaxed">
+                    &ldquo;{word.exampleSentence}&rdquo;
+                  </p>
+                  {word.exampleTranslation && (
+                    <p className="text-sm text-stone-600">
+                      {word.exampleTranslation}
+                    </p>
+                  )}
+                </dd>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Cultural Context Note */}
-          {word.culturalContext && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Lightbulb className="w-4 h-4 text-amber-500" />
-                Informasi Budaya & Etiket Lokal
-              </h4>
-              <div className="p-4 bg-amber-50/70 rounded-2xl border border-amber-200 text-xs text-amber-950 leading-relaxed font-medium">
-                {word.culturalContext}
+            {/* Cultural Context */}
+            {word.culturalContext && (
+              <div className="py-5 space-y-1.5">
+                <dt className="text-xs uppercase tracking-wider text-stone-500 font-medium">
+                  Catatan Budaya &amp; Etiket Lokal
+                </dt>
+                <dd className="text-sm text-stone-700 leading-relaxed pt-1">
+                  {word.culturalContext}
+                </dd>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Synonyms & Antonyms */}
-          {(word.synonyms?.length || word.antonyms?.length) ? (
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              {word.synonyms && word.synonyms.length > 0 && (
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-[11px] font-bold text-slate-500 block mb-1">Sinonim:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {word.synonyms.map((s, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-800">
-                        {s}
-                      </span>
-                    ))}
+            {/* Synonyms & Antonyms */}
+            {Boolean(word.synonyms?.length || word.antonyms?.length) && (
+              <div className="pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {word.synonyms && word.synonyms.length > 0 && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-stone-500 font-medium">
+                      Sinonim
+                    </dt>
+                    <dd className="text-sm text-stone-800 mt-1">
+                      {word.synonyms.join(' · ')}
+                    </dd>
                   </div>
-                </div>
-              )}
+                )}
 
-              {word.antonyms && word.antonyms.length > 0 && (
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-[11px] font-bold text-slate-500 block mb-1">Antonim:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {word.antonyms.map((a, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-800">
-                        {a}
-                      </span>
-                    ))}
+                {word.antonyms && word.antonyms.length > 0 && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-stone-500 font-medium">
+                      Antonim
+                    </dt>
+                    <dd className="text-sm text-stone-800 mt-1">
+                      {word.antonyms.join(' · ')}
+                    </dd>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : null}
+                )}
+              </div>
+            )}
+          </dl>
 
-          {/* AI Tutor Ask Trigger */}
+          {/* Tutor Discussion Trigger */}
           <div className="pt-2">
             <button
+              type="button"
               onClick={() => {
                 onClose();
                 onAskAiAboutWord(word);
               }}
-              className="w-full py-3 bg-gradient-to-r from-emerald-800 to-teal-800 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-md hover:from-emerald-700 hover:to-teal-700 transition-all cursor-pointer"
+              className="w-full py-3 px-4 bg-[#14532D] hover:bg-[#166534] text-white font-medium text-sm rounded-xl inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Tanya AI Tutor tentang kata "{word.translation}"</span>
+              <MessageSquareText className="w-4 h-4" />
+              <span>Diskusikan Kata &ldquo;{word.translation}&rdquo; dengan Tutor Bahasa</span>
             </button>
           </div>
-
         </div>
 
-        {/* Modal Footer Actions */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+        {/* Footer Actions */}
+        <div className="px-6 sm:px-8 py-4 bg-[#F8F6F1] border-t border-stone-200/90 flex items-center justify-between gap-3">
           <button
+            type="button"
             onClick={() => onToggleBookmark(word.id)}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap ${
               isBookmarked
-                ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+                ? 'bg-amber-100/80 text-amber-950 border border-amber-300'
+                : 'bg-white border border-stone-200 text-stone-700 hover:bg-[#EFECE4]'
             }`}
           >
             {isBookmarked ? (
               <>
-                <BookmarkCheck className="w-4 h-4 fill-amber-500 text-amber-600" />
-                <span>Tersimpan di Favorit</span>
+                <BookmarkCheck className="w-4 h-4 text-amber-700" />
+                <span>Tersimpan</span>
               </>
             ) : (
               <>
                 <Bookmark className="w-4 h-4" />
-                <span>Simpan ke Favorit</span>
+                <span>Simpan Kosakata</span>
               </>
             )}
           </button>
 
           <button
+            type="button"
             onClick={handleShare}
-            className="py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="py-2.5 px-4 bg-white border border-stone-200 hover:bg-[#EFECE4] text-stone-700 rounded-xl text-xs sm:text-sm font-medium inline-flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
-            <span>{copied ? 'Tersalin!' : 'Bagikan'}</span>
+            {copied ? <Check className="w-4 h-4 text-[#14532D]" /> : <Share2 className="w-4 h-4" />}
+            <span>{copied ? 'Tersalin' : 'Salin Kutipan'}</span>
           </button>
         </div>
-
       </div>
     </div>
   );
